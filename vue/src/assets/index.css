@@ -1,0 +1,27 @@
+.left-float {
+  float: left;
+}
+
+.right-float {
+  float: right;
+}
+
+.clear-float::after {
+  content: "";
+  display: block;
+  clear: both;
+}
+
+.el-message-box {
+  border-radius: 6px !important;
+  overflow: hidden;
+  z-index: 9888 !important;
+}
+
+.el-message-box__btns .el-button {
+  border-radius: 6px !important;
+}
+
+.el-message {
+  z-index: 9999 !important;
+}

@@ -1,0 +1,100 @@
+server:
+  port: 8090
+
+spring:
+  datasource:
+    username: root
+    password: 123456
+    url: jdbc:mysql://localhost:3306/lmp?serverTimezone=UTC&useSSL=false&characterEncoding=utf8&allowPublicKeyRetrieval=true
+    driverClassName: com.mysql.cj.jdbc.Driver
+    type: com.alibaba.druid.pool.DruidDataSource
+    # Druid连接池配置
+    druid:
+      # 初始化连接数
+      initial-size: 5
+      # 最大活跃连接数
+      max-active: 20
+      # 最小空闲连接数
+      min-idle: 5
+      # 连接超时时间（毫秒）
+      max-wait: 60000
+      # 检测连接是否有效（空闲时验证）
+      test-while-idle: true
+      # 检测连接是否有效（获取连接时验证）
+      test-on-borrow: false
+      # 检测连接是否有效（归还连接时验证）
+      test-on-return: false
+      # 配置连接池回收机制（间隔时间，毫秒）
+      time-between-eviction-runs-millis: 60000
+      # 连接最小存活时间（毫秒）
+      min-evictable-idle-time-millis: 300000
+
+      # 配置监控统计拦截的filters（必须包含stat，否则监控无数据）
+      # wall：防SQL注入；slf4j：日志
+      filters: stat,wall,slf4j
+      # 过滤规则配置（可选）
+      filter:
+        stat:
+          # 慢SQL记录（超过2000毫秒视为慢SQL）
+          slow-sql-millis: 2000
+          # 日志记录慢SQL
+          log-slow-sql: true
+        wall:
+          # 允许执行多条SQL（如批量插入）
+          config:
+            multi-statement-allow: true
+
+      # 监控页面配置（StatViewServlet）
+      stat-view-servlet:
+        # 启用监控页面
+        enabled: true
+        # 监控页面访问路径（默认/druid/*）
+        url-pattern: /druid/*
+        # 登录监控页面的用户名
+        login-username: admin
+        # 登录监控页面的密码
+        login-password: 123456
+        # 允许访问的IP（默认所有IP）
+        allow: 127.0.0.1
+        # 禁止访问的IP（优先级高于allow）
+        # deny: 192.168.1.100
+
+      # Web监控配置（WebStatFilter，收集web请求与SQL的关联数据）
+      web-stat-filter:
+        # 启用Web监控
+        enabled: true
+        # 监控所有请求
+        url-pattern: /*
+        # 排除不需要监控的路径（如静态资源、druid自身页面）
+        exclusions: "*.js,*.gif,*.jpg,*.png,*.css,*.ico,/druid/*"
+  servlet:
+    multipart:
+      max-file-size: 5MB  # 单个文件最大大小（支持KB/MB/GB）
+      max-request-size: 50MB  # 整个请求（含所有文件）的最大大小
+      enabled: true  # 启用文件上传支持（默认开启）
+
+mybatis:
+  # 指定Mapper XML文件的位置（classpath: 表示resources目录下）
+  mapper-locations: classpath:mapper/*.xml
+  # 指定实体类的包路径（用于在Mapper XML中省略全类名）
+  type-aliases-package: com.xjtu.springboot.pojo
+  # 开启下划线转驼峰（如数据库字段user_id -> 实体类属性userId）
+  configuration:
+    map-underscore-to-camel-case: true
+    # 可选：开启MyBatis日志（方便调试SQL）
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+pagehelper:
+  # 指定数据库类型（必须配置，否则分页可能失效，如mysql、oracle、postgresql等）
+  helper-dialect: mysql
+  # 分页参数合理化（默认false，设为true时，pageNum≤0会查第一页，pageNum>总页数会查最后一页）
+  reasonable: true
+  # 支持通过Mapper接口参数传递分页参数（默认false）
+  support-methods-arguments: true
+  # 分页参数名（默认pageNum=pageNum，pageSize=pageSize，可自定义）
+  params: count=countSql
+
+jwt:
+  # 至少256位（32个字符）
+  secret-key: 7mn2U4LRf2oAu77LRD/VKqsXEp482g614/mmPta5qoc=
+  expiration: 10080

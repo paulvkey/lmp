@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xjtu.springboot.mapper.FileFolderMapper">
+    <resultMap id="BaseResultMap" type="com.xjtu.springboot.pojo.FileFolder">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="user_id" jdbcType="BIGINT" property="userId"/>
+        <result column="session_id" jdbcType="BIGINT" property="sessionId"/>
+        <result column="folder_name" jdbcType="VARCHAR" property="folderName"/>
+        <result column="parent_folder_id" jdbcType="BIGINT" property="parentFolderId"/>
+        <result column="created_at" jdbcType="TIMESTAMP" property="createdAt"/>
+    </resultMap>
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+        delete
+        from file_folder
+        where id = #{id,jdbcType=BIGINT}
+    </delete>
+    <insert id="insert" parameterType="com.xjtu.springboot.pojo.FileFolder" useGeneratedKeys="true"
+            keyColumn="id" keyProperty="id">
+        <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+        insert into file_folder (user_id, session_id, folder_name,
+        parent_folder_id, created_at)
+        values (#{userId,jdbcType=BIGINT}, #{sessionId,jdbcType=BIGINT},
+        #{folderName,jdbcType=VARCHAR},
+        #{parentFolderId,jdbcType=BIGINT}, #{createdAt,jdbcType=TIMESTAMP})
+    </insert>
+    <update id="updateByPrimaryKey" parameterType="com.xjtu.springboot.pojo.FileFolder">
+        update file_folder
+        set user_id          = #{userId,jdbcType=BIGINT},
+            session_id       = #{sessionId,jdbcType=BIGINT},
+            folder_name      = #{folderName,jdbcType=VARCHAR},
+            parent_folder_id = #{parentFolderId,jdbcType=BIGINT},
+            created_at       = #{createdAt,jdbcType=TIMESTAMP}
+        where id = #{id,jdbcType=BIGINT}
+    </update>
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select id, user_id, session_id, folder_name, parent_folder_id, created_at
+        from file_folder
+        where id = #{id,jdbcType=BIGINT}
+    </select>
+    <select id="selectAll" resultMap="BaseResultMap">
+        select id, user_id, session_id, folder_name, parent_folder_id, created_at
+        from file_folder
+    </select>
+    <select id="selectByUserSessionId" resultMap="BaseResultMap">
+        select id, user_id, session_id, folder_name, parent_folder_id, created_at
+        from file_folder
+        where user_id = #{userId}
+          and session_id = #{sessionId}
+    </select>
+</mapper>

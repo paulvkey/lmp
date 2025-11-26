@@ -1,0 +1,85 @@
+<!DOCTYPE generatorConfiguration PUBLIC
+        "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN"
+        "https://mybatis.org/dtd/mybatis-generator-config_1_0.dtd">
+<generatorConfiguration>
+    <context id="Simple" targetRuntime="MyBatis3Simple">
+        <!-- 开启驼峰命名（数据库字段user_name → 实体类属性userName） -->
+        <plugin type="org.mybatis.generator.plugins.SerializablePlugin"/>
+        <plugin type="org.mybatis.generator.plugins.ToStringPlugin"/>
+
+        <!-- 注释生成策略（去除默认注释，可选） -->
+        <commentGenerator>
+            <!-- 不生成注释 -->
+            <property name="suppressAllComments" value="true"/>
+            <!-- 不生成日期注释 -->
+            <property name="suppressDate" value="true"/>
+        </commentGenerator>
+
+        <jdbcConnection driverClass="com.mysql.cj.jdbc.Driver"
+                        connectionURL="jdbc:mysql://localhost:3306/lmp"
+                        userId="root"
+                        password="123456"/>
+
+        <!-- 关键配置：类型解析器，开启 JSR310 类型（Java 8 时间类型） -->
+        <javaTypeResolver type="org.mybatis.generator.internal.types.JavaTypeResolverDefaultImpl">
+            <!-- 开启后，数据库日期时间类型会映射为 LocalDateTime/LocalDate 等 -->
+            <property name="useJSR310Types" value="true"/>
+            <!-- 可选：是否强制将 DECIMAL 映射为 BigDecimal（默认 false） -->
+            <property name="forceBigDecimals" value="false"/>
+        </javaTypeResolver>
+
+        <!-- 实体类生成配置 -->
+        <!-- targetPackage:实体类包路径 -->
+        <!-- enableSubPackages:按包结构生成 -->
+        <javaModelGenerator targetPackage="com.xjtu.springboot.pojo"
+                            targetProject="src/main/java">
+            <property name="enableSubPackages" value="true"/>
+            <!-- 去除字符串前后空格 -->
+            <property name="trimStrings" value="true"/>
+        </javaModelGenerator>
+
+        <!-- Mapper XML生成配置 -->
+        <!-- targetPackage:XML文件路径（需与MyBatis配置的mapper-locations一致） -->
+        <sqlMapGenerator targetPackage="mapper"
+                         targetProject="src/main/resources">
+            <property name="enableSubPackages" value="true"/>
+        </sqlMapGenerator>
+
+        <!-- Mapper接口生成配置 -->
+        <!-- type:接口与XML分离 -->
+        <!-- targetPackage:Mapper接口包路径 -->
+        <javaClientGenerator type="XMLMAPPER"
+                             targetPackage="com.xjtu.springboot.mapper"
+                             targetProject="src/main/java">
+            <property name="enableSubPackages" value="true"/>
+        </javaClientGenerator>
+
+        <!-- 配置需要生成的表（多个表可添加多个table标签） -->
+        <!-- tableName：数据库表名；domainObjectName：生成的实体类名 -->
+        <!-- <table tableName="user" domainObjectName="User"> -->
+        <!--     <generatedKey column="id" sqlStatement="MySQL" identity="true"/> -->
+        <!-- </table> -->
+        <!-- <table tableName="user_info" domainObjectName="UserInfo"> -->
+        <!--     <generatedKey column="id" sqlStatement="MySQL" identity="true"/> -->
+        <!-- </table> -->
+        <!-- <table tableName="user_collection" domainObjectName="UserCollection"> -->
+        <!--     <generatedKey column="id" sqlStatement="MySQL" identity="true"/> -->
+        <!-- </table> -->
+        <!-- <table tableName="chat_session" domainObjectName="ChatSession"> -->
+        <!--     <generatedKey column="id" sqlStatement="MySQL" identity="true"/> -->
+        <!-- </table> -->
+        <!-- <table tableName="chat_message" domainObjectName="ChatMessage"> -->
+        <!--     <generatedKey column="id" sqlStatement="MySQL" identity="true"/> -->
+        <!-- </table> -->
+        <table tableName="ai_model" domainObjectName="AiModel">
+            <generatedKey column="id" sqlStatement="MySQL" identity="true"/>
+        </table>
+        <!-- <table tableName="file" domainObjectName="File"> -->
+        <!--     <generatedKey column="id" sqlStatement="MySQL" identity="true"/> -->
+        <!-- </table> -->
+        <!-- <table tableName="file_folder" domainObjectName="FileFolder"> -->
+        <!--     <generatedKey column="id" sqlStatement="MySQL" identity="true"/> -->
+        <!-- </table> -->
+
+    </context>
+</generatorConfiguration>

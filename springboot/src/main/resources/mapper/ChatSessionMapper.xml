@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xjtu.springboot.mapper.ChatSessionMapper">
+    <resultMap id="BaseResultMap" type="com.xjtu.springboot.pojo.ChatSession">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="user_id" jdbcType="BIGINT" property="userId"/>
+        <result column="ai_model_id" jdbcType="BIGINT" property="aiModelId"/>
+        <result column="session_title" jdbcType="VARCHAR" property="sessionTitle"/>
+        <result column="is_pinned" jdbcType="TINYINT" property="isPinned"/>
+        <result column="is_collected" jdbcType="TINYINT" property="isCollected"/>
+        <result column="is_deleted" jdbcType="TINYINT" property="isDeleted"/>
+        <result column="created_at" jdbcType="TIMESTAMP" property="createdAt"/>
+        <result column="updated_at" jdbcType="TIMESTAMP" property="updatedAt"/>
+        <result column="last_message_time" jdbcType="TIMESTAMP" property="lastMessageTime"/>
+    </resultMap>
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+        delete
+        from chat_session
+        where id = #{id,jdbcType=BIGINT}
+    </delete>
+    <insert id="insert" parameterType="com.xjtu.springboot.pojo.ChatSession">
+        <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+        insert into chat_session (user_id, ai_model_id, session_title,
+        is_pinned, is_collected, is_deleted, created_at,
+        updated_at, last_message_time)
+        values (#{userId,jdbcType=BIGINT}, #{aiModelId,jdbcType=BIGINT},
+        #{sessionTitle,jdbcType=VARCHAR},
+        #{isPinned,jdbcType=TINYINT}, #{isDeleted,jdbcType=TINYINT},
+        #{isCollected,jdbcType=TINYINT},
+        #{createdAt,jdbcType=TIMESTAMP},
+        #{updatedAt,jdbcType=TIMESTAMP}, #{lastMessageTime,jdbcType=TIMESTAMP})
+    </insert>
+    <update id="updateByPrimaryKey" parameterType="com.xjtu.springboot.pojo.ChatSession">
+        update chat_session
+        set user_id           = #{userId,jdbcType=BIGINT},
+            ai_model_id       = #{aiModelId,jdbcType=BIGINT},
+            session_title     = #{sessionTitle,jdbcType=VARCHAR},
+            is_pinned         = #{isPinned,jdbcType=TINYINT},
+            is_collected      = #{isCollected,jdbcType=TINYINT},
+            is_deleted        = #{isDeleted,jdbcType=TINYINT},
+            created_at        = #{createdAt,jdbcType=TIMESTAMP},
+            updated_at        = #{updatedAt,jdbcType=TIMESTAMP},
+            last_message_time = #{lastMessageTime,jdbcType=TIMESTAMP}
+        where id = #{id,jdbcType=BIGINT}
+    </update>
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select id,
+               user_id,
+               ai_model_id,
+               session_title,
+               is_pinned,
+               is_collected,
+               is_deleted,
+               created_at,
+               updated_at,
+               last_message_time
+        from chat_session
+        where id = #{id,jdbcType=BIGINT}
+    </select>
+    <select id="selectAll" resultMap="BaseResultMap">
+        select id,
+               user_id,
+               ai_model_id,
+               session_title,
+               is_pinned,
+               is_collected,
+               is_deleted,
+               created_at,
+               updated_at,
+               last_message_time
+        from chat_session
+    </select>
+
+    <select id="selectSessionByUserId" resultMap="BaseResultMap">
+        select id,
+               user_id,
+               ai_model_id,
+               session_title,
+               is_pinned,
+               is_collected,
+               is_deleted,
+               created_at,
+               updated_at,
+               last_message_time
+        from chat_session
+        where user_id = #{userId}
+    </select>
+</mapper>

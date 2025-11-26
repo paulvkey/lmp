@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xjtu.springboot.mapper.FileMapper">
+  <resultMap id="BaseResultMap" type="com.xjtu.springboot.pojo.File">
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="user_id" jdbcType="BIGINT" property="userId" />
+    <result column="session_id" jdbcType="BIGINT" property="sessionId" />
+    <result column="folder_id" jdbcType="BIGINT" property="folderId" />
+    <result column="file_name" jdbcType="VARCHAR" property="fileName" />
+    <result column="file_path" jdbcType="VARCHAR" property="filePath" />
+    <result column="file_size" jdbcType="BIGINT" property="fileSize" />
+    <result column="is_image" jdbcType="TINYINT" property="isImage" />
+    <result column="image_width" jdbcType="INTEGER" property="imageWidth" />
+    <result column="image_height" jdbcType="INTEGER" property="imageHeight" />
+    <result column="upload_time" jdbcType="TIMESTAMP" property="uploadTime" />
+  </resultMap>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+    delete from file
+    where id = #{id,jdbcType=BIGINT}
+  </delete>
+  <insert id="insert" parameterType="com.xjtu.springboot.pojo.File">
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+    insert into file (user_id, session_id, folder_id, 
+      file_name, file_path, file_size, 
+      is_image, image_width, image_height, 
+      upload_time)
+    values (#{userId,jdbcType=BIGINT}, #{sessionId,jdbcType=BIGINT}, #{folderId,jdbcType=BIGINT}, 
+      #{fileName,jdbcType=VARCHAR}, #{filePath,jdbcType=VARCHAR}, #{fileSize,jdbcType=BIGINT}, 
+      #{isImage,jdbcType=TINYINT}, #{imageWidth,jdbcType=INTEGER}, #{imageHeight,jdbcType=INTEGER}, 
+      #{uploadTime,jdbcType=TIMESTAMP})
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="com.xjtu.springboot.pojo.File">
+    update file
+    set user_id = #{userId,jdbcType=BIGINT},
+      session_id = #{sessionId,jdbcType=BIGINT},
+      folder_id = #{folderId,jdbcType=BIGINT},
+      file_name = #{fileName,jdbcType=VARCHAR},
+      file_path = #{filePath,jdbcType=VARCHAR},
+      file_size = #{fileSize,jdbcType=BIGINT},
+      is_image = #{isImage,jdbcType=TINYINT},
+      image_width = #{imageWidth,jdbcType=INTEGER},
+      image_height = #{imageHeight,jdbcType=INTEGER},
+      upload_time = #{uploadTime,jdbcType=TIMESTAMP}
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select id, user_id, session_id, folder_id, file_name, file_path, file_size, is_image, 
+    image_width, image_height, upload_time
+    from file
+    where id = #{id,jdbcType=BIGINT}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select id, user_id, session_id, folder_id, file_name, file_path, file_size, is_image, 
+    image_width, image_height, upload_time
+    from file
+  </select>
+</mapper>

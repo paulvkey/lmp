@@ -1,0 +1,10 @@
+{
+  "dependencies": {
+    "@iconify/vue": "^5.0.0",
+    "@vueuse/core": "^14.0.0",
+    "katex": "^0.16.25",
+    "mermaid": "^11.12.1",
+    "vue-renderer-markdown": "^0.0.62-beta.1",
+    "vue-use-monaco": "^0.0.33"
+  }
+}
