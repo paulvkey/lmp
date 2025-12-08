@@ -2,13 +2,13 @@ package com.xjtu.springboot.controller;
 
 import com.xjtu.springboot.common.Result;
 import com.xjtu.springboot.component.MessageHolder;
+import com.xjtu.springboot.component.ThreadPoolManager;
 import com.xjtu.springboot.dto.ChatData;
 import com.xjtu.springboot.dto.Msg;
 import com.xjtu.springboot.dto.SessionData;
 import com.xjtu.springboot.pojo.ChatMessage;
 import com.xjtu.springboot.pojo.ChatSession;
 import com.xjtu.springboot.service.ChatService;
-import com.xjtu.springboot.util.ExecutorUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -31,6 +31,8 @@ public class ChatController {
     private ChatService chatService;
     @Autowired
     private MessageHolder messageHolder;
+    @Autowired
+    private ThreadPoolManager threadPoolManager;
 
     private static final Logger log = LoggerFactory.getLogger(ChatController.class);
 
@@ -135,7 +137,6 @@ public class ChatController {
         }
     }
 
-    // 模型对话接口
     @RequestMapping(method = RequestMethod.POST, path = "/session/chat")
     public SseEmitter chat(@RequestBody ChatData chatData) {
         if (CollectionUtils.isEmpty(chatData.getMessageList())) {
@@ -161,7 +162,7 @@ public class ChatController {
         return emitter;
     }
 
-    // ========== 抽离的子方法：初始化空错误Emitter ==========
+    // ========== 初始化空错误Emitter ==========
     private SseEmitter createEmptyErrorEmitter(String errorMsg) {
         SseEmitter emptyEmitter = new SseEmitter(0L);
         try {
@@ -176,7 +177,7 @@ public class ChatController {
         return emptyEmitter;
     }
 
-    // ========== 抽离的子方法：注册Emitter回调 ==========
+    // ========== 注册Emitter回调 ==========
     private void registerEmitterCallbacks(SseEmitter emitter,
                                           AtomicBoolean isEmitterCompleted,
                                           ChatData chatData,
@@ -213,33 +214,31 @@ public class ChatController {
         });
     }
 
-    // ========== 抽离的子方法：处理登录用户对话逻辑 ==========
+    // ========== 处理登录用户对话逻辑 ==========
     private void handleLoginUserChat(ChatData chatData,
                                      SseEmitter emitter,
                                      AtomicBoolean isEmitterCompleted) throws Exception {
-        // 1. 保存用户输入
+        // 保存用户输入
         chatData.setMessageType((byte) 1);
         ChatData updateData = chatService.updateSession(chatData);
         Long loginSessionId = updateData.getSessionId();
         messageHolder.initContentHolder(loginSessionId);
         log.debug("登录用户SSE初始化完成，sessionId: {}", loginSessionId);
 
-        // 2. 异步执行AI流式处理（抽离为通用方法）
+        // 异步执行AI流式处理
         executeAiChatAsync(chatData, loginSessionId, emitter, isEmitterCompleted, true, updateData);
     }
 
-    // ========== 抽离的子方法：处理未登录用户对话逻辑 ==========
+    // ========== 处理未登录用户对话逻辑 ==========
     private void handleNonLoginUserChat(ChatData chatData,
                                         SseEmitter emitter,
                                         AtomicBoolean isEmitterCompleted) {
-        log.debug("未登录用户SSE初始化开始");
         Long nonLoginSessionId = 0L;
-
-        // 异步执行AI流式处理（复用通用方法）
+        // 异步执行AI流式处理
         executeAiChatAsync(chatData, nonLoginSessionId, emitter, isEmitterCompleted, false, null);
     }
 
-    // ========== 抽离的子方法：通用AI异步处理逻辑 ==========
+    // ========== 通用AI异步处理逻辑 ==========
     private void executeAiChatAsync(ChatData chatData,
                                     Long sessionId,
                                     SseEmitter emitter,
@@ -248,7 +247,7 @@ public class ChatController {
                                     ChatData updateData) {
         CompletableFuture.runAsync(() -> {
             try {
-                // 1. 调用AI服务处理流式响应
+                // 调用AI服务处理流式响应
                 chatService.chat(chatData, sessionId, responseData -> {
                     // 前置校验：Emitter已完成则直接返回
                     if (isEmitterCompleted.get()) {
@@ -271,7 +270,7 @@ public class ChatController {
                     }
                 });
 
-                // 2. 发送完成事件
+                // 发送完成事件
                 if (isEmitterCompleted.get()){
                     ChatData finishData = buildFinishChatData(chatData, sessionId, isLogin, updateData);
                     sendSseEvent(emitter, isEmitterCompleted, FINISHED_EVENT, Result.success(finishData));
@@ -284,10 +283,10 @@ public class ChatController {
                 // 最终确保Emitter完成，清理资源
                 completeEmitterFinally(emitter, isEmitterCompleted, sessionId, isLogin);
             }
-        }, ExecutorUtil.SseExecutor);
+        }, threadPoolManager.getThreadPool("chat"));
     }
 
-    // ========== 抽离的子方法：构建完成事件的ChatData ==========
+    // ========== 构建完成事件的ChatData ==========
     private ChatData buildFinishChatData(ChatData originalData,
                                          Long sessionId,
                                          boolean isLogin,
@@ -313,7 +312,7 @@ public class ChatController {
         return finishData;
     }
 
-    // ========== 抽离的子方法：最终完成Emitter并清理资源 ==========
+    // ========== 最终完成Emitter并清理资源 ==========
     private void completeEmitterFinally(SseEmitter emitter,
                                         AtomicBoolean isEmitterCompleted,
                                         Long sessionId,
@@ -328,7 +327,7 @@ public class ChatController {
         }
     }
 
-    // ========== 抽离的子方法：处理同步异常 ==========
+    // ========== 处理同步异常 ==========
     private void handleSyncException(SseEmitter emitter,
                                      AtomicBoolean isEmitterCompleted,
                                      ChatData chatData,
@@ -368,6 +367,7 @@ public class ChatController {
 
     // 资源清理通用方法
     private void cleanupResources(ChatData chatData, String reason) {
+        log.debug("清理资源，原因：{}", reason);
         if (chatData.getIsLogin() && chatData.getSessionId() != null) {
             messageHolder.clearContent(chatData.getSessionId());
         }

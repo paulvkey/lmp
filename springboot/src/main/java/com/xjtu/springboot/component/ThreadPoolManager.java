@@ -1,4 +1,4 @@
-package com.xjtu.springboot.util;
+package com.xjtu.springboot.component;
 
 import com.xjtu.springboot.config.ThreadPoolConfig;
 import org.slf4j.Logger;
@@ -15,14 +15,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * 通用线程池管理工具
- * 支持：
- * 1. 多业务线程池创建/获取（SSE、订单、消息等）
- * 2. 配置化参数（核心数、线程名、超时时间）
- * 3. 应用关闭时自动优雅关闭所有线程池
- * 4. 线程安全的生命周期管理
- */
 @Component
 public class ThreadPoolManager {
     private static final Logger log = LoggerFactory.getLogger(ThreadPoolManager.class);
@@ -54,7 +46,7 @@ public class ThreadPoolManager {
                     ExecutorService pool = createThreadPool(bizName);
                     threadPoolMap.put(bizName, pool);
                     shutdownFlagMap.put(bizName, new AtomicBoolean(false));
-                    log.info("通用线程池[{}]创建完成，配置：核心数={}，线程名前缀={}",
+                    log.debug("通用线程池[{}]创建完成，配置：核心数={}，线程名前缀={}",
                             bizName,
                             threadPoolConfig.getConfig(bizName).getCoreSize(),
                             threadPoolConfig.getConfig(bizName).getThreadNamePrefix());
@@ -87,7 +79,7 @@ public class ThreadPoolManager {
         if (isShutdown.compareAndSet(false, true)) {
             ExecutorService pool = threadPoolMap.get(bizName);
             ThreadPoolConfig.PoolConfig config = threadPoolConfig.getConfig(bizName);
-            log.info("开始关闭线程池[{}]，等待现有任务完成（超时时间：{}秒）", bizName, config.getShutdownTimeout());
+            log.debug("开始关闭线程池[{}]，等待现有任务完成（超时时间：{}秒）", bizName, config.getShutdownTimeout());
 
             pool.shutdown();
             try {
@@ -101,7 +93,7 @@ public class ThreadPoolManager {
                         log.error("线程池[{}]强制关闭失败，可能存在资源泄漏", bizName);
                     }
                 }
-                log.info("线程池[{}]已成功关闭", bizName);
+                log.debug("线程池[{}]已成功关闭", bizName);
             } catch (InterruptedException e) {
                 // 恢复中断状态，符合并发最佳实践
                 Thread.currentThread().interrupt();
@@ -130,7 +122,7 @@ public class ThreadPoolManager {
     private ThreadFactory createThreadFactory(String threadNamePrefix) {
         return runnable -> {
             Thread thread = new Thread(runnable);
-            // 线程名格式：前缀-线程ID（如sse-worker-101、order-worker-202）
+            // 线程名格式：前缀-线程ID
             thread.setName(threadNamePrefix + "-worker-" + thread.getId());
             // 守护线程：JVM退出时自动销毁
             thread.setDaemon(true);
@@ -148,6 +140,6 @@ public class ThreadPoolManager {
     public void destroyAll() {
         // 遍历关闭所有线程池
         threadPoolMap.keySet().forEach(this::shutdownThreadPool);
-        log.info("所有线程池关闭完成");
+        log.debug("所有线程池关闭完成");
     }
 }

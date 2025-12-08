@@ -98,3 +98,12 @@ jwt:
   # 至少256位（32个字符）
   secret-key: 7mn2U4LRf2oAu77LRD/VKqsXEp482g614/mmPta5qoc=
   expiration: 10080
+
+common:
+  thread:
+    pool:
+      configs:
+        chat:
+          coreSize: 10          # 核心线程数
+          shutdownTimeout: 5    # 关闭超时时间（秒）
+          threadNamePrefix: chat # 线程名前缀
