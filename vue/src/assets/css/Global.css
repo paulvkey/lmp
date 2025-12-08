@@ -46,16 +46,62 @@ html, body {
 }
 
 /* 处理md解析渲染的样式 */
+/* 整体内容的上下外间距调整 */
 .chat-msg .markdown-renderer .paragraph-node {
   margin: 0;
 }
 
+/* 表格基础样式：单层边框 + 圆角 */
 .chat-msg .markdown-renderer .table-node {
-  border-collapse: collapse;
-  border: 1px solid #999;
+  /* 表格外层仅保留左上边框（实际是完整边框，配合单元格边框抵消重叠） */
+  border: 1px solid #e8e8e8;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 10px;
+  overflow: hidden;
 }
 
+/* 单元格仅保留右下边框：避免相邻重叠 */
 .chat-msg .markdown-renderer .table-node th,
 .chat-msg .markdown-renderer .table-node td {
-  border: 1px solid #999;
+  /* 清空原有全边框 */
+  border: none;
+  /* 仅保留右边框 */
+  border-right: 1px solid #e8e8e8;
+  /* 仅保留下边框 */
+  border-bottom: 1px solid #e8e8e8;
+  color: #333;
+}
+
+/* 表头样式增加背景色 */
+.chat-msg .markdown-renderer .table-node thead th {
+  background-color: #eef2f7;
+}
+
+/* 最后一列单元格：清除右边框（避免和表格外层边框重叠） */
+.chat-msg .markdown-renderer .table-node th:last-child,
+.chat-msg .markdown-renderer .table-node td:last-child {
+  border-right: none;
+}
+
+/* 最后一行单元格：清除下边框（避免和表格外层边框重叠） */
+.chat-msg .markdown-renderer .table-node tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* 圆角细节：保证四个角完整，无边框缺失 */
+.chat-msg .markdown-renderer .table-node thead th:first-child {
+  border-top-left-radius: 10px;
+}
+
+.chat-msg .markdown-renderer .table-node thead th:last-child {
+  border-top-right-radius: 10px;
+}
+
+.chat-msg .markdown-renderer .table-node tbody tr:last-child td:first-child {
+  border-bottom-left-radius: 10px;
+}
+
+.chat-msg .markdown-renderer .table-node tbody tr:last-child td:last-child {
+  border-bottom-right-radius: 10px;
 }

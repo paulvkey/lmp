@@ -75,14 +75,14 @@
       </div>
 
       <!-- 对话输入区 -->
-      <div class="chat-input-wrapper" ref="chatInputWrapperRef">
+      <div class="chat-input-wrapper">
         <div class="chat-input-panel">
           <!-- 文件上传展示区 -->
           <div class="upload-files-wrapper" v-if="chat.uploadedFiles.length > 0">
             <div class="uploaded-files">
               <div
                 class="uploaded-file-item"
-                v-for="(file, index) in chat.visibleFiles"
+                v-for="(file, index) in visibleFiles"
                 :key="`${file.name}-${file.size}-${index}`"
                 :title="file.name"
               >
@@ -130,7 +130,13 @@
                   ×
                 </button>
               </div>
-              <button class="more-files-btn"></button>
+              <button
+                  class="more-files-btn"
+                  v-if="hasMoreFiles"
+                  @click.stop="chat.showAllFiles = true"
+                >
+                  +{{ moreFilesCount }} 更多文件
+                </button>
             </div>
           </div>
 
@@ -193,9 +199,9 @@
               class="send-button"
               @click="sendMessage"
               :class="{ 'send-active': chat.inputData.trim() || chat.uploadedFiles.length > 0 }"
-              :disabled="chat.isSending || isInputDisabled"
+              :disabled="chat.isSending || requestLock.value || isInputDisabled"
             >
-              <template v-if="isInputDisabled">
+              <template v-if="chat.isSending && !isInputDisabled">
                 <!-- 加载动画 -->
                 <svg
                   width="16"
@@ -298,23 +304,22 @@ const homeStatus = useHomeStatusStore()
 const history = useHistoryStore()
 const func = useFunctionStore()
 
-// 常量定义
+const STREAM_SCROLL_DELAY = 300
+const SCROLL_BOTTOM_DELAY = 500
+const MAX_FILE_SHOW = 5
 const chatMsgWrapperRef = ref(null)
-const chatInputWrapperRef = ref(null)
 const chatMsgInputRef = ref(null)
 const chatInputFileRef = ref(null)
 // AbortController用于取消fetch请求
-const streamControllerRef = ref(null)
+const streamAbortCtrl = ref(null)
 const streamMsgIdRef = ref('')
-
 // 新对话/发送请求锁
 const requestLock = ref(false)
 // 全局AbortController：用于取消重复的异步请求
 const globalAbortCtrl = ref(new AbortController())
 
 const isInputDisabled = computed(() => {
-  // 禁用条件：非新对话菜单 || 正在发送 || 有请求锁
-  return !(homeStatus.currentMenu === 'new') || requestLock.value
+  return !(homeStatus.currentMenu === 'new')
 })
 
 const renameTitle = () => {
@@ -330,6 +335,37 @@ const chatMsgScrollTop = () => {
 
 const chatMsgInputFocus = () => {
   chatMsgInputRef.value?.focus()
+}
+
+// 可见文件（最多6个）
+const visibleFiles = computed(() => {
+  return chat.uploadedFiles.slice(0, MAX_FILE_SHOW)
+})
+
+// 是否有更多文件
+const hasMoreFiles = computed(() => {
+  return chat.uploadedFiles.length > 6
+})
+
+// 更多文件有多少
+const moreFilesCount = computed(() => {
+  return Math.max(chat.uploadedFiles.length - MAX_FILE_SHOW, 0);
+})
+
+// 移除特定文件
+const removeUploadedFile = (index) => {
+  if (index < 0 || index >= chat.uploadedFiles.length) {
+    console.warn('无效的文件索引:', index)
+    return
+  }
+  const file = chat.uploadedFiles[index]
+  if (file.isImage && file.previewUrl) {
+    URL.revokeObjectURL(file.previewUrl)
+  }
+  chat.uploadedFiles.splice(index, 1)
+  if (chat.uploadedFiles.length <= MAX_FILE_SHOW) {
+    chat.showAllFiles = false
+  }
 }
 
 const formatUserMessage = (content) => {
@@ -387,7 +423,7 @@ const scrollToBottom = () => {
       chatMsgWrapper.scrollTop = chatMsgWrapper.scrollHeight
       chat.isScrolling = false
       checkScrollBottomBtn()
-    }, 500)
+    }, SCROLL_BOTTOM_DELAY)
   } catch (e) {
     chat.isScrolling = false
     chatMsgWrapper.scrollTop = chatMsgWrapper.scrollHeight
@@ -529,6 +565,7 @@ const handleFileSelected = async (e) => {
   }
 }
 
+// 处理输入框键盘事件
 const handleKeydown = (e) => {
   if (e.keyCode === 13) {
     if (e.altKey || e.metaKey) {
@@ -654,11 +691,11 @@ const updateInfoByResponse = (response) => {
 
 const getAndParseChatData = async (requestData, abortSignal) => {
   // 取消已有流式请求（避免重复）
-  if (streamControllerRef.value) {
-    streamControllerRef.value.abort()
+  if (streamAbortCtrl.value) {
+    streamAbortCtrl.value.abort()
   }
-  streamControllerRef.value = new AbortController()
-  const combinedSignal = AbortSignal.any([abortSignal, streamControllerRef.value.signal])
+  streamAbortCtrl.value = new AbortController()
+  const combinedSignal = AbortSignal.any([abortSignal, streamAbortCtrl.value.signal])
 
   try {
     // 创建流式消息项（初始空内容+加载状态）
@@ -687,13 +724,8 @@ const getAndParseChatData = async (requestData, abortSignal) => {
 
     let errorMsg = '抱歉，请求异常，请重试'
     if (!response.ok) {
-      const msgIndex = chat.messageList.findIndex((item) => item.id === streamMsgIdRef.value)
-      if (msgIndex !== -1) {
-        chat.messageList[msgIndex].content = `${errorMsg}`
-        chat.messageList[msgIndex].isStreaming = false
-      }
-      // 让finally执行最终滚动
-      throw new Error(errorMsg)
+      await handleChatError(streamMsgIdRef.value, errorMsg)
+      return
     }
 
     // 处理SSE流式响应
@@ -783,14 +815,8 @@ const getAndParseChatData = async (requestData, abortSignal) => {
           // 处理错误事件（error：超时/业务异常）
           else if (eventName === 'error') {
             errorMsg = parsedData.msg || errorMsg
-            const msgIndex = chat.messageList.findIndex((item) => item.id === streamMsgIdRef.value)
-            if (msgIndex !== -1) {
-              chat.messageList[msgIndex].content = `${errorMsg}`
-              chat.messageList[msgIndex].isStreaming = false
-            }
+            await handleChatError(streamMsgIdRef.value, errorMsg)
             reader.releaseLock()
-            // 让finally执行最终滚动
-            throw new Error(errorMsg)
           }
         } catch (e) {
           // 忽略不完整块的JSON解析错误，仅处理业务错误
@@ -822,9 +848,19 @@ const getAndParseChatData = async (requestData, abortSignal) => {
     setTimeout(() => {
       scrollToBottom()
       chat.isSending = false
-      streamControllerRef.value = null
-    }, 300)
+      streamAbortCtrl.value = null
+    }, STREAM_SCROLL_DELAY)
   }
+}
+
+const handleChatError = async (msgId, errorMsg) => {
+  const msgIndex = chat.messageList.findIndex((item) => item.id === msgId)
+  if (msgIndex !== -1) {
+    chat.messageList[msgIndex].content = errorMsg
+    chat.messageList[msgIndex].isStreaming = false
+  }
+  await nextTick()
+  scrollToBottom()
 }
 
 const updateHistoryByResponse = () => {
@@ -875,7 +911,7 @@ watch(
     homeStatus.initIsNewSession()
     chat.initIsInputEnabled(homeStatus)
     chat.inputData = ''
-    if (chat.isInputEnabled) {
+    if (!isInputDisabled.value) {
       await nextTick()
       chatMsgInputFocus()
     }
@@ -916,7 +952,7 @@ onMounted(() => {
       scrollToBottom()
       checkScrollBottomBtn()
     })
-  }, 300)
+  }, STREAM_SCROLL_DELAY)
 })
 
 onUnmounted(() => {
@@ -928,7 +964,7 @@ onUnmounted(() => {
   chat.showScrollBtn = false
   chat.isScrolling = false
   globalAbortCtrl.value.abort()
-  if (streamControllerRef.value) streamControllerRef.value.abort()
+  if (streamAbortCtrl.value) streamAbortCtrl.value.abort()
   requestLock.value = false
 })
 

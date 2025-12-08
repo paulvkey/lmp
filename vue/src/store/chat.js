@@ -41,7 +41,6 @@ export const useChatStore = defineStore('chat', {
     isInputEnabled: false,
     isSending: false,
     filesUploaded: false,
-    visibleFiles: false,
   }),
 
   actions: {
@@ -70,7 +69,6 @@ export const useChatStore = defineStore('chat', {
       this.isInputEnabled = false
       this.isSending = false
       this.filesUploaded = false
-      this.visibleFiles = false
     },
     clearModelInfo() {
       this.modelInfo = {
@@ -100,7 +98,7 @@ export const useChatStore = defineStore('chat', {
       if (homeStatus.currentMenu === 'new') {
         this.isInputEnabled = true
       }
-    }
+    },
   },
 
   // 持久化配置
@@ -115,7 +113,7 @@ export const useChatStore = defineStore('chat', {
           'chatTitle',
           'inputData',
           'messageList',
-        ]
+        ],
       },
     ],
   },

@@ -146,8 +146,8 @@
 }
 
 .system-msg-wrapper {
-  /* background-color: transparent; */
-  background-color: #f5f7fa;
+  background-color: transparent;
+  /* background-color: #f5f7fa; */
 }
 
 .user-msg-wrapper {
@@ -281,14 +281,14 @@
 /* 文件上传展示区域 */
 .upload-files-wrapper {
   margin-bottom: 10px;
-  /* max-height: calc(20px + 24px); */
+  max-height: 50px;
 }
 
 /* 上传文件整体样式 */
 .uploaded-files {
   display: flex;
   flex-wrap: wrap;
-  padding: 8px;
+  padding: 4px;
   gap: 8px;
   border-radius: 6px;
   background-color: #f5f7fa;
@@ -301,11 +301,9 @@
   display: flex;
   align-items: center;
   flex: 0 0 auto;
-  /* TODO */
   min-width: 10%;
   max-width: 15%;
-  padding: 10px;
-  margin-bottom: 8px;
+  padding: 4px;
   gap: 8px;
   border: 1px solid #eee;
   border-radius: 6px;
@@ -315,9 +313,10 @@
 /* 上传文件信息 */
 .uploaded-file-info {
   flex: 1;
-  min-width: 30px;
   margin-bottom: 5px;
-  display: inline-block;
+  margin-right: 12px;
+  min-width: 0;
+  display: block;
 }
 
 .uploaded-file-icon {
@@ -343,6 +342,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   margin-bottom: 4px;
+  font-size: 13px;
+  color: #333;
 }
 
 /* 上传进度条样式 */
@@ -389,28 +390,30 @@
 /* 更多文件按钮 */
 .more-files-btn {
   display: flex;
+  flex: 0 0 auto;
   align-items: center;
-  padding: 10px 12px;
-  background-color: rgba(255, 255, 255, 0.8);
-  border: 1px solid #eee;
-  border-radius: 4px;
-  font-size: 12px;
-  color: #1890ff;
-  cursor: pointer;
-  transition: all 0.2s;
+  justify-content: center;
   text-align: center;
-  max-width: 10%;
-  width: auto;
   height: auto;
-  margin-bottom: 8px;
+  min-width: 80px;
+  max-width: 10%;
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #1890ff;
+  background-color: #fff;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
   box-sizing: border-box;
+  white-space: nowrap;
 }
 
 .more-files-btn:hover {
   background-color: #e6f7ff;
   border-color: #91d5ff;
+  color: #096dd9;
 }
-
 
 /* 对话消息输入框 */
 .chat-msg-input {
