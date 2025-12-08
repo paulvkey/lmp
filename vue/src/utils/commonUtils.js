@@ -39,3 +39,18 @@ export const validatePass = (rule, value, callback) => {
     callback()
   }
 }
+
+export const throttle = (fn, delay = 100) => {
+  let lastTime = 0
+  return (...args) => {
+    const now = Date.now()
+    if (now - lastTime > delay) {
+      fn.apply(this, args)
+      lastTime = now
+    }
+  }
+}
+
+export const checkLogin = (userProfile) => {
+  return userProfile.isLogin && userProfile.userId > 0
+}

@@ -1,0 +1,273 @@
+/* 历史对话 */
+.history-list-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 100px;
+  overflow: visible;
+  /* 底部用户信息预留空间 */
+  padding-bottom: calc(var(--left-profile-height) + var(--left-profile-bottom));
+  box-sizing: border-box;
+}
+
+.history-list-detail {
+  position: relative;
+  height: auto;
+  /* 视口高度 - 顶部菜单高度 - 底部用户信息高度 - 底部预留高度 */
+  max-height: calc(100vh - 220px - var(--left-profile-height) - var(--left-profile-bottom) - 20px);
+  padding: 4px 0;
+  margin: 0 8px;
+  opacity: 1;
+  border-bottom: 1px solid transparent;
+  box-sizing: border-box;
+  transition: max-height 0.3s ease-out;
+  scrollbar-width: thin;
+  overflow-y: auto;
+  overflow-x: hidden
+}
+
+/* 滚动条样式 */
+.history-list-detail::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.history-list-detail::-webkit-scrollbar-track {
+  background: #f5f5f5;
+  border-radius: 3px;
+}
+
+.history-list-detail::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 3px;
+}
+
+.history-list-detail::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}
+
+.history-list-loading,
+.history-list-empty {
+  padding: 8px 12px;
+  color: #666;
+  font-size: 14px;
+  text-align: center;
+}
+
+/* 历史对话列表 */
+.history-list {
+  position: relative;
+  max-height: calc(100vh - 220px - var(--left-profile-height) - var(--left-profile-bottom) - 20px);
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+/* 历史对话单条 */
+.history-item {
+  position: relative;
+  padding: 6px 16px 6px 22px;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-radius: 10px;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: visible;
+}
+
+.history-item:hover {
+  background-color: #f5f7fa;
+}
+
+.history-item:hover .history-item-dots {
+  opacity: 1;
+}
+
+/* 历史对话选中状态样式 */
+.history-item.history-item-selected {
+  background-color: #e6f7ff;
+  color: #1890ff;
+  font-weight: bold;
+}
+
+.history-item.history-item-selected .history-item-dots {
+  opacity: 1;
+  color: #1890ff;
+}
+
+.history-item.history-item-selected:has(.history-item-more),
+.history-item.history-item-selected:has(.history-item-more.active) {
+  background-color: #e6f7ff;
+  color: #1890ff;
+}
+
+.history-item:not(.history-item-selected):has(.history-item-more.active) {
+  background-color: #f5f7fa;
+  color: #666;
+}
+
+/* 历史对话所有内容 */
+.history-item-content {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+/* 历史对话标题 */
+.history-title {
+  flex: 1;
+  font-size: 15px;
+  line-height: 1.5;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+.history-title-text {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 悬浮时显示完整文字 */
+.history-title-text.text-overflowed:hover::before {
+  content: attr(data-full-title);
+  position: fixed;
+  top: var(--el-top);
+  left: var(--el-left);
+  font-size: 13px;
+  line-height: 1.4;
+  width: max-content;
+  max-width: calc(var(--left-menu-width) - 4px);
+  padding: 4px 8px;
+  color: #fff;
+  white-space: normal;
+  word-wrap: break-word;
+  word-break: break-all;
+  border-radius: 6px;
+  background-color: rgba(51, 51, 51, 0.95);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+/* 三点菜单按钮 */
+.history-item-dots {
+  width: 20px;
+  padding: 2px;
+  margin-left: 4px;
+  color: #333;
+  border: none;
+  cursor: pointer;
+  opacity: 0;
+  flex-shrink: 0;
+  background: none;
+  transition: all 0.2s;
+}
+
+/* 三点菜单弹出框样式 */
+.history-item-more {
+  position: fixed;
+  display: block;
+  left: auto;
+  right: 0;
+  top: 100%;
+  width: 110px;
+  min-width: 80px;
+  padding: 2px;
+  margin: -4px 4px 4px 2px;
+  opacity: 0;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  border: 1px solid #eee;
+  animation: slideDown 0.2s ease forwards;
+  transform-origin: top right;
+  transform: scaleY(0.9);
+  overflow: visible;
+  pointer-events: auto;
+  contain: none;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: scaleY(0.9) translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1) translateY(0);
+  }
+}
+
+.history-item.history-item-more-active {
+  background-color: #f5f7fa;
+}
+
+.history-item:has(.history-item-more) {
+  background-color: inherit;
+}
+
+.history-item:has(.history-item-more.active) {
+  pointer-events: none;
+}
+
+.history-item:has(.history-item-more.active) .history-item-dots {
+  opacity: 1;
+}
+
+.history-item.session-item-selected.history-item-more-active {
+  background-color: #e6f7ff;
+}
+
+/* 三单菜单单个选项样式 */
+.more-menu-item {
+  display: flex;
+  align-items: center;
+  padding: 6px 18px;
+  margin: 2px;
+  font-size: 13px;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+  border-radius: 6px;
+  color: #666;
+  transition: background-color 0.2s;
+}
+
+.more-menu-item:hover {
+  background-color: #f5f7fa;
+  transition: background-color 0.2s ease;
+}
+
+/* 删除项 */
+.more-menu-item.delete-item {
+  color: #f5222d;
+}
+
+.more-menu-item.delete-item:hover {
+  color: #f5222d;
+  background-color: #fff1f0;
+}
+
+/* 置顶图标 */
+.pin-icon {
+  width: 12px;
+  height: 12px;
+  color: #1890ff;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pinned {
+  color: #333;
+}

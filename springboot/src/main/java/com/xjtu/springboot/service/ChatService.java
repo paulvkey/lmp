@@ -101,7 +101,7 @@ public class ChatService {
             requestMessage.setContent(message.getContent());
             requestMessageList.add(requestMessage);
         }
-        requestData.setMessages(requestMessageList);
+        requestData.setMessageList(requestMessageList);
         Options options = new Options();
         options.setTemperature(0.6);
         requestData.setOptions(options);

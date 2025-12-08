@@ -1,0 +1,122 @@
+.files-dialog {
+  width: 400px;
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  max-width: 90vw;
+  max-height: 70vh;
+}
+
+.files-dialog-header {
+  padding: 15px 20px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.files-dialog-header h3 {
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+}
+
+.files-dialog-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #999;
+}
+
+.files-dialog-content {
+  padding: 20px;
+  max-height: calc(70vh - 120px);
+  overflow-y: auto;
+}
+
+.files-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.files-item {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border-radius: 6px;
+  background-color: #f5f7fa;
+  border: 1px solid #e8e8e8;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.files-item .file-size {
+  margin-left: auto;
+  margin-right: 10px;
+  font-size: 12px;
+  color: #666;
+  white-space: nowrap;
+}
+
+.files-remove-file {
+  display: inline-block;
+  color: #ff4d4f;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 16px;
+  position: relative;
+}
+
+.file-icon {
+  margin-right: 2px;
+  color: #1890ff;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.file-name {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 4px;
+}
+
+.file-image-preview {
+  width: 24px;
+  height: 24px;
+  object-fit: cover;
+  border-radius: 2px;
+}
+
+.files-dialog-footer {
+  padding: 15px 20px;
+  border-top: 1px solid #eee;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.files-dialog-btn {
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.files-dialog-btn.cancel {
+  border: 1px solid #d9d9d9;
+  background-color: #fff;
+  color: #666;
+}
+
+.files-dialog-btn.confirm {
+  border: none;
+  background-color: #1890ff;
+  color: #fff;
+}

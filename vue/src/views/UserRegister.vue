@@ -57,10 +57,10 @@
 
 <script setup>
 import { reactive, ref } from 'vue'
+import router from '@/router/index.js'
 import request from '@/utils/request.js'
 import { ElMessage } from 'element-plus'
 import { validatePass, validateUsername } from '@/utils/commonUtils.js'
-import router from '@/router/index.js'
 
 const validateConfirmPass = (rule, value, callback) => {
   if (!value) {
@@ -75,6 +75,7 @@ const validateConfirmPass = (rule, value, callback) => {
 const data = reactive({
   form: {
     username: '',
+    phone: '',
     password: '',
     confirmPassword: '',
   },

@@ -1,0 +1,179 @@
+.coll-dialog {
+  display: flex;
+  flex-direction: column;
+  width: 50vw;
+  height: 50vh;
+  min-height: 200px;
+  max-width: 60vw;
+  max-height: 60vh;
+  margin-top: 15vh;
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+}
+
+.coll-dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.coll-dialog-header h3 {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+}
+
+.coll-dialog-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #999;
+}
+
+/* 表格头头部样式 */
+.coll-table-header {
+  padding: 0 16px;
+  border-bottom: 1px solid #eee;
+  background-color: #fafafa;
+}
+
+.coll-table-header .header-row {
+  display: flex;
+  width: 100%;
+}
+
+.header-row .header-cell {
+  padding: 10px 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.header-cell.title-cell,
+.header-cell.note-cell {
+  width: 30%;
+}
+
+.header-cell.time-cell {
+  width: 25%;
+}
+
+.header-cell.action-cell {
+  width: 15%;
+}
+
+/* 表格内容样式 */
+.coll-dialog-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 16px;
+  min-height: 50px;
+  max-height: 100%;
+  box-sizing: border-box;
+}
+
+.loading-coll {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+  font-size: 14px;
+}
+
+.coll-table-body {
+  width: 100%;
+}
+
+.table-row {
+  display: flex;
+  width: 100%;
+  padding: 4px 0;
+  align-items: center;
+}
+
+.table-row:hover {
+  background-color: #f5f7fa;
+  border-radius: 8px;
+}
+
+.table-cell {
+  padding: 6px;
+  font-size: 13px;
+}
+
+/* 内容列宽与表头对应 */
+.table-cell.title-cell {
+  width: 30%;
+  word-break: break-all;
+}
+
+.table-cell.note-cell {
+  width: 30%;
+  word-break: break-all;
+}
+
+.table-cell.time-cell {
+  width: 25%;
+  color: #666;
+}
+
+.table-cell.action-cell {
+  width: 15%;
+  display: flex;
+  gap: 8px;
+}
+
+.coll-dialog-pagination {
+  padding: 4px 14px 18px 14px;
+  border-top: 1px solid #f0f0f0;
+  background-color: #fff;
+  border-radius: 0 0 12px 12px;
+}
+
+.coll-table th,
+.coll-table td {
+  padding: 6px 6px;
+  font-size: 13px;
+}
+
+.coll-table th {
+  background-color: #f5f7fa;
+  font-weight: 500;
+}
+
+.action-cell .operation-btn {
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.operation-btn.view-btn {
+  background-color: #e6f7ff;
+  color: #1890ff;
+}
+
+.operation-btn.view-btn:hover {
+  background-color: #bae7ff;
+}
+
+.operation-btn.delete-btn {
+  background-color: #fff2f0;
+  color: #f5222d;
+}
+
+.operation-btn.delete-btn:hover {
+  background-color: #ffe3e0;
+}
+
+.empty-tip {
+  text-align: center;
+  color: #999;
+  padding: 60px 0;
+}

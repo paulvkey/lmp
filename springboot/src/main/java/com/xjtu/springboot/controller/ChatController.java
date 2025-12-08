@@ -31,7 +31,9 @@ public class ChatController {
 
     private static final Logger log = LoggerFactory.getLogger(ChatController.class);
 
-    private static final String EVENT_NAME = "chunk";
+    private static final String ERROR = "error";
+    private static final String CHUNK = "chunk";
+    private static final String FINISHED = "finished";
 
     @RequestMapping(method = RequestMethod.POST, path = "/session/new")
     public Result newSession(@RequestBody ChatData chatData){
@@ -54,23 +56,23 @@ public class ChatController {
         return Result.success(result);
     }
 
-    @RequestMapping(method = RequestMethod.POST, path = "/session/model")
-    public SseEmitter callModel(@RequestBody ChatData chatData) {
+    @RequestMapping(method = RequestMethod.POST, path = "/session/chat")
+    public SseEmitter chat(@RequestBody ChatData chatData) {
         if (CollectionUtils.isEmpty(chatData.getMessageList())) {
             return null;
         }
-        // 注册完成回调，清理资源
-        SseEmitter emitter = new SseEmitter(600000L); // 10分钟
-        emitter.onCompletion(() -> cleanUpResources(chatData, "完成"));
+        // 注册完成回调，清理资源(10分钟)
+        SseEmitter emitter = new SseEmitter(600000L);
+        emitter.onCompletion(() -> cleanupResources(chatData, "finished"));
         emitter.onTimeout(() -> {
             try {
                 emitter.send(SseEmitter.event()
                         .data(Result.error("请求超时，请重试"))
-                        .name("error"));
+                        .name(ERROR));
             } catch (IOException e) {
                 log.error(e.getMessage());
             } finally {
-                cleanUpResources(chatData, "超时");
+                cleanupResources(chatData, "timeout");
             }
         });
 
@@ -87,12 +89,12 @@ public class ChatController {
                         chatService.chat(chatData, sessionId, responseData -> {
                             try {
                                 String content = responseData.getMessage().getContent();
-                                if (StringUtils.isNotBlank(content)) {
+                                if (StringUtils.isNotEmpty(content)) {
                                     messageHolder.appendContent(sessionId, content);
                                     // 发送分块消息
                                     emitter.send(SseEmitter.event()
                                             .data(responseData)
-                                            .name(EVENT_NAME));
+                                            .name(CHUNK));
                                 }
                             } catch (IOException e) {
                                 emitter.completeWithError(e);
@@ -111,7 +113,7 @@ public class ChatController {
                 ChatData result = chatService.updateSession(updateData);
                 result.setMessageType((byte) 2);
                 result.setNewSession(false);
-                emitter.send(SseEmitter.event().data(Result.success(result)).name("complete"));
+                emitter.send(SseEmitter.event().data(Result.success(result)).name(FINISHED));
                 emitter.complete();
             } else {
                 CompletableFuture.runAsync(() -> {
@@ -120,11 +122,10 @@ public class ChatController {
                         chatService.chat(chatData, 0L, responseData -> {
                             try {
                                 String content = responseData.getMessage().getContent();
-                                if (StringUtils.isNotBlank(content)) {
+                                if (StringUtils.isNotEmpty(content)) {
                                     emitter.send(SseEmitter.event()
                                             .data(responseData)
-                                            .name(EVENT_NAME));
-                                    System.out.println(content);
+                                            .name(CHUNK));
                                 }
                             } catch (IOException e) {
                                 emitter.completeWithError(e);
@@ -133,7 +134,7 @@ public class ChatController {
 
                         chatData.setMessageType((byte) 2);
                         chatData.setNewSession(false);
-                        emitter.send(SseEmitter.event().data(Result.success(chatData)).name("complete"));
+                        emitter.send(SseEmitter.event().data(Result.success(chatData)).name(FINISHED));
                         emitter.complete();
                     } catch (Exception e) {
                         emitter.completeWithError(e);
@@ -224,7 +225,7 @@ public class ChatController {
     }
 
     // 资源清理通用方法
-    private void cleanUpResources(ChatData chatData, String reason) {
+    private void cleanupResources(ChatData chatData, String reason) {
         if (chatData.getIsLogin() && chatData.getSessionId() != null) {
             messageHolder.clearContent(chatData.getSessionId());
         }

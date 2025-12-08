@@ -1,0 +1,73 @@
+/* 左侧菜单整体 */
+.left-menu-text {
+  white-space: nowrap;
+  color: #1e1e1e;
+  font-size: 16px;
+  margin-left: 10px;
+}
+
+.menu-icon,
+.history-chats .expand-icon {
+  flex-shrink: 0;
+}
+
+/* 左侧菜单上部分的标题 */
+.left-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 60px;
+  font-size: 22px;
+  font-weight: bold;
+  border-bottom: 1px solid #f0f0f0;
+  padding-left: 20px;
+}
+
+/* 左侧菜单项 */
+.left-menus {
+  padding-top: 8px;
+}
+
+/* 左侧菜单子项公共样式 */
+.menu-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 15px;
+  margin: 4px 8px 4px;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-radius: 10px;
+}
+
+.menu-item:hover,
+.history-item.history-item-menu-active {
+  background-color: #f5f7fa;
+}
+
+/* 新对话菜单 */
+.new-chat.active {
+  background-color: #e6f7ff;
+  color: #1890ff;
+}
+
+/* 收藏对话和历史对话样式 */
+.collected-chat.active,
+.history-chats.active {
+  background-color: #e6f7ff;
+  color: black;
+}
+
+.menu-divider {
+  border: none;
+  border-top: 1px solid #eee;
+  margin: 8px 15px;
+}
+
+/* 历史对话样式 */
+/* 历史对话右侧图标 */
+.history-chats .expand-icon {
+  margin-left: auto;
+  margin-right: 4px;
+  transition: transform 0.2s ease;
+}

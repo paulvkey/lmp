@@ -1,7 +1,7 @@
 <template>
   <div class="login-container">
     <div class="login-box">
-      <!-- 表单容器：用于统一居中控制 -->
+      <!-- 表单容器 -->
       <div class="login-box-form">
         <el-form ref="formRef" :rules="data.rules" :model="data.form" label-width="0px">
           <!-- 标题 -->
@@ -62,14 +62,14 @@
 
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
+import router from '@/router/index.js'
 import request from '@/utils/request.js'
 import { ElMessage } from 'element-plus'
 import { getPublicIp } from '@/utils/ipUtils.js'
-import { useUserStore } from '@/store/userInfo.js'
-import { validatePass, validateUsername } from '@/utils/commonUtils.js'
-import router from '@/router/index.js'
+import { useUserProfileStore } from '@/store/userProfile.js'
+import { checkLogin, validatePass, validateUsername } from '@/utils/commonUtils.js'
 
-const userStore = useUserStore()
+const userProfile = useUserProfileStore()
 
 // 加载状态（防止重复提交）
 const isLoading = ref(false)
@@ -103,7 +103,7 @@ const data = reactive({
 const formRef = ref()
 
 const login = async () => {
-  if (userStore.isLogin) {
+  if (checkLogin(userProfile)) {
     ElMessage.warning('已登录，请勿重复操作')
     return
   }
@@ -114,8 +114,8 @@ const login = async () => {
         const response = await request('post', '/login', data.form)
         if (response.code === 200) {
           // 存储用户信息和token
-          userStore.setUserInfo(response.data)
-          userStore.setUserToken(response.data.token)
+          userProfile.setUserProfile(response.data)
+          userProfile.setUserToken(response.data.token)
 
           // 记住密码（存储到localStorage，7天有效期）
           if (rememberMe.value) {

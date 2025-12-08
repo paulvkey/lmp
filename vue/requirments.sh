@@ -10,9 +10,10 @@ npm install sass -D
 
 npm install dayjs --S
 npm install axios -S
-npm install pinia pinia-plugin-persistedstate -S
+npm install pinia -S
+npm install pinia-plugin-persistedstate -S
+npm install @vitejs/plugin-vue-jsx -D
+npm install lodash.debounce -S
 
-npm install marked highlight.js dompurify -S
-npm install markdown-it markdown-it-highlightjs markdown-it-katex github-markdown-css katex -S
-
-# npm install vue-renderer-markdown @iconify/vue @vueuse/core mermaid vue-use-monaco stream-markdown shiki vite-plugin-monaco-editor-esm -S
+npm install shiki stream-markdown stream-monaco mermaid katex -S
+npm install markstream-vue -S

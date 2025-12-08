@@ -1,16 +1,16 @@
 <template>
   <!-- 模板内容保持不变 -->
-  <div class="settings-container">
+  <div class="profile-container">
     <!-- 页面标题 -->
-    <div class="settings-header">
+    <div class="profile-header">
       <h1>个人中心</h1>
     </div>
 
     <!-- 主内容区 -->
-    <div class="settings-content">
+    <div class="profile-content">
       <!-- 左侧导航 -->
       <el-menu
-        class="settings-menu"
+        class="profile-menu"
         default-active="profile"
         mode="vertical"
         @select="handleMenuSelect"
@@ -26,7 +26,7 @@
       </el-menu>
 
       <!-- 右侧设置内容 -->
-      <div class="settings-form">
+      <div class="profile-form">
         <!-- 个人信息设置 -->
         <el-form
           v-if="activeTab === 'profile'"
@@ -274,15 +274,15 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import request from '@/utils/request.js'
-import { useUserStore } from '@/store/userInfo.js'
-import { checkPhone } from '@/utils/commonUtils.js'
+import { useUserProfileStore } from '@/store/userProfile.js'
+import { checkLogin, checkPhone } from '@/utils/commonUtils.js'
 import { getImageDimensions } from '@/utils/fileUtils.js'
 // noinspection ES6UnusedImports
 import { formatTimeDay, formatTimeSecond } from '@/utils/dateUtils.js'
 import router from '@/router/index.js'
 
 // 状态管理
-const userStore = useUserStore()
+const userProfile = useUserProfileStore()
 
 // 激活的标签页
 const activeTab = ref('profile')
@@ -309,20 +309,20 @@ const isAvatarUploading = ref(false)
 
 // 个人信息表单数据
 const profileForm = reactive({
-  avatar: userStore.avatar,
-  username: userStore.username || '游客',
-  email: userStore.email || '',
-  phone: userStore.phone || '',
-  sex: userStore.sex !== undefined ? userStore.sex.toString() : '3',
-  birthday: userStore.birthday || null,
-  loginIp: userStore.lastLoginIp || '未知',
-  loginTime: userStore.lastLoginTime || null,
-  bio: userStore.bio || '',
+  avatar: userProfile.avatar,
+  username: userProfile.username || '游客',
+  email: userProfile.email || '',
+  phone: userProfile.phone || '',
+  sex: userProfile.sex !== undefined ? userProfile.sex.toString() : '3',
+  birthday: userProfile.birthday || null,
+  loginIp: userProfile.lastLoginIp || '未知',
+  loginTime: userProfile.lastLoginTime || null,
+  bio: userProfile.bio || '',
 })
 
 // 安全设置表单数据
 const securityForm = reactive({
-  username: userStore.username,
+  username: userProfile.username,
   currentPassword: '',
   newPassword: '',
   confirmPassword: '',
@@ -471,7 +471,6 @@ const resetForms = () => {
   securityFormRef.value?.resetFields()
 }
 
-console.log(userStore)
 // 触发头像上传
 const triggerAvatarUpload = () => {
   if (isProfileEditing.value) {
@@ -506,7 +505,7 @@ const handleAvatarChange = async (e) => {
     const avatarFile = {
       fileName: file.name,
       fileSize: file.size,
-      userId: userStore.userId,
+      userId: userProfile.userId,
       sessionId: 0,
       isImage: file.type.startsWith('image/') ? 1 : 0,
       imageWidth: width,
@@ -522,7 +521,7 @@ const handleAvatarChange = async (e) => {
     if (response.code === 200 && response.data?.filePath) {
       // 上传成功，更新头像URL
       profileForm.avatar = response.data.filePath
-      userStore.setUserInfo({ ...userStore.userInfo, avatar: response.data.filePath })
+      userProfile.avatar = response.data.filePath
       ElMessage.success('头像上传成功')
     } else {
       ElMessage.error(response.msg || '头像上传失败')
@@ -541,15 +540,15 @@ const toggleProfileEdit = () => {
   if (isProfileEditing.value) {
     // 取消编辑，恢复原始数据
     profileFormRef.value.clearValidate()
-    profileForm.avatar = userStore.avatar
-    profileForm.username = userStore.username
-    profileForm.phone = userStore.phone
-    profileForm.email = userStore.email
-    profileForm.sex = userStore.sex !== undefined ? userStore.sex.toString() : '3'
-    profileForm.birthday = userStore.birthday
-    profileForm.loginIp = userStore.lastLoginIp
-    profileForm.loginTime = userStore.lastLoginTime
-    profileForm.bio = userStore.bio
+    profileForm.avatar = userProfile.avatar
+    profileForm.username = userProfile.username
+    profileForm.phone = userProfile.phone
+    profileForm.email = userProfile.email
+    profileForm.sex = userProfile.sex !== undefined ? userProfile.sex.toString() : '3'
+    profileForm.birthday = userProfile.birthday
+    profileForm.loginIp = userProfile.lastLoginIp
+    profileForm.loginTime = userProfile.lastLoginTime
+    profileForm.bio = userProfile.bio
   }
   isProfileEditing.value = !isProfileEditing.value
 }
@@ -567,8 +566,8 @@ const saveProfile = () => {
           birthdayValue = `${birthdayValue}T00:00:00`
         }
         const requestData = {
-          userId: userStore.userId,
-          username: userStore.username,
+          userId: userProfile.userId,
+          username: userProfile.username,
           phone: profileForm.phone,
           email: profileForm.email,
           avatar: profileForm.avatar,
@@ -581,19 +580,8 @@ const saveProfile = () => {
         if (response.code === 200) {
           ElMessage.success('修改成功')
           // 更新用户存储（同步类型）
-          userStore.setUserInfo({
-            ...userStore.userInfo,
-            phone: requestData.phone,
-            email: requestData.email,
-            avatar: requestData.avatar,
-            sex: requestData.sex,
-            birthday: requestData.birthday,
-            bio: requestData.bio,
-            status: requestData.status,
-            lastLoginIp: requestData.lastLoginIp,
-            lastLoginTime: requestData.lastLoginTime,
-          })
-          userStore.token = response.data.token
+          userProfile.setUserProfile(requestData)
+          userProfile.token = response.data.token
           isProfileEditing.value = false
         } else {
           ElMessage.error(response.msg || '修改失败')
@@ -616,7 +604,7 @@ const changePassword = () => {
       isPasswordLoading.value = true
       try {
         const response = await request('post', '/update/pwd', {
-          userId: userStore.userId,
+          userId: userProfile.userId,
           username: securityForm.username,
           oldPwd: securityForm.currentPassword,
           newPwd: securityForm.newPassword,
@@ -625,7 +613,7 @@ const changePassword = () => {
         if (response.code === 200) {
           ElMessage.success('密码修改成功，请重新登录')
           securityFormRef.value.resetFields()
-          userStore.clearUserInfo()
+          userProfile.clearUserProfile()
           isPasswordLoading.value = false
           setTimeout(() => {
             router.push('/login')
@@ -643,7 +631,7 @@ const changePassword = () => {
 }
 
 const logout = () => {
-  userStore.clearUserInfo()
+  userProfile.clearUserProfile()
   localStorage.removeItem('currentSessionId')
   ElMessage.success('已退出登录，跳转至登录页')
   setTimeout(() => {
@@ -653,29 +641,29 @@ const logout = () => {
 
 watch(
   () => [
-    userStore.avatar,
-    userStore.username,
-    userStore.phone,
-    userStore.email,
-    userStore.sex,
-    userStore.birthday,
-    userStore.bio,
+    userProfile.avatar,
+    userProfile.username,
+    userProfile.phone,
+    userProfile.email,
+    userProfile.sex,
+    userProfile.birthday,
+    userProfile.bio,
   ],
   ([avatar, username, phone, email, sex, birthday, bio]) => {
     profileForm.avatar = avatar
-    profileForm.username = username || '游客'
-    profileForm.phone = phone || ''
-    profileForm.email = email || ''
+    profileForm.username = username
+    profileForm.phone = phone
+    profileForm.email = email
     profileForm.sex = sex !== undefined ? sex.toString() : '3'
     profileForm.birthday = birthday
-    profileForm.bio = bio || ''
+    profileForm.bio = bio
   },
   { immediate: true },
 )
 
 // 初始化
 onMounted(() => {
-  if (!userStore.isLogin) {
+  if (!checkLogin(userProfile)) {
     router.push('/login')
   }
 })
@@ -791,7 +779,7 @@ onMounted(() => {
   cursor: not-allowed;
 }
 
-.settings-container {
+.profile-container {
   width: 100%;
   min-height: 100vh;
   background-image: url('@/assets/images/login_bg.jpg');
@@ -800,21 +788,21 @@ onMounted(() => {
   box-sizing: border-box;
 }
 
-.settings-header {
+.profile-header {
   padding-bottom: 15px;
   text-align: left;
   max-width: 80%;
   margin: 0 auto 30px;
 }
 
-.settings-header h1 {
+.profile-header h1 {
   font-size: 28px;
   margin-bottom: 12px;
   color: #333;
   font-weight: 500;
 }
 
-.settings-content {
+.profile-content {
   display: flex;
   gap: 30px;
   align-items: flex-start;
@@ -822,7 +810,7 @@ onMounted(() => {
   margin: 0 auto;
 }
 
-.settings-menu {
+.profile-menu {
   width: 220px;
   min-width: 220px;
   border-radius: 12px;
@@ -833,7 +821,7 @@ onMounted(() => {
   font-size: 14px;
 }
 
-::v-deep .settings-menu .el-menu-item {
+::v-deep .profile-menu .el-menu-item {
   color: #333;
   height: 50px;
   line-height: 50px;
@@ -841,16 +829,16 @@ onMounted(() => {
   border-radius: 8px;
 }
 
-::v-deep .settings-menu .el-menu-item.is-active {
+::v-deep .profile-menu .el-menu-item.is-active {
   background-color: #e6f7ff;
   color: #1890ff;
 }
 
-::v-deep .settings-menu .el-menu-item:hover {
+::v-deep .profile-menu .el-menu-item:hover {
   background-color: #f0f2f5;
 }
 
-.settings-form {
+.profile-form {
   flex: 1;
   background: #fff;
   border-radius: 12px;
@@ -869,21 +857,21 @@ onMounted(() => {
   max-width: 600px;
 }
 
-.settings-form::-webkit-scrollbar {
+.profile-form::-webkit-scrollbar {
   width: 6px;
 }
 
-.settings-form::-webkit-scrollbar-track {
+.profile-form::-webkit-scrollbar-track {
   background: #f5f7fa;
   border-radius: 3px;
 }
 
-.settings-form::-webkit-scrollbar-thumb {
+.profile-form::-webkit-scrollbar-thumb {
   background: #ddd;
   border-radius: 3px;
 }
 
-.settings-form::-webkit-scrollbar-thumb:hover {
+.profile-form::-webkit-scrollbar-thumb:hover {
   background: #bbb;
 }
 
@@ -964,8 +952,6 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  /* 确保在头像上方 */
-  z-index: 10;
 }
 
 .loading-spinner {

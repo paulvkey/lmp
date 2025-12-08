@@ -1,0 +1,97 @@
+.rename-dialog {
+  display: flex;
+  flex-direction: column;
+  width: 25vw;
+  min-width: 200px;
+  max-width: 500px;
+  min-height: 180px;
+  margin-top: 15vh;
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.rename-dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.rename-dialog-header h3 {
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+}
+
+.rename-dialog-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #999;
+}
+
+.rename-dialog-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  padding: 15px;
+}
+
+.title-dialog-input {
+  width: 100%;
+  height: 44px;
+  padding: 0 12px;
+  font-size: 14px;
+  border-radius: 10px;
+  border: 1px solid #dcdfe6;
+  outline: none;
+}
+
+.title-dialog-input:focus {
+  border-color: #1890ff;
+}
+
+.rename-dialog-hint {
+  font-size: 12px;
+  color: #999;
+  margin-top: 10px;
+}
+
+.rename-dialog-hint.warning {
+  color: #ff9800;
+}
+
+.rename-dialog-hint.error {
+  color: #f56c6c;
+}
+
+.rename-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 15px 20px;
+  border-top: 1px solid #eee;
+  gap: 16px;
+}
+
+.rename-dialog-btn {
+  padding: 6px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.rename-dialog-btn.cancel {
+  border: 1px solid #d9d9d9;
+  background-color: #fff;
+  color: #666;
+}
+
+.rename-dialog-btn.confirm {
+  border: none;
+  background-color: #1890ff;
+  color: #fff;
+}
