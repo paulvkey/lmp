@@ -43,13 +43,22 @@
 
     <!-- 分页导航 -->
     <div class="page-navigation">
-      <button class="page-btn" @click="handlePrevious" :disabled="!hasPreviousPage || disabled">
+      <button
+        class="page-btn"
+        @click="handlePrevious"
+        :disabled="!collection.pageInfo.hasPreviousPage || disabled"
+      >
         上一页
       </button>
       <span class="page-info">
-        第 {{ pageNum }} 页 / 共 {{ pages }} 页 （总计 {{ total }} 条）
+        第 {{ collection.pageInfo.pageNum }} 页 / 共 {{ collection.pageInfo.pages }} 页 （总计
+        {{ collection.pageInfo.total }} 条）
       </span>
-      <button class="page-btn" @click="handleNext" :disabled="!hasNextPage || disabled">
+      <button
+        class="page-btn"
+        @click="handleNext"
+        :disabled="!collection.pageInfo.hasNextPage || disabled"
+      >
         下一页
       </button>
     </div>
@@ -58,15 +67,12 @@
 
 <script setup>
 import { computed, defineEmits, defineProps, nextTick, onMounted, ref, watch } from 'vue'
+import { useCollectionStore } from '@/store/collection.js'
+
+const collection = useCollectionStore()
 
 // 定义接收的 props
 const props = defineProps({
-  total: { type: Number, default: 0 },
-  pageNum: { type: Number, default: 1 },
-  pages: { type: Number, default: 0 },
-  hasPreviousPage: { type: Boolean, default: false },
-  hasNextPage: { type: Boolean, default: false },
-  pageSize: { type: Number, default: 5 },
   pageSizes: { type: Array, default: () => [5, 10] },
   visible: { type: Boolean, default: true },
   disabled: { type: Boolean, default: false },
@@ -75,7 +81,7 @@ const props = defineProps({
 const emit = defineEmits(['page-size-change', 'page-num-change'])
 
 // 自定义下拉框状态
-const currentPageSize = ref(props.pageSize)
+const currentPageSize = ref(collection.pageInfo.pageSize)
 const showOptions = ref(false)
 const optionsRef = ref(null)
 const selectRef = ref(null)
@@ -88,7 +94,7 @@ const toggleOptions = () => {
 
 // 监听 props 中 pageSize 变化
 watch(
-  () => props.pageSize,
+  () => collection.pageInfo.pageSize,
   (newVal) => {
     currentPageSize.value = newVal
   },
@@ -100,7 +106,6 @@ const optionsStyle = computed(() => ({
   top: 'auto',
   bottom: 'calc(100% + 4px)',
   margin: 0,
-  zIndex: 2010,
 }))
 
 // 选择每页条数
@@ -112,10 +117,10 @@ const handleCustomSizeChange = (size) => {
 
 // 上一页/下一页
 const handlePrevious = () => {
-  emit('page-num-change', props.pageNum - 1)
+  emit('page-num-change', collection.pageInfo.pageNum - 1)
 }
 const handleNext = () => {
-  emit('page-num-change', props.pageNum + 1)
+  emit('page-num-change', collection.pageInfo.pageNum + 1)
 }
 
 onMounted(() => {
@@ -147,7 +152,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* 保持原有样式，优化向上弹窗样式 */
+/* 向上弹窗样式 */
 .pagination-container {
   display: flex;
   justify-content: space-between;
@@ -174,7 +179,7 @@ onMounted(() => {
   border-radius: 8px;
   background-color: #fff;
   cursor: pointer;
-  min-width: 50px;
+  min-width: 70px;
 }
 
 .pagination-container,
@@ -197,16 +202,17 @@ onMounted(() => {
 
 .select-arrow {
   margin-left: 2px;
-  transition: transform 0.2s;
+  margin-top: 2px;
+  transition: transform 0.2s ease;
   transform: rotate(180deg);
 }
 
-/* 箭头向下时旋转360度 */
 .select-arrow.active {
+  margin-bottom: 4px;
   transform: rotate(360deg);
 }
 
-/* 下拉选项列表（优化向上显示的边框和阴影） */
+/* 下拉选项列表 */
 .select-options {
   position: absolute;
   left: 0;
@@ -216,19 +222,18 @@ onMounted(() => {
   border-radius: 8px;
   background-color: #fff;
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
-  z-index: 3010;
-  /* 防止被父容器裁剪 */
+  z-index: 2000;
   overflow: visible;
   clip: auto;
 }
 
 /* 单个选项样式 */
 .option-item {
-  padding: 4px 12px;
+  padding: 2px 12px;
   cursor: pointer;
   transition: all 0.2s;
   border-radius: 6px;
-  margin: 0 4px;
+  margin: 2px 4px;
 }
 
 .option-item:hover {

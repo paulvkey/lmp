@@ -39,11 +39,11 @@ instance.interceptors.response.use(
   (error) => {
     // 统一错误提示（避免在封装函数中重复处理）
     if (error.response && error.response.status === 404) {
-      ElMessage.error('未找到请求接口！')
+      console.error('请求接口不存在')
     } else if (error.response && error.response.status === 500) {
-      console.log(error)
+      console.log("服务返回异常： " + error)
     } else {
-      ElMessage.error(error.message || '请求失败，请稍后重试')
+      console.error(error.message || '请求失败，请稍后重试')
     }
     return Promise.reject(error)
   },

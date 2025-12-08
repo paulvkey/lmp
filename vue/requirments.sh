@@ -11,10 +11,7 @@ npm install axios -S
 npm install pinia -S
 npm install pinia-plugin-persistedstate -S
 npm install @vitejs/plugin-vue-jsx -D
-npm install @wangeditor/editor -S
-npm install @wangeditor/editor-for-vue@next -S
-npm install marked highlight.js dompurify -S
-npm install markdown-it markdown-it-highlightjs markdown-it-katex github-markdown-css -S
-npm install vue-renderer-markdown @iconify/vue @vueuse/core katex mermaid vue-use-monaco stream-markdown shiki vite-plugin-monaco-editor-esm -S
+npm install lodash.debounce -S
 
-npm install normalize.css -S
+npm install shiki stream-markdown stream-monaco mermaid katex -S
+npm install markstream-vue -S

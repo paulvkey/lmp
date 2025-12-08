@@ -11,6 +11,7 @@
 /* 2. Remove default margin */
 * {
   margin: 0;
+  padding: 0;
 }
 
 /* 3. Enable keyword animations */

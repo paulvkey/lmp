@@ -679,10 +679,10 @@
 
 <script setup>
 import { computed, getCurrentInstance, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { useUserStore } from '@/store/userInfo.js'
+import { useUserStore } from '@/store/userProfile.js'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/utils/request.js' // noinspection ES6UnusedImports
-import PagingHandler from '@/components/PagingHandler.vue' // noinspection ES6UnusedImports
+import CollectionPaging from '@/components/CollectionPaging.vue' // noinspection ES6UnusedImports
 import { formatFileSize, getImageDimensions } from '@/utils/fileUtils.js' // noinspection ES6UnusedImports
 import { formatTimeSecond } from '@/utils/dateUtils.js'
 // noinspection ES6UnusedImports
