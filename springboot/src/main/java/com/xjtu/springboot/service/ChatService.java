@@ -12,6 +12,8 @@ import com.xjtu.springboot.mapper.UserCollectionMapper;
 import com.xjtu.springboot.pojo.*;
 import com.xjtu.springboot.util.DateUtil;
 import org.apache.commons.collections4.CollectionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +36,8 @@ public class ChatService {
     ChatMessageMapper chatMessageMapper;
     @Autowired
     private UserCollectionMapper userCollectionMapper;
+
+    private static final Logger log = LoggerFactory.getLogger(ChatService.class);
 
     public final static String TEXT = "text";
     private final static String FILE = "file";
@@ -67,6 +71,7 @@ public class ChatService {
         // https://docs.ollama.com/api/chat#response-load-duration
         // https://github.com/ollama/ollama/blob/main/docs/api.md
         RequestData requestData = genrateRequestData(chatData);
+        log.info(requestData.toString());
         // 转换为JSON
         String requestJson = objectMapper.writeValueAsString(requestData);
         // 构建请求
@@ -88,7 +93,22 @@ public class ChatService {
                     } catch (Exception e) {
                         throw new RuntimeException("解析响应异常", e);
                     }
-                }))
+                })).exceptionally(ex -> {
+                    // 解析异常根源（ex是CompletionException，其cause才是真正的异常）
+                    Throwable rootCause = ex.getCause();
+                    String errorMsg;
+                    if (rootCause instanceof java.net.ConnectException) {
+                        errorMsg = "无法连接到AI服务，请检查Ollama是否已启动（地址：" + OLLAMA_API_URL + "）";
+                    } else if (rootCause instanceof java.net.SocketTimeoutException) {
+                        errorMsg = "连接AI服务超时，请稍后重试";
+                    } else if (rootCause instanceof java.io.IOException) {
+                        errorMsg = "与AI服务通信失败：" + rootCause.getMessage();
+                    } else {
+                        errorMsg = "AI请求处理异常：" + rootCause.getMessage();
+                    }
+                    // 抛出自定义异常，由上层Controller捕获
+                    throw new CustomException(503, errorMsg);
+                })
                 .join();
     }
 
@@ -97,11 +117,15 @@ public class ChatService {
         List<RequestMessage> requestMessageList = new ArrayList<>();
         for (Msg message : chatData.getMessageList()) {
             RequestMessage requestMessage = new RequestMessage();
-            requestMessage.setRole(Role.USER.getName());
+            if (message.getRole() == 1) {
+                requestMessage.setRole(Role.USER.getName());
+            } else if (message.getRole() == 2) {
+                requestMessage.setRole(Role.ASSISTANT.getName());
+            }
             requestMessage.setContent(message.getContent());
             requestMessageList.add(requestMessage);
         }
-        requestData.setMessageList(requestMessageList);
+        requestData.setMessages(requestMessageList);
         Options options = new Options();
         options.setTemperature(0.6);
         requestData.setOptions(options);

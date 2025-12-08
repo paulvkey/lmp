@@ -23,6 +23,9 @@ export const useHomeStatusStore = defineStore('homeStatus', {
       if (this.currentMenu === 'new') {
         this.isNewSession = true
       }
+    },
+    setCurrentMenu(newCurrentMenu) {
+      this.currentMenu = newCurrentMenu
     }
   },
 

@@ -11,7 +11,7 @@ import java.util.List;
 @Data
 public class RequestData {
     private String model = "qwen3:8b";
-    private List<RequestMessage> messageList;
+    private List<RequestMessage> messages;
     private List<ToolFunction> tools;
     private String format;
     private Options options;

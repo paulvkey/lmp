@@ -144,7 +144,7 @@
             v-model="chat.inputData"
             placeholder="发送消息（Alt+Enter换行，Enter发送）"
             @keydown="handleKeydown"
-            :disabled="!chat.isInputEnabled"
+            :disabled="isInputDisabled"
           ></textarea>
 
           <!-- 按钮功能区 -->
@@ -154,7 +154,7 @@
                 class="deep-thinking"
                 @click="chat.isDeepActive = !chat.isDeepActive"
                 :class="{ active: chat.isDeepActive }"
-                :disabled="!chat.isInputEnabled"
+                :disabled="isInputDisabled"
               >
                 深度思考
               </button>
@@ -162,18 +162,20 @@
                 class="network-search"
                 @click="chat.isNetworkActive = !chat.isNetworkActive"
                 :class="{ active: chat.isNetworkActive }"
-                :disabled="!chat.isInputEnabled"
+                :disabled="isInputDisabled"
               >
                 联网搜索
               </button>
+
               <!-- 上传文件按钮 -->
               <button
                 class="upload-file"
                 @click="handleFileUploadClick"
-                :disabled="!chat.isInputEnabled"
+                :disabled="isInputDisabled"
               >
                 上传文件
               </button>
+
               <!-- 隐藏的文件上传输入 -->
               <input
                 type="file"
@@ -182,17 +184,18 @@
                 @change="handleFileSelected"
                 style="display: none"
                 multiple
-                :disabled="!chat.isInputEnabled"
+                :disabled="isInputDisabled"
               />
             </div>
+
             <!-- 发送按钮 -->
             <button
               class="send-button"
               @click="sendMessage"
               :class="{ 'send-active': chat.inputData.trim() || chat.uploadedFiles.length > 0 }"
-              :disabled="chat.isSending"
+              :disabled="chat.isSending || isInputDisabled"
             >
-              <template v-if="chat.isSending">
+              <template v-if="isInputDisabled">
                 <!-- 加载动画 -->
                 <svg
                   width="16"
@@ -270,7 +273,7 @@
 </template>
 
 <script setup>
-import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import 'katex/dist/katex.min.css'
 import '@/assets/css/home/RightChat.css'
@@ -303,6 +306,16 @@ const chatInputFileRef = ref(null)
 // AbortController用于取消fetch请求
 const streamControllerRef = ref(null)
 const streamMsgIdRef = ref('')
+
+// 新对话/发送请求锁
+const requestLock = ref(false)
+// 全局AbortController：用于取消重复的异步请求
+const globalAbortCtrl = ref(new AbortController())
+
+const isInputDisabled = computed(() => {
+  // 禁用条件：非新对话菜单 || 正在发送 || 有请求锁
+  return !(homeStatus.currentMenu === 'new') || requestLock.value
+})
 
 const renameTitle = () => {
   homeStatus.isRenameDialogShow = true
@@ -532,14 +545,34 @@ const handleKeydown = (e) => {
   }
 }
 
+// 触发新对话
+const triggerNewChat = async () => {
+  // 重复点击拦截
+  if (requestLock.value) return
+  requestLock.value = true
+  try {
+    // 取消上一次未完成的请求
+    globalAbortCtrl.value.abort()
+    globalAbortCtrl.value = new AbortController()
+    chat.isSending = false
+  } finally {
+    // 释放锁（无论成败都执行）
+    requestLock.value = false
+  }
+}
+
 // 发送消息
 const sendMessage = async () => {
-  if (!beforeSendMessage()) return
+  if (requestLock.value || !beforeSendMessage()) return
+  requestLock.value = true
   try {
-    const response = await request('post', `/session/new`, chat.modelInfo)
+    const response = await request('post', `/session/new`, chat.modelInfo, {
+      signal: globalAbortCtrl.value.signal,
+    })
     if (response.code === 200) {
+      console.log(response)
       updateInfoByResponse(response.data)
-      await getAndParseChatData(response.data)
+      await getAndParseChatData(response.data, globalAbortCtrl.value.signal)
       updateHistoryByResponse(response.data)
     } else {
       ElMessage.error('发送消息异常: ' + response.msg)
@@ -547,8 +580,9 @@ const sendMessage = async () => {
   } catch (e) {
     // 不做处理
   } finally {
-    chat.clearChat()
+    chat.resetChat()
     homeStatus.isNewSession = false
+    requestLock.value = false
     await nextTick()
     scrollToBottom()
   }
@@ -578,6 +612,7 @@ const beforeSendMessage = () => {
     chat.modelInfo.messageList.push({
       content: fileMessage.content,
       type: fileMessage.type,
+      role: fileMessage.isUser ? 1 : 2
     })
     chat.filesUploaded = true
   }
@@ -592,6 +627,7 @@ const beforeSendMessage = () => {
   chat.modelInfo.messageList.push({
     content: message.content,
     type: message.type,
+    role: message.isUser ? 1 : 2
   })
   chat.inputData = ''
   chat.isSending = true
@@ -616,13 +652,13 @@ const updateInfoByResponse = (response) => {
   homeStatus.renamingSessionId = response.sessionId
 }
 
-const getAndParseChatData = async (requestData) => {
+const getAndParseChatData = async (requestData, abortSignal) => {
   // 取消已有流式请求（避免重复）
   if (streamControllerRef.value) {
     streamControllerRef.value.abort()
   }
   streamControllerRef.value = new AbortController()
-  const { signal } = streamControllerRef.value
+  const combinedSignal = AbortSignal.any([abortSignal, streamControllerRef.value.signal])
 
   try {
     // 创建流式消息项（初始空内容+加载状态）
@@ -639,10 +675,9 @@ const getAndParseChatData = async (requestData) => {
     scrollToBottom()
 
     // 使用fetch发起SSE流式请求
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || ''
-    const response = await fetch(`${baseUrl}/session/chat`, {
+    const response = await fetch(`/session/chat`, {
       method: 'POST',
-      signal,
+      signal: combinedSignal,
       headers: {
         'Content-Type': 'application/json',
         Accept: 'text/event-stream',
@@ -672,6 +707,7 @@ const getAndParseChatData = async (requestData) => {
 
       // 解码并拼接数据
       buffer += decoder.decode(value, { stream: true })
+      console.log(buffer)
       const events = buffer.split('\n\n')
       buffer = events.pop() || ''
 
@@ -679,14 +715,14 @@ const getAndParseChatData = async (requestData) => {
       for (const eventBlock of events) {
         if (!eventBlock || eventBlock.trim() === '') continue
 
-        // 拆分event和data（按换行分割）
+        // 拆分event和data
         const lines = eventBlock.split('\n').filter((line) => line.trim() !== '')
         let eventName = ''
         let eventData = ''
 
         for (const line of lines) {
           if (line.startsWith('event:')) {
-            // 提取事件名（仅关注CHUNK/FINISHED/ERROR）
+            // 提取事件名（仅关注chunk/finished/error）
             eventName = line.substring(6).trim()
           } else if (line.startsWith('data:')) {
             // 提取数据内容
@@ -704,7 +740,18 @@ const getAndParseChatData = async (requestData) => {
                 (item) => item.id === streamMsgIdRef.value,
               )
               if (msgIndex !== -1) {
-                chat.messageList[msgIndex].content += parsedData.message.content
+                chat.$patch({
+                  messageList: chat.messageList.map((item, index) => {
+                    if (index === msgIndex) {
+                      return {
+                        ...item,
+                        content: item.content + parsedData.message.content
+                      }
+                    }
+                    return item
+                  })
+                })
+                await nextTick()
               }
             }
           }
@@ -714,10 +761,19 @@ const getAndParseChatData = async (requestData) => {
             const msgIndex = chat.messageList.findIndex((item) => item.id === streamMsgIdRef.value)
             if (msgIndex !== -1) {
               // 标记流式结束，优先使用后端返回的最终内容
-              chat.messageList[msgIndex].isStreaming = false
-              if (parsedData.data?.messageList?.[0]?.content) {
-                chat.messageList[msgIndex].content = parsedData.data.messageList[0].content
-              }
+              // const finalContent = parsedData.data?.messageList?.[0]?.content || chat.messageList[msgIndex].content
+              // chat.$patch({
+              //   messageList: chat.messageList.map((item, index) => {
+              //     if (index === msgIndex) {
+              //       return {
+              //         ...item,
+              //         content: finalContent,
+              //         isStreaming: false
+              //       }
+              //     }
+              //     return item
+              //   })
+              // })
             }
             // 释放资源，结束循环
             reader.releaseLock()
@@ -757,7 +813,7 @@ const getAndParseChatData = async (requestData) => {
       // 更新消息状态提示错误
       const msgIndex = chat.messageList.findIndex((item) => item.id === streamMsgIdRef.value)
       if (msgIndex !== -1 && !chat.messageList[msgIndex].content.includes('抱歉')) {
-        chat.messageList[msgIndex].content += `\n\n⚠️ ${e.message || '消息接收中断'}`
+        chat.messageList[msgIndex].content += `\n\n ${e.message || '消息接收中断'}`
         chat.messageList[msgIndex].isStreaming = false
       }
     }
@@ -814,19 +870,22 @@ const updateHistoryByResponse = () => {
 
 watch(
   () => homeStatus.currentMenu,
-  (newMenu) => {
-    // 只有当前菜单是"新对话"时才启用输入框
-    chat.isInputEnabled = newMenu === 'new'
-    if (!chat.isInputEnabled) {
-      chat.inputData = ''
-      homeStatus.isNewSession = false
+  async (newMenu) => {
+    homeStatus.setCurrentMenu(newMenu)
+    homeStatus.initIsNewSession()
+    chat.initIsInputEnabled(homeStatus)
+    chat.inputData = ''
+    if (chat.isInputEnabled) {
+      await nextTick()
+      chatMsgInputFocus()
     }
   },
+  { immediate: true, flush: 'sync' },
 )
 
 onMounted(() => {
   homeStatus.initIsNewSession()
-  chat.initIsInputEnabled()
+  chat.initIsInputEnabled(homeStatus)
   // 监听聊天区域的滚动事件，实时检测是否显示按钮
   const chatMsgWrapper = chatMsgWrapperRef.value
   if (chatMsgWrapper) {
@@ -868,11 +927,15 @@ onUnmounted(() => {
   // 重置按钮状态
   chat.showScrollBtn = false
   chat.isScrolling = false
+  globalAbortCtrl.value.abort()
+  if (streamControllerRef.value) streamControllerRef.value.abort()
+  requestLock.value = false
 })
 
 func.setChatMsgScrollTop(chatMsgScrollTop)
 func.setChatMsgInputFocus(chatMsgInputFocus)
 func.setScrollToBottom(scrollToBottom)
+func.setTriggerNewChat(triggerNewChat)
 </script>
 
 <style scoped></style>

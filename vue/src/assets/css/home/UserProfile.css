@@ -59,8 +59,8 @@
   align-items: center;
   justify-content: flex-start;
   text-align: left;
-  padding: 6px 15px;
-  color: #666;
+  padding: 8px 20px;
+  color: #333;
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.2s;

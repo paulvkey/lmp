@@ -117,11 +117,13 @@ import { useUserProfileStore } from '@/store/userProfile.js'
 import { useHomeStatusStore } from '@/store/homeStatus.js'
 import { useHistoryStore } from '@/store/history.js'
 import { useCollectionStore } from '@/store/collection.js'
+import { useFunctionStore } from '@/store/function.js'
 
 const userProfile = useUserProfileStore()
 const homeStatus = useHomeStatusStore()
 const history = useHistoryStore()
 const collection = useCollectionStore()
+const func = useFunctionStore()
 
 const resetCurrentChat = inject("resetCurrentChat")
 
@@ -134,6 +136,8 @@ const handleNewChat = async () => {
   resetCurrentChat()
   // 切换菜单状态
   homeStatus.currentMenu = 'new'
+  homeStatus.isNewSession = true;
+  func.triggerNewChat()
   // 清除历史对话相关高亮
   history.selectedSessionId = null
   history.activeSessionMenuId = null
@@ -249,7 +253,6 @@ const loadHistoryList = async () => {
       );
     await nextTick();
   } catch (e) {
-    ElMessage.error('加载历史对话失败，请稍后重试');
     history.historyList = [];
   } finally {
     history.isLoading = false;

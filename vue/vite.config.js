@@ -15,10 +15,10 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      // 匹配所有以 /session 开头的请求
-      '/session/model': {
+      // 匹配所有以 /session/chat 开头的请求
+      '/session/chat': {
         target: 'http://localhost:8090',
-        changeOrigin: true, // 解决跨域（关键）
+        changeOrigin: true, // 解决跨域
         rewrite: (path) => path,
       },
     },

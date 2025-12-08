@@ -196,9 +196,7 @@ const loadHistorySession = async (item) => {
     setTimeout(() => {
       func.scrollToBottom()
     }, SCROLL_BOTTOM_DELAY)
-  } catch (error) {
-    console.error('加载对话失败:', error)
-    ElMessage.error('加载对话失败，请重试')
+  } catch (e) {
     chat.messageList = []
     history.loadedSessionId = null
   } finally {

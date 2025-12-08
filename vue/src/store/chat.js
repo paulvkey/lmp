@@ -30,7 +30,7 @@ export const useChatStore = defineStore('chat', {
       isPinned: 0,
       isCollected: 0,
       messageType: 1,
-      messageList: null,
+      messageList: [],
       sendTime: null,
       fileIds: '',
       tokenCount: 0,
@@ -48,6 +48,12 @@ export const useChatStore = defineStore('chat', {
     initModelInfo(userProfile) {
       this.modelInfo.isLogin = userProfile.isLogin
       this.modelInfo.userId = userProfile.userId
+    },
+    resetChat() {
+      this.inputData = ''
+      this.uploadedFiles = []
+      this.showAllFiles = false
+      this.isSending = false
     },
     clearChat() {
       this.chatTitle = '新对话'
@@ -81,7 +87,7 @@ export const useChatStore = defineStore('chat', {
         isPinned: 0,
         isCollected: 0,
         messageType: 1,
-        messageList: null,
+        messageList: [],
         sendTime: null,
         fileIds: '',
         tokenCount: 0,
@@ -90,8 +96,7 @@ export const useChatStore = defineStore('chat', {
         deepThinkStep: '',
       }
     },
-    initIsInputEnabled() {
-      const homeStatus = useHomeStatusStore()
+    initIsInputEnabled(homeStatus) {
       if (homeStatus.currentMenu === 'new') {
         this.isInputEnabled = true
       }
@@ -106,6 +111,7 @@ export const useChatStore = defineStore('chat', {
         key: 'chat',
         storage: sessionStorage,
         paths: [
+          // TODO
           'chatTitle',
           'inputData',
           'messageList',
