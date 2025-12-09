@@ -16,6 +16,7 @@ export const useChatStore = defineStore('chat', {
     isNetworkActive: false,
     showScrollBtn: false,
     isScrolling: false,
+    isUserScrolled: false,
     modelInfo: {
       newSession: true,
       isLogin: false,
@@ -53,6 +54,7 @@ export const useChatStore = defineStore('chat', {
       this.uploadedFiles = []
       this.showAllFiles = false
       this.isSending = false
+      this.filesUploaded = false
     },
     clearChat() {
       this.chatTitle = '新对话'
@@ -65,6 +67,7 @@ export const useChatStore = defineStore('chat', {
       this.isNetworkActive = false
       this.showScrollBtn = false
       this.isScrolling = false
+      this.isUserScrolled = false
       this.clearModelInfo()
       this.isInputEnabled = false
       this.isSending = false
@@ -103,16 +106,12 @@ export const useChatStore = defineStore('chat', {
 
   // 持久化配置
   persist: {
-    enabled: true,
+    enabled: false,
     strategies: [
       {
         key: 'chat',
         storage: sessionStorage,
         paths: [
-          // TODO
-          'chatTitle',
-          'inputData',
-          'messageList',
         ],
       },
     ],

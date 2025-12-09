@@ -156,7 +156,10 @@ const loadHistorySession = async (item) => {
     homeStatus.currentMenu = 'history'
     await nextTick()
     setTimeout(() => {
-      func.scrollToBottom()
+      nextTick(() => {
+        func.scrollToBottom({ force: true })
+        func.checkScrollBottomBtn()
+      })
     }, SCROLL_BOTTOM_DELAY)
     return
   }

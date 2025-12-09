@@ -54,3 +54,20 @@ export const throttle = (fn, delay = 100) => {
 export const checkLogin = (userProfile) => {
   return userProfile.isLogin && userProfile.userId > 0
 }
+
+export const escapeMsg = (content) => {
+  if (!content) return ''
+  // 仅转义 HTML 特殊字符
+  let escaped = content
+    .replace(/&/g, '&amp;') // & → &amp;
+    .replace(/</g, '&lt;') // < → &lt;
+    .replace(/>/g, '&gt;') // > → &gt;
+    .replace(/"/g, '&quot;') // " → &quot;
+    .replace(/'/g, '&#039;') // ' → &#039;
+  // 处理空白字符（空格、制表符、换行）
+  escaped = escaped
+    .replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;') // 制表符 → 4个空格
+    .replace(/ /g, '&nbsp;') // 空格 → 非换行空格
+    .replace(/\n/g, '<br>') // 换行 → <br>
+  return escaped
+}

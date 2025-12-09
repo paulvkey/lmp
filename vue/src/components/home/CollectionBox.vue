@@ -112,7 +112,13 @@ const handleViewCollection = async (id) => {
     await nextTick()
     setTimeout(async () => {
       await scrollToSessionItem(chatSession.id)
-      await nextTick(func.scrollToBottom())
+      await nextTick()
+      setTimeout(() => {
+        nextTick(() => {
+          func.scrollToBottom({ force: true })
+          func.checkScrollBottomBtn()
+        })
+      }, SCROLL_DELAY)
     }, SCROLL_DELAY)
   } catch (error) {
     console.log(error)

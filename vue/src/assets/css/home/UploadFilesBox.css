@@ -1,18 +1,25 @@
 .files-dialog {
-  width: 400px;
+  display: flex;
+  flex-direction: column;
+  width: 50vw;
+  height: 50vh;
+  min-height: 200px;
+  max-width: 60vw;
+  max-height: 60vh;
+  margin-top: 15vh;
   background-color: #fff;
   border-radius: 10px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  max-width: 90vw;
-  max-height: 70vh;
+  overflow: hidden;
 }
 
 .files-dialog-header {
-  padding: 15px 20px;
-  border-bottom: 1px solid #eee;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid #eee;
+  flex-shrink: 0;
 }
 
 .files-dialog-header h3 {
@@ -30,8 +37,9 @@
 }
 
 .files-dialog-content {
-  padding: 20px;
-  max-height: calc(70vh - 120px);
+  max-height: calc(60vh - 120px);
+  padding: 10px 20px;
+  flex-grow: 1;
   overflow-y: auto;
 }
 
@@ -44,47 +52,49 @@
 .files-item {
   display: flex;
   align-items: center;
-  padding: 10px;
+  max-width: 100%;
+  padding: 8px 10px;
+  gap: 8px;
   border-radius: 6px;
   background-color: #f5f7fa;
   border: 1px solid #e8e8e8;
-  max-width: 100%;
   box-sizing: border-box;
 }
 
 .files-item .file-size {
   margin-left: auto;
   margin-right: 10px;
-  font-size: 12px;
+  font-size: 14px;
   color: #666;
   white-space: nowrap;
 }
 
 .files-remove-file {
+  position: relative;
   display: inline-block;
   color: #ff4d4f;
   border: none;
   background: transparent;
   cursor: pointer;
   font-size: 16px;
-  position: relative;
+  flex-shrink: 0;
 }
 
 .file-icon {
-  margin-right: 2px;
-  color: #1890ff;
-  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-right: 2px;
+  color: #1890ff;
+  flex-shrink: 0;
 }
 
 .file-name {
-  display: block;
+  flex-grow: 1;
+  font-size: 16px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-bottom: 4px;
 }
 
 .file-image-preview {

@@ -63,215 +63,213 @@
                 </div>
               </div>
               <!-- 展示文本消息 -->
-              <div v-else v-html="formatUserMessage(msg.content)" />
+              <div v-else v-html="escapeMsg(msg.content)" />
             </div>
           </div>
           <div class="system-msg-wrapper" v-else>
             <div class="chat-msg">
-              <MarkdownRender :content="msg.content"/>
+              <MarkdownRender :content="msg.content" />
             </div>
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- 对话输入区 -->
-      <div class="chat-input-wrapper">
-        <div class="chat-input-panel">
-          <!-- 文件上传展示区 -->
-          <div class="upload-files-wrapper" v-if="chat.uploadedFiles.length > 0">
-            <div class="uploaded-files">
-              <div
-                class="uploaded-file-item"
-                v-for="(file, index) in visibleFiles"
-                :key="`${file.name}-${file.size}-${index}`"
-                :title="file.name"
-              >
-                <span class="uploaded-file-icon">
-                  <img
-                    v-if="file.isImage && file.previewUrl"
-                    :src="file.previewUrl"
-                    :alt="file.name"
-                    class="uploaded-image-preview"
-                  />
-                  <svg
-                    v-else
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <path
-                      d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"
-                    ></path>
-                    <polyline points="14 2 14 8 20 8"></polyline>
-                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                    <polyline points="10 9 9 9 8 9"></polyline>
-                  </svg>
-                </span>
-                <div class="uploaded-file-info">
-                  <span class="uploaded-file-name">{{ file.name }}</span>
-                  <!-- 上传进度显示 -->
-                  <div v-if="file.uploading || file.progress > 0" class="upload-file-progress">
-                    <div class="upload-progress-bar" :style="{ width: `${file.progress}%` }"></div>
-                  </div>
-                </div>
-                <button
-                  class="remove-uploaded-file"
-                  @click.stop="removeUploadedFile(index)"
-                  :title="`移除 ${file.name}`"
-                  :disabled="file.uploading"
-                >
-                  ×
-                </button>
-              </div>
-              <button
-                  class="more-files-btn"
-                  v-if="hasMoreFiles"
-                  @click.stop="chat.showAllFiles = true"
-                >
-                  +{{ moreFilesCount }} 更多文件
-                </button>
-            </div>
-          </div>
-
-          <!-- 内容输入区 -->
-          <textarea
-            id="chat-msg-input"
-            class="chat-msg-input"
-            name="chatMessage"
-            rows="4"
-            ref="chatMsgInputRef"
-            v-model="chat.inputData"
-            placeholder="发送消息（Alt+Enter换行，Enter发送）"
-            @keydown="handleKeydown"
-            :disabled="isInputDisabled"
-          ></textarea>
-
-          <!-- 按钮功能区 -->
-          <div class="chat-buttons">
-            <div class="chat-left-buttons">
-              <button
-                class="deep-thinking"
-                @click="chat.isDeepActive = !chat.isDeepActive"
-                :class="{ active: chat.isDeepActive }"
-                :disabled="isInputDisabled"
-              >
-                深度思考
-              </button>
-              <button
-                class="network-search"
-                @click="chat.isNetworkActive = !chat.isNetworkActive"
-                :class="{ active: chat.isNetworkActive }"
-                :disabled="isInputDisabled"
-              >
-                联网搜索
-              </button>
-
-              <!-- 上传文件按钮 -->
-              <button
-                class="upload-file"
-                @click="handleFileUploadClick"
-                :disabled="isInputDisabled"
-              >
-                上传文件
-              </button>
-
-              <!-- 隐藏的文件上传输入 -->
-              <input
-                type="file"
-                ref="chatInputFileRef"
-                class="file-input"
-                @change="handleFileSelected"
-                style="display: none"
-                multiple
-                :disabled="isInputDisabled"
-              />
-            </div>
-
-            <!-- 发送按钮 -->
-            <button
-              class="send-button"
-              @click="sendMessage"
-              :class="{ 'send-active': chat.inputData.trim() || chat.uploadedFiles.length > 0 }"
-              :disabled="chat.isSending || requestLock.value || isInputDisabled"
+    <!-- 对话输入区 -->
+    <div class="chat-input-wrapper">
+      <div class="chat-input-panel">
+        <!-- 文件上传展示区 -->
+        <div class="upload-files-wrapper" v-if="chat.uploadedFiles.length > 0">
+          <div class="uploaded-files">
+            <div
+              class="uploaded-file-item"
+              v-for="(file, index) in visibleFiles"
+              :key="`${file.name}-${file.size}-${index}`"
+              :title="file.name"
             >
-              <template v-if="chat.isSending && !isInputDisabled">
-                <!-- 加载动画 -->
+              <span class="uploaded-file-icon">
+                <img
+                  v-if="file.isImage && file.previewUrl"
+                  :src="file.previewUrl"
+                  :alt="file.name"
+                  class="uploaded-image-preview"
+                />
                 <svg
-                  width="16"
-                  height="16"
+                  v-else
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
                   stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
                 >
-                  <circle
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke-dasharray="100"
-                    stroke-dashoffset="0"
-                    transform="rotate(0 12 12)"
-                  >
-                    <animate
-                      attributeName="stroke-dashoffset"
-                      values="0;150"
-                      dur="1.5s"
-                      repeatCount="indefinite"
-                    />
-                    <animate
-                      attributeName="transform"
-                      type="rotate"
-                      values="0 12 12;360 12 12"
-                      dur="1.5s"
-                      repeatCount="indefinite"
-                    />
-                  </circle>
+                  <path
+                    d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"
+                  ></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                  <polyline points="10 9 9 9 8 9"></polyline>
                 </svg>
-              </template>
-              <template v-else>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  stroke="none"
-                  style="transform: translate(-5%, 5%)"
-                >
-                  <path d="M22 2L11 13M22 2L15 22L11 13L2 9L22 2Z" />
-                </svg>
-              </template>
+              </span>
+              <div class="uploaded-file-info">
+                <span class="uploaded-file-name">{{ file.name }}</span>
+                <!-- 上传进度显示 -->
+                <div v-if="file.uploading || file.progress > 0" class="upload-file-progress">
+                  <div class="upload-progress-bar" :style="{ width: `${file.progress}%` }"></div>
+                </div>
+              </div>
+              <button
+                class="remove-uploaded-file"
+                @click.stop="removeUploadedFile(index)"
+                :title="`移除 ${file.name}`"
+                :disabled="file.uploading"
+              >
+                ×
+              </button>
+            </div>
+            <button
+              class="more-files-btn"
+              v-if="hasMoreFiles"
+              @click.stop="chat.showAllFiles = true"
+            >
+              +{{ moreFilesCount }} 更多文件
             </button>
           </div>
         </div>
-      </div>
-      <UploadFilesBox />
 
-      <!-- 滚动底部按钮 -->
-      <div
-        class="scroll-bottom"
-        @click="scrollToBottom"
-        v-show="chat.showScrollBtn"
-        :class="{ active: chat.showScrollBtn }"
-      >
-        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="#fff">
-          <path
-            d="M30,40 L50,60 L70,40"
-            stroke="black"
-            stroke-width="4"
-            fill="none"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
+        <!-- 内容输入区 -->
+        <textarea
+          id="chat-msg-input"
+          class="chat-msg-input"
+          name="chatMessage"
+          rows="4"
+          ref="chatMsgInputRef"
+          v-model="chat.inputData"
+          placeholder="发送消息（Alt+Enter换行，Enter发送）"
+          @keydown="handleKeydown"
+          :disabled="isInputDisabled"
+        ></textarea>
+
+        <!-- 按钮功能区 -->
+        <div class="chat-buttons">
+          <div class="chat-left-buttons">
+            <button
+              class="deep-thinking"
+              @click="chat.isDeepActive = !chat.isDeepActive"
+              :class="{ active: chat.isDeepActive }"
+              :disabled="isInputDisabled"
+            >
+              深度思考
+            </button>
+            <button
+              class="network-search"
+              @click="chat.isNetworkActive = !chat.isNetworkActive"
+              :class="{ active: chat.isNetworkActive }"
+              :disabled="isInputDisabled"
+            >
+              联网搜索
+            </button>
+
+            <!-- 上传文件按钮 -->
+            <button class="upload-file" @click="handleFileUploadClick" :disabled="isInputDisabled">
+              上传文件
+            </button>
+
+            <!-- 隐藏的文件上传输入 -->
+            <input
+              type="file"
+              ref="chatInputFileRef"
+              class="file-input"
+              @change="handleFileSelected"
+              style="display: none"
+              multiple
+              :disabled="isInputDisabled"
+            />
+          </div>
+
+          <!-- 发送按钮 -->
+          <button
+            class="send-button"
+            @click="sendMessage"
+            :class="{ 'send-active': chat.inputData.trim() || chat.uploadedFiles.length > 0 }"
+            :disabled="chat.isSending || requestLock.value || isInputDisabled"
+          >
+            <template v-if="chat.isSending && !isInputDisabled">
+              <!-- 加载动画 -->
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke-dasharray="100"
+                  stroke-dashoffset="0"
+                  transform="rotate(0 12 12)"
+                >
+                  <animate
+                    attributeName="stroke-dashoffset"
+                    values="0;150"
+                    dur="1.5s"
+                    repeatCount="indefinite"
+                  />
+                  <animate
+                    attributeName="transform"
+                    type="rotate"
+                    values="0 12 12;360 12 12"
+                    dur="1.5s"
+                    repeatCount="indefinite"
+                  />
+                </circle>
+              </svg>
+            </template>
+            <template v-else>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                stroke="none"
+                style="transform: translate(-5%, 5%)"
+              >
+                <path d="M22 2L11 13M22 2L15 22L11 13L2 9L22 2Z" />
+              </svg>
+            </template>
+          </button>
+        </div>
       </div>
+    </div>
+
+    <!-- 上传文件 -->
+    <UploadFilesBox />
+
+    <!-- 滚动底部按钮 -->
+    <div
+      class="scroll-bottom"
+      @click="scrollToBottom"
+      v-show="chat.showScrollBtn"
+      :class="{ active: chat.showScrollBtn }"
+    >
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="#fff">
+        <path
+          d="M30,40 L50,60 L70,40"
+          stroke="black"
+          stroke-width="4"
+          fill="none"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
     </div>
   </div>
 
@@ -279,12 +277,12 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, toRaw, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import 'katex/dist/katex.min.css'
 import '@/assets/css/home/RightChat.css'
 import request from '@/utils/request.js'
-import { checkLogin } from '@/utils/commonUtils.js'
+import { checkLogin, escapeMsg } from '@/utils/commonUtils.js'
 import { formatFileSize, getImageDimensions } from '@/utils/fileUtils.js'
 import RenameBox from '@/components/RenameBox.vue'
 import TuningParams from '@/components/home/TuningParams.vue'
@@ -304,9 +302,13 @@ const homeStatus = useHomeStatusStore()
 const history = useHistoryStore()
 const func = useFunctionStore()
 
-const STREAM_SCROLL_DELAY = 300
-const SCROLL_BOTTOM_DELAY = 500
+const STREAM_SCROLL_DELAY = 100
+const SCROLL_DEBOUNCE_DELAY = 100
+const SCROLLBAR_SHOW_DURATION = 500;
 const MAX_FILE_SHOW = 5
+
+const scrollDebounceTimer = ref(null)
+const scrollbarShowTimer = ref(null);
 const chatMsgWrapperRef = ref(null)
 const chatMsgInputRef = ref(null)
 const chatInputFileRef = ref(null)
@@ -337,40 +339,12 @@ const chatMsgInputFocus = () => {
   chatMsgInputRef.value?.focus()
 }
 
-const formatUserMessage = (content) => {
-  if (!content) return ''
-  // 仅转义 HTML 特殊字符
-  let escaped = content
-    .replace(/&/g, '&amp;') // & → &amp;
-    .replace(/</g, '&lt;') // < → &lt;
-    .replace(/>/g, '&gt;') // > → &gt;
-    .replace(/"/g, '&quot;') // " → &quot;
-    .replace(/'/g, '&#039;') // ' → &#039;
-  // 处理空白字符（空格、制表符、换行）
-  escaped = escaped
-    .replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;') // 制表符 → 4个空格
-    .replace(/ /g, '&nbsp;') // 空格 → 非换行空格
-    .replace(/\n/g, '<br>') // 换行 → <br>
-  return escaped
-}
-
-const checkScrollBottomBtn = () => {
-  const chatMsgWrapper = chatMsgWrapperRef.value
-  if (!chatMsgWrapper) return
-
-  // 滚动容器的关键高度计算
-  const { scrollTop, scrollHeight, clientHeight } = chatMsgWrapper
-  // 阈值：距离底部超过10px时显示按钮（避免轻微滚动就触发）
-  const isNotAtBottom = scrollTop + clientHeight < scrollHeight - 10
-
-  // 更新显示状态
-  if (chat.showScrollBtn !== isNotAtBottom) {
-    chat.showScrollBtn = isNotAtBottom
-  }
-}
-
 // 滚动到底部
-const scrollToBottom = () => {
+const scrollToBottom = (options = {}) => {
+  const { force = false, smooth = false } = options
+  // 如果不是强制滚动，且用户手动滚动过，则不自动滚动
+  if (!force && chat.isUserScrolled && !chat.showScrollBtn) return
+
   chat.showScrollBtn = false
   if (chat.isScrolling) return
   chat.isScrolling = true
@@ -379,25 +353,94 @@ const scrollToBottom = () => {
     chat.isScrolling = false
     return
   }
+
   try {
-    // 先强制设置scrollTop（跳过平滑滚动的延迟问题）
+    // 强制重绘，确保DOM尺寸计算准确（针对fixed定位的容器）
+    chatMsgWrapper.style.display = 'none'
+    chatMsgWrapper.offsetHeight
+    chatMsgWrapper.style.display = ''
+
+    // 精准设置scrollTop（优先于scrollIntoView，避免定位偏差）
     chatMsgWrapper.scrollTop = chatMsgWrapper.scrollHeight
-    // 平滑滚动兜底
-    chatMsgWrapper.scrollTo({
-      top: chatMsgWrapper.scrollHeight,
-      left: 0,
-      behavior: 'auto',
-    })
+    // scrollIntoView兜底（针对最后一条消息）
+    const lastMessage = chatMsgWrapper.lastElementChild
+    if (lastMessage) {
+      lastMessage.scrollIntoView({
+        behavior: smooth ? 'smooth' : 'instant',
+        block: 'end',
+        inline: 'nearest',
+      })
+    }
+
+    // 最终校准（消除fixed定位导致的像素级偏差）
     setTimeout(() => {
+      // 强制设置到最大滚动高度
       chatMsgWrapper.scrollTop = chatMsgWrapper.scrollHeight
       chat.isScrolling = false
+      chat.isUserScrolled = false
       checkScrollBottomBtn()
-    }, SCROLL_BOTTOM_DELAY)
+
+      // 如果仍有微小滚动余量，强制修正
+      const { scrollTop, scrollHeight, clientHeight } = chatMsgWrapper
+      const distanceToBottom = scrollHeight - scrollTop - clientHeight
+      if (distanceToBottom > 0) {
+        chatMsgWrapper.scrollTop += distanceToBottom
+      }
+    }, STREAM_SCROLL_DELAY)
   } catch (e) {
-    chat.isScrolling = false
     chatMsgWrapper.scrollTop = chatMsgWrapper.scrollHeight
+    chat.isScrolling = false
   }
 }
+
+// 滚动检测逻辑，防抖和手动滚动判断
+const checkScrollBottomBtn = () => {
+  if (scrollDebounceTimer.value) clearTimeout(scrollDebounceTimer.value);
+  if (scrollbarShowTimer.value) clearTimeout(scrollbarShowTimer.value);
+
+  // 滚动时立即显示滚动条
+  showScrollbar();
+  // 滚动停止后，延迟隐藏滚动条
+  scrollbarShowTimer.value = setTimeout(() => {
+    hideScrollbar();
+  }, SCROLLBAR_SHOW_DURATION);
+
+  // 滚动按钮检测
+  scrollDebounceTimer.value = setTimeout(() => {
+    const chatMsgWrapper = chatMsgWrapperRef.value;
+    if (!chatMsgWrapper) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = chatMsgWrapper;
+    const distanceToBottom = scrollHeight - scrollTop - clientHeight;
+    chat.isUserScrolled = scrollHeight > clientHeight && distanceToBottom > 5;
+    chat.showScrollBtn = chat.isUserScrolled;
+  }, SCROLL_DEBOUNCE_DELAY);
+};
+
+// 显示滚动条
+const showScrollbar = () => {
+  const chatMsgWrapper = chatMsgWrapperRef.value;
+  if (!chatMsgWrapper) return;
+
+  // 直接修改样式（优先级最高）
+  chatMsgWrapper.style.scrollbarColor = '#ccc transparent';
+  chatMsgWrapper.style.setProperty('--scrollbar-thumb-bg', '#ccc');
+  // 强制更新滚动条样式
+  chatMsgWrapper.classList.add('scrollbar-visible');
+  setTimeout(() => {
+    chatMsgWrapper.classList.remove('scrollbar-visible');
+  }, 0);
+};
+
+// 隐藏滚动条
+const hideScrollbar = () => {
+  const chatMsgWrapper = chatMsgWrapperRef.value;
+  if (!chatMsgWrapper) return;
+
+  // 兼容 Webkit（Chrome/Safari）
+  chatMsgWrapper.style.scrollbarColor = 'transparent transparent';
+  chatMsgWrapper.style.setProperty('--scrollbar-thumb-bg', 'transparent');
+};
 
 // 文件上传相关方法
 const handleFileUploadClick = () => {
@@ -541,12 +584,12 @@ const visibleFiles = computed(() => {
 
 // 是否有更多文件
 const hasMoreFiles = computed(() => {
-  return chat.uploadedFiles.length > 6
+  return chat.uploadedFiles.length > MAX_FILE_SHOW
 })
 
 // 更多文件有多少
 const moreFilesCount = computed(() => {
-  return Math.max(chat.uploadedFiles.length - MAX_FILE_SHOW, 0);
+  return Math.max(chat.uploadedFiles.length - MAX_FILE_SHOW, 0)
 })
 
 // 移除特定文件
@@ -607,10 +650,9 @@ const sendMessage = async () => {
       signal: globalAbortCtrl.value.signal,
     })
     if (response.code === 200) {
-      console.log(response)
       updateInfoByResponse(response.data)
       await getAndParseChatData(response.data, globalAbortCtrl.value.signal)
-      updateHistoryByResponse(response.data)
+      updateHistoryByResponse()
     } else {
       ElMessage.error('发送消息异常: ' + response.msg)
     }
@@ -633,11 +675,11 @@ const beforeSendMessage = () => {
 
   chat.initModelInfo(userProfile)
   chat.modelInfo.messageList = []
-  chat.messageList.forEach(msg => {
+  chat.messageList.forEach((msg) => {
     chat.modelInfo.messageList.push({
       content: msg.content,
       type: msg.type,
-      role: msg.isUser ? 1 : 2
+      role: msg.isUser ? 1 : 2,
     })
   })
   if (hasUploadFiles && !chat.filesUploaded) {
@@ -657,7 +699,7 @@ const beforeSendMessage = () => {
     chat.modelInfo.messageList.push({
       content: fileMessage.content,
       type: fileMessage.type,
-      role: fileMessage.isUser ? 1 : 2
+      role: fileMessage.isUser ? 1 : 2,
     })
     chat.filesUploaded = true
   }
@@ -672,7 +714,7 @@ const beforeSendMessage = () => {
   chat.modelInfo.messageList.push({
     content: message.content,
     type: message.type,
-    role: message.isUser ? 1 : 2
+    role: message.isUser ? 1 : 2,
   })
   chat.inputData = ''
   chat.isSending = true
@@ -784,35 +826,28 @@ const getAndParseChatData = async (requestData, abortSignal) => {
                     if (index === msgIndex) {
                       return {
                         ...item,
-                        content: item.content + parsedData.message.content
+                        content: item.content + parsedData.message.content,
                       }
                     }
                     return item
-                  })
+                  }),
                 })
                 await nextTick()
+                scrollToBottom()
               }
             }
           }
 
           // 处理结束事件（finished：完成事件单独返回格式）
           else if (eventName === 'finished') {
-            const msgIndex = chat.messageList.findIndex((item) => item.id === streamMsgIdRef.value)
+            const rawChat = toRaw(chat)
+            const msgIndex = rawChat.messageList.findIndex(
+              (item) => item.id === streamMsgIdRef.value,
+            )
             if (msgIndex !== -1) {
-              // 标记流式结束，优先使用后端返回的最终内容
-              // const finalContent = parsedData.data?.messageList?.[0]?.content || chat.messageList[msgIndex].content
-              // chat.$patch({
-              //   messageList: chat.messageList.map((item, index) => {
-              //     if (index === msgIndex) {
-              //       return {
-              //         ...item,
-              //         content: finalContent,
-              //         isStreaming: false
-              //       }
-              //     }
-              //     return item
-              //   })
-              // })
+              // 标记流式结束，优先使用后端返回的最终内容(但是不更新dom)
+              rawChat.messageList[msgIndex].content =
+                parsedData.data?.messageList?.[0]?.content || rawChat.messageList[msgIndex].content
             }
             // 释放资源，结束循环
             reader.releaseLock()
@@ -826,10 +861,7 @@ const getAndParseChatData = async (requestData, abortSignal) => {
             reader.releaseLock()
           }
         } catch (e) {
-          // 忽略不完整块的JSON解析错误，仅处理业务错误
-          if (e.name !== 'SyntaxError') {
-            console.error(`解析${eventName}事件失败:`, e)
-          }
+          // 暂不处理
         }
       }
     }
@@ -841,8 +873,6 @@ const getAndParseChatData = async (requestData, abortSignal) => {
     }
   } catch (e) {
     if (e.name !== 'AbortError') {
-      console.error('流式接收异常:', e)
-      ElMessage.error(e.message || '消息接收失败，请重试')
       // 更新消息状态提示错误
       const msgIndex = chat.messageList.findIndex((item) => item.id === streamMsgIdRef.value)
       if (msgIndex !== -1 && !chat.messageList[msgIndex].content.includes('抱歉')) {
@@ -853,7 +883,7 @@ const getAndParseChatData = async (requestData, abortSignal) => {
   } finally {
     await nextTick()
     setTimeout(() => {
-      scrollToBottom()
+      scrollToBottom({ force: true })
       chat.isSending = false
       streamAbortCtrl.value = null
     }, STREAM_SCROLL_DELAY)
@@ -878,7 +908,6 @@ const updateHistoryByResponse = () => {
 
     // 检查历史列表中是否已存在该对话
     const existSessionIdx = history.historyList.findIndex((item) => item.id === sessionId)
-
     if (existSessionIdx !== -1) {
       // 已有对话：更新标题和时间（不新增）
       history.historyList[existSessionIdx] = {
@@ -932,7 +961,13 @@ onMounted(() => {
   // 监听聊天区域的滚动事件，实时检测是否显示按钮
   const chatMsgWrapper = chatMsgWrapperRef.value
   if (chatMsgWrapper) {
-    chatMsgWrapper.addEventListener('scroll', checkScrollBottomBtn)
+    chatMsgWrapper.addEventListener('scroll', checkScrollBottomBtn, { passive: true })
+    // 监听resize事件，适配窗口大小变化导致的定位偏差(只有用户未手动滚动时，才自动校准)
+    window.addEventListener('resize', () => {
+      if (!chat.isUserScrolled) {
+        scrollToBottom({ force: true })
+      }
+    })
   }
   // 监听消息列表变化，自动检测滚动位置
   const unwatchMessages = watch(
@@ -940,6 +975,10 @@ onMounted(() => {
     async () => {
       await nextTick()
       checkScrollBottomBtn()
+      // 消息数变化时，强制校准滚动位置
+      if (!chat.isUserScrolled) {
+        scrollToBottom({ force: true })
+      }
     },
   )
   // 监听窗口大小变化（比如缩放、移动端旋转），更新按钮状态
@@ -956,7 +995,7 @@ onMounted(() => {
   // 页面刷新后主动初始化滚动和按钮状态
   setTimeout(() => {
     nextTick(() => {
-      scrollToBottom()
+      scrollToBottom({ force: true })
       checkScrollBottomBtn()
     })
   }, STREAM_SCROLL_DELAY)
@@ -973,11 +1012,14 @@ onUnmounted(() => {
   globalAbortCtrl.value.abort()
   if (streamAbortCtrl.value) streamAbortCtrl.value.abort()
   requestLock.value = false
+  // 清除滚动条定时器
+  if (scrollbarShowTimer.value) clearTimeout(scrollbarShowTimer.value);
 })
 
 func.setChatMsgScrollTop(chatMsgScrollTop)
 func.setChatMsgInputFocus(chatMsgInputFocus)
 func.setScrollToBottom(scrollToBottom)
+func.setCheckScrollBottomBtn(checkScrollBottomBtn)
 func.setTriggerNewChat(triggerNewChat)
 </script>
 

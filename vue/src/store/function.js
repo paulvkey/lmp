@@ -6,6 +6,7 @@ export const useFunctionStore = defineStore('function', {
     chatMsgScrollTop: null,
     chatMsgInputFocus: null,
     scrollToBottom: null,
+    checkScrollBottomBtn: null,
     scrollBtnCleanup: null,
     triggerNewChat: null,
   }),
@@ -19,6 +20,9 @@ export const useFunctionStore = defineStore('function', {
     },
     setScrollToBottom(func) {
       this.scrollToBottom = func
+    },
+    setCheckScrollBottomBtn(func) {
+      this.checkScrollBottomBtn = func
     },
     setScrollBtnCleanup(func) {
       this.scrollBtnCleanup = func
