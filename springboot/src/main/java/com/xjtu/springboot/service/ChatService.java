@@ -71,7 +71,6 @@ public class ChatService {
         // https://docs.ollama.com/api/chat#response-load-duration
         // https://github.com/ollama/ollama/blob/main/docs/api.md
         RequestData requestData = genrateRequestData(chatData);
-        log.info(requestData.toString());
         // 转换为JSON
         String requestJson = objectMapper.writeValueAsString(requestData);
         // 构建请求
@@ -126,6 +125,7 @@ public class ChatService {
             requestMessageList.add(requestMessage);
         }
         requestData.setMessages(requestMessageList);
+
         Options options = new Options();
         options.setTemperature(0.6);
         requestData.setOptions(options);

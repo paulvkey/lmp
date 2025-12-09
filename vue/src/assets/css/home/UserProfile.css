@@ -59,11 +59,21 @@
   align-items: center;
   justify-content: flex-start;
   text-align: left;
-  padding: 8px 20px;
+  padding: 8px 10px;
+  margin: 4px 10px;
   color: #333;
+  border-radius: 10px;
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.2s;
+}
+
+.user-item:first-child {
+  margin-top: 10px;
+}
+
+.user-item:last-child {
+  margin-bottom: 10px;
 }
 
 .user-item:hover {

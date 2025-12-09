@@ -337,40 +337,9 @@ const chatMsgInputFocus = () => {
   chatMsgInputRef.value?.focus()
 }
 
-// 可见文件（最多6个）
-const visibleFiles = computed(() => {
-  return chat.uploadedFiles.slice(0, MAX_FILE_SHOW)
-})
-
-// 是否有更多文件
-const hasMoreFiles = computed(() => {
-  return chat.uploadedFiles.length > 6
-})
-
-// 更多文件有多少
-const moreFilesCount = computed(() => {
-  return Math.max(chat.uploadedFiles.length - MAX_FILE_SHOW, 0);
-})
-
-// 移除特定文件
-const removeUploadedFile = (index) => {
-  if (index < 0 || index >= chat.uploadedFiles.length) {
-    console.warn('无效的文件索引:', index)
-    return
-  }
-  const file = chat.uploadedFiles[index]
-  if (file.isImage && file.previewUrl) {
-    URL.revokeObjectURL(file.previewUrl)
-  }
-  chat.uploadedFiles.splice(index, 1)
-  if (chat.uploadedFiles.length <= MAX_FILE_SHOW) {
-    chat.showAllFiles = false
-  }
-}
-
 const formatUserMessage = (content) => {
   if (!content) return ''
-  // 仅转义 HTML 特殊字符（一次即可）
+  // 仅转义 HTML 特殊字符
   let escaped = content
     .replace(/&/g, '&amp;') // & → &amp;
     .replace(/</g, '&lt;') // < → &lt;
@@ -394,7 +363,7 @@ const checkScrollBottomBtn = () => {
   // 阈值：距离底部超过10px时显示按钮（避免轻微滚动就触发）
   const isNotAtBottom = scrollTop + clientHeight < scrollHeight - 10
 
-  // 更新显示状态（避免频繁更新，仅状态变化时赋值）
+  // 更新显示状态
   if (chat.showScrollBtn !== isNotAtBottom) {
     chat.showScrollBtn = isNotAtBottom
   }
@@ -565,6 +534,37 @@ const handleFileSelected = async (e) => {
   }
 }
 
+// 可见文件
+const visibleFiles = computed(() => {
+  return chat.uploadedFiles.slice(0, MAX_FILE_SHOW)
+})
+
+// 是否有更多文件
+const hasMoreFiles = computed(() => {
+  return chat.uploadedFiles.length > 6
+})
+
+// 更多文件有多少
+const moreFilesCount = computed(() => {
+  return Math.max(chat.uploadedFiles.length - MAX_FILE_SHOW, 0);
+})
+
+// 移除特定文件
+const removeUploadedFile = (index) => {
+  if (index < 0 || index >= chat.uploadedFiles.length) {
+    console.warn('无效的文件索引:', index)
+    return
+  }
+  const file = chat.uploadedFiles[index]
+  if (file.isImage && file.previewUrl) {
+    URL.revokeObjectURL(file.previewUrl)
+  }
+  chat.uploadedFiles.splice(index, 1)
+  if (chat.uploadedFiles.length <= MAX_FILE_SHOW) {
+    chat.showAllFiles = false
+  }
+}
+
 // 处理输入框键盘事件
 const handleKeydown = (e) => {
   if (e.keyCode === 13) {
@@ -632,6 +632,14 @@ const beforeSendMessage = () => {
   if (!hasUploadFiles && inputData.length <= 0) return false
 
   chat.initModelInfo(userProfile)
+  chat.modelInfo.messageList = []
+  chat.messageList.forEach(msg => {
+    chat.modelInfo.messageList.push({
+      content: msg.content,
+      type: msg.type,
+      role: msg.isUser ? 1 : 2
+    })
+  })
   if (hasUploadFiles && !chat.filesUploaded) {
     const fileContent = chat.uploadedFiles.map((file) => ({
       name: file.name,
@@ -739,7 +747,6 @@ const getAndParseChatData = async (requestData, abortSignal) => {
 
       // 解码并拼接数据
       buffer += decoder.decode(value, { stream: true })
-      console.log(buffer)
       const events = buffer.split('\n\n')
       buffer = events.pop() || ''
 

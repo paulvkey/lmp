@@ -47,13 +47,12 @@ public class ChatController {
         }
         ChatData result = new ChatData();
         try {
-            if (chatData.getIsLogin()) {
+            if (chatData.getIsLogin() && chatData.getNewSession()) {
                 result = chatService.createSession(chatData);
                 result.setMessageType(chatData.getMessageType());
             } else {
                 result.copyFrom(chatData);
             }
-
             result.setNewSession(false);
         } catch (Exception e) {
             return Result.error(e.getMessage());
@@ -140,10 +139,10 @@ public class ChatController {
     @RequestMapping(method = RequestMethod.POST, path = "/session/chat")
     public SseEmitter chat(@RequestBody ChatData chatData) {
         if (CollectionUtils.isEmpty(chatData.getMessageList())) {
-            return createEmptyErrorEmitter("消息列表为空");
+            return createEmptyErrorEmitter("对话消息列表为空");
         }
 
-        SseEmitter emitter = new SseEmitter(TimeUnit.MINUTES.toMillis(10));
+        SseEmitter emitter = new SseEmitter(TimeUnit.MINUTES.toMillis(30));
         Long sessionId = chatData.getIsLogin() ? chatData.getSessionId() : 0L;
         AtomicBoolean isEmitterCompleted = new AtomicBoolean(false);
 
@@ -345,7 +344,7 @@ public class ChatController {
         }
     }
 
-    // ========== 通用SSE事件发送方法（保留） ==========
+    // ========== 通用SSE事件发送方法 ==========
     private void sendSseEvent(SseEmitter emitter,
                               AtomicBoolean isEmitterCompleted,
                               String eventName,

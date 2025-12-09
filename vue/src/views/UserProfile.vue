@@ -1,5 +1,4 @@
 <template>
-  <!-- 模板内容保持不变 -->
   <div class="profile-container">
     <!-- 页面标题 -->
     <div class="profile-header">
@@ -277,12 +276,18 @@ import request from '@/utils/request.js'
 import { useUserProfileStore } from '@/store/userProfile.js'
 import { checkLogin, checkPhone } from '@/utils/commonUtils.js'
 import { getImageDimensions } from '@/utils/fileUtils.js'
-// noinspection ES6UnusedImports
 import { formatTimeDay, formatTimeSecond } from '@/utils/dateUtils.js'
 import router from '@/router/index.js'
+import { useHomeStatusStore } from '@/store/homeStatus.js'
+import { useHistoryStore } from '@/store/history.js'
+import { useCollectionStore } from '@/store/collection.js'
+import { useChatStore } from '@/store/chat.js'
 
-// 状态管理
 const userProfile = useUserProfileStore()
+const homeStatus = useHomeStatusStore()
+const history = useHistoryStore()
+const collection = useCollectionStore()
+const chat = useChatStore()
 
 // 激活的标签页
 const activeTab = ref('profile')
@@ -632,10 +637,14 @@ const changePassword = () => {
 
 const logout = () => {
   userProfile.clearUserProfile()
+  homeStatus.clearHomeStatus()
+  history.clearHistory()
+  collection.clearCollection()
+  chat.clearChat()
   localStorage.removeItem('currentSessionId')
-  ElMessage.success('已退出登录，跳转至登录页')
+  ElMessage.success('已退出登录')
   setTimeout(() => {
-    router.push('/login')
+    window.open('/home', '_blank')
   }, 300)
 }
 
