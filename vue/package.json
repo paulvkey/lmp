@@ -21,6 +21,7 @@
     "dayjs": "^1.11.18",
     "element-plus": "^2.11.4",
     "katex": "^0.16.25",
+    "lodash": "^4.17.21",
     "lodash.debounce": "^4.0.8",
     "markstream-vue": "^0.0.2",
     "mermaid": "^11.12.2",

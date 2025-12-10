@@ -1,6 +1,4 @@
 import { defineStore } from 'pinia'
-import { useUserProfileStore } from '@/store/userProfile.js'
-import { useHomeStatusStore } from '@/store/homeStatus.js'
 
 // 定义信息存储
 export const useChatStore = defineStore('chat', {

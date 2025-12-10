@@ -260,10 +260,15 @@ public class ChatController {
                     }
 
                     // 发送分块消息
+                    String thinking = responseData.getMessage().getThinking();
                     String content = responseData.getMessage().getContent();
-                    if (StringUtils.isNotEmpty(content)) {
+                    if (StringUtils.isNotEmpty(content) || StringUtils.isNotEmpty(thinking)) {
                         if (isLogin) {
-                            messageHolder.appendContent(sessionId, content);
+                            if (StringUtils.isNotEmpty(thinking)) {
+                                messageHolder.appendContent(sessionId, thinking, true);
+                            } else {
+                                messageHolder.appendContent(sessionId, content, false);
+                            }
                         }
                         sendSseEvent(emitter, isEmitterCompleted, CHUNK_EVENT, responseData);
                     }
@@ -297,8 +302,9 @@ public class ChatController {
 
         // 登录用户需要组装完整回复
         if (isLogin && updateData != null) {
-            String completeContent = messageHolder.getCompleteContent(sessionId);
-            Msg msg = new Msg(completeContent, ChatService.TEXT, 2);
+            String thinking = messageHolder.getCompleteContent(sessionId, true);
+            String content = messageHolder.getCompleteContent(sessionId, false);
+            Msg msg = new Msg(thinking, content, ChatService.TEXT, 2);
             updateData.setMessageList(Collections.singletonList(msg));
             try {
                 finishData = chatService.updateSession(updateData);

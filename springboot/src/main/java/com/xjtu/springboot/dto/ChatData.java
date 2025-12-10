@@ -38,7 +38,6 @@ public class ChatData implements Serializable {
     private Integer tokenCount = 0;
     private Byte isDeepThink = 0;
     private Byte isNetworkSearch = 0;
-    private String deepThinkStep;
 
     public void copyFrom(ChatData chatData) {
         this.isLogin = chatData.getIsLogin();
@@ -59,6 +58,5 @@ public class ChatData implements Serializable {
         this.tokenCount = chatData.getTokenCount();
         this.isDeepThink = chatData.getIsDeepThink();
         this.isNetworkSearch = chatData.getIsNetworkSearch();
-        this.deepThinkStep = chatData.getDeepThinkStep();
     }
 }

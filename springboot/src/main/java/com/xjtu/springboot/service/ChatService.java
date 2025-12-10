@@ -217,6 +217,7 @@ public class ChatService {
             chatMessage.setSessionId(chatSession.getId());
             chatMessage.setMessageType(chatData.getMessageType());
             chatMessage.setType(msg.getType());
+            chatMessage.setMessageThinking(msg.getThinking());
             chatMessage.setMessageContent(msg.getContent());
             chatMessage.setTokenCount(msg.getContent().length());
             chatMessage.setIsDeepThink(chatData.getIsDeepThink());
@@ -243,7 +244,6 @@ public class ChatService {
         chatData.setLastMessageTime(chatSession.getLastMessageTime());
         chatData.setIsPinned(chatSession.getIsPinned());
 
-        // TODO
         for (ChatMessage chatMessage : chatMessageList) {
             if (TEXT.equals(chatMessage.getType())) {
                 chatData.setMessageType(chatMessage.getMessageType());
@@ -252,7 +252,6 @@ public class ChatService {
                 chatData.setTokenCount(chatMessage.getTokenCount());
                 chatData.setIsDeepThink(chatMessage.getIsDeepThink());
                 chatData.setIsNetworkSearch(chatMessage.getIsNetworkSearch());
-                chatData.setDeepThinkStep(chatMessage.getDeepThinkStep());
             } else {
                 chatData.setMessageType(chatMessageList.get(0).getMessageType());
                 chatData.setSendTime(chatMessageList.get(0).getSendTime());
@@ -260,7 +259,6 @@ public class ChatService {
                 chatData.setTokenCount(chatMessageList.get(0).getTokenCount());
                 chatData.setIsDeepThink(chatMessageList.get(0).getIsDeepThink());
                 chatData.setIsNetworkSearch(chatMessageList.get(0).getIsNetworkSearch());
-                chatData.setDeepThinkStep(chatMessageList.get(0).getDeepThinkStep());
                 break;
             }
         }

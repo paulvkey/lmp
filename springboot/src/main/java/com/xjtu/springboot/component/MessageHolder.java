@@ -1,6 +1,7 @@
 package com.xjtu.springboot.component;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -17,7 +18,8 @@ import java.util.concurrent.locks.ReentrantLock;
 @Component
 public class MessageHolder {
     // 存储会话ID与对应累积内容的映射（线程安全）
-    private final ConcurrentHashMap<Long, AtomicReference<StringBuilder>> contentMap = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Long, AtomicReference<Pair<StringBuilder, StringBuilder>>>
+            contentMap = new ConcurrentHashMap<>();
     // 存储会话创建时间，用于超时清理
     private final ConcurrentHashMap<Long, Long> sessionCreateTime = new ConcurrentHashMap<>();
     // 锁对象用于定时任务安全操作
@@ -29,41 +31,57 @@ public class MessageHolder {
      * 初始化会话的内容容器
      */
     public void initContentHolder(Long sessionId) {
-        contentMap.putIfAbsent(sessionId, new AtomicReference<>(new StringBuilder()));
+        contentMap.putIfAbsent(sessionId, new AtomicReference<>(Pair.of(new StringBuilder(), new StringBuilder())));
         sessionCreateTime.put(sessionId, System.currentTimeMillis());
         log.debug("初始化会话[{}]的流式内容容器", sessionId);
 
     }
 
+
     /**
      * 累加流式内容
      */
-    public void appendContent(Long sessionId, String content) {
+    public void appendContent(Long sessionId, String content, Boolean isThinking) {
         if (sessionId == null || StringUtils.isBlank(content)) return;
 
-        AtomicReference<StringBuilder> contentRef = contentMap.get(sessionId);
+        AtomicReference<Pair<StringBuilder, StringBuilder>> contentRef = contentMap.get(sessionId);
         if (contentRef != null) {
             // 限制单会话最大内容长度（防止内存溢出）
-            StringBuilder sb = contentRef.get();
-            // 5MB限制
-            if (sb.length() + content.length() > 1024 * 1024 * 5) {
-                log.warn("会话[{}]内容超过5MB，将截断", sessionId);
-                return;
+            Pair<StringBuilder, StringBuilder> sbPair = contentRef.get();
+            if (sbPair != null) {
+                StringBuilder sb = null;
+                if  (isThinking) {
+                    sb = sbPair.getLeft();
+                } else {
+                    sb = sbPair.getRight();
+                }
+                // 5MB限制
+                if (sb.length() + content.length() > 1024 * 1024 * 5) {
+                    log.warn("会话[{}]内容超过5MB，将截断", sessionId);
+                    return;
+                }
+                sb.append(content);
+                sessionCreateTime.put(sessionId, System.currentTimeMillis());
             }
-            sb.append(content);
-            sessionCreateTime.put(sessionId, System.currentTimeMillis());
         }
     }
 
     /**
      * 获取完整内容并清除暂存
      */
-    public String getCompleteContent(Long sessionId) {
+    public String getCompleteContent(Long sessionId, Boolean isThinking) {
         lock.lock();
         try {
-            AtomicReference<StringBuilder> contentRef = contentMap.remove(sessionId);
+            AtomicReference<Pair<StringBuilder, StringBuilder>> contentRef = contentMap.remove(sessionId);
             sessionCreateTime.remove(sessionId);
-            return contentRef != null ? contentRef.get().toString() : "";
+            if (contentRef != null) {
+                if (isThinking) {
+                    return contentRef.get().getLeft().toString();
+                } else {
+                    return contentRef.get().getRight().toString();
+                }
+            }
+            return "";
         } finally {
             lock.unlock();
         }

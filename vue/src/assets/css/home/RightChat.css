@@ -155,7 +155,6 @@
 
 .system-msg-wrapper {
   background-color: transparent;
-  /* background-color: #f5f7fa; */
 }
 
 .user-msg-wrapper {
@@ -171,6 +170,43 @@
   justify-content: flex-end;
 }
 
+/* 思考过程 折叠/展开按钮样式 */
+.toggle-thinking {
+  display: inline-block;
+  font-size: 14px;
+  padding: 5px 10px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  text-align: left;
+  color: #333;
+  border: 1px solid #f0f0f0;
+  border-radius: 10px;
+  background-color: #fafafa;
+}
+
+/* 思考内容区域样式 */
+.thinking-msg {
+  display: block;
+  max-height: 240px;
+  font-size: 12px;
+  line-height: 1.4;
+  padding: 0 6px 0 10px;
+  margin-bottom: 16px;
+  color: #999;
+  border-left: 1px solid #f0f0f0;
+  overflow-y: auto;
+  transition: all 0.3s ease;
+  scrollbar-width: thin;
+}
+
+/* 思考内容折叠状态 */
+.thinking-msg.collapsed {
+  display: none;
+  max-height: 0;
+  overflow: hidden;
+}
+
+/* 文件相关样式 */
 .msg-file-list {
   display: flex;
   flex-direction: column;

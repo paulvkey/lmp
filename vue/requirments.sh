@@ -13,7 +13,7 @@ npm install axios -S
 npm install pinia -S
 npm install pinia-plugin-persistedstate -S
 npm install @vitejs/plugin-vue-jsx -D
-npm install lodash.debounce -S
+npm install lodash -S
 
 npm install shiki stream-markdown stream-monaco mermaid katex -S
 npm install markstream-vue -S

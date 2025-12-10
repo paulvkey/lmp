@@ -67,6 +67,17 @@
             </div>
           </div>
           <div class="system-msg-wrapper" v-else>
+            <!-- 思考过程 折叠/展开按钮 -->
+            <button v-if="msg.thinking" class="toggle-thinking" @click="msg.showThinking = !msg.showThinking">
+              {{ msg.thinkingTitle }}
+            </button>
+
+            <!-- 思考内容区域 -->
+            <div class="thinking-msg" :class="{ collapsed: !msg.showThinking }">
+              <MarkdownRender :content="msg.thinking" />
+            </div>
+
+            <!-- 结果消息区域 -->
             <div class="chat-msg">
               <MarkdownRender :content="msg.content" />
             </div>
@@ -290,6 +301,7 @@ import UploadFilesBox from '@/components/home/UploadFilesBox.vue'
 import MarkdownRender from 'markstream-vue'
 import 'markstream-vue/index.css'
 import '@/assets/css/Global.css'
+import { debounce } from 'lodash'
 import { useChatStore } from '@/store/chat.js'
 import { useHomeStatusStore } from '@/store/homeStatus.js'
 import { useFunctionStore } from '@/store/function.js'
@@ -304,11 +316,11 @@ const func = useFunctionStore()
 
 const STREAM_SCROLL_DELAY = 100
 const SCROLL_DEBOUNCE_DELAY = 100
-const SCROLLBAR_SHOW_DURATION = 500;
+const SCROLLBAR_SHOW_DURATION = 500
 const MAX_FILE_SHOW = 5
 
 const scrollDebounceTimer = ref(null)
-const scrollbarShowTimer = ref(null);
+const scrollbarShowTimer = ref(null)
 const chatMsgWrapperRef = ref(null)
 const chatMsgInputRef = ref(null)
 const chatInputFileRef = ref(null)
@@ -388,6 +400,7 @@ const scrollToBottom = (options = {}) => {
       }
     }, STREAM_SCROLL_DELAY)
   } catch (e) {
+    console.warn('滚动异常：' + e)
     chatMsgWrapper.scrollTop = chatMsgWrapper.scrollHeight
     chat.isScrolling = false
   }
@@ -395,52 +408,52 @@ const scrollToBottom = (options = {}) => {
 
 // 滚动检测逻辑，防抖和手动滚动判断
 const checkScrollBottomBtn = () => {
-  if (scrollDebounceTimer.value) clearTimeout(scrollDebounceTimer.value);
-  if (scrollbarShowTimer.value) clearTimeout(scrollbarShowTimer.value);
+  if (scrollDebounceTimer.value) clearTimeout(scrollDebounceTimer.value)
+  if (scrollbarShowTimer.value) clearTimeout(scrollbarShowTimer.value)
 
   // 滚动时立即显示滚动条
-  showScrollbar();
+  showScrollbar()
   // 滚动停止后，延迟隐藏滚动条
   scrollbarShowTimer.value = setTimeout(() => {
-    hideScrollbar();
-  }, SCROLLBAR_SHOW_DURATION);
+    hideScrollbar()
+  }, SCROLLBAR_SHOW_DURATION)
 
   // 滚动按钮检测
   scrollDebounceTimer.value = setTimeout(() => {
-    const chatMsgWrapper = chatMsgWrapperRef.value;
-    if (!chatMsgWrapper) return;
+    const chatMsgWrapper = chatMsgWrapperRef.value
+    if (!chatMsgWrapper) return
 
-    const { scrollTop, scrollHeight, clientHeight } = chatMsgWrapper;
-    const distanceToBottom = scrollHeight - scrollTop - clientHeight;
-    chat.isUserScrolled = scrollHeight > clientHeight && distanceToBottom > 5;
-    chat.showScrollBtn = chat.isUserScrolled;
-  }, SCROLL_DEBOUNCE_DELAY);
-};
+    const { scrollTop, scrollHeight, clientHeight } = chatMsgWrapper
+    const distanceToBottom = scrollHeight - scrollTop - clientHeight
+    chat.isUserScrolled = scrollHeight > clientHeight && distanceToBottom > 5
+    chat.showScrollBtn = chat.isUserScrolled
+  }, SCROLL_DEBOUNCE_DELAY)
+}
 
 // 显示滚动条
 const showScrollbar = () => {
-  const chatMsgWrapper = chatMsgWrapperRef.value;
-  if (!chatMsgWrapper) return;
+  const chatMsgWrapper = chatMsgWrapperRef.value
+  if (!chatMsgWrapper) return
 
   // 直接修改样式（优先级最高）
-  chatMsgWrapper.style.scrollbarColor = '#ccc transparent';
-  chatMsgWrapper.style.setProperty('--scrollbar-thumb-bg', '#ccc');
+  chatMsgWrapper.style.scrollbarColor = '#ccc transparent'
+  chatMsgWrapper.style.setProperty('--scrollbar-thumb-bg', '#ccc')
   // 强制更新滚动条样式
-  chatMsgWrapper.classList.add('scrollbar-visible');
+  chatMsgWrapper.classList.add('scrollbar-visible')
   setTimeout(() => {
-    chatMsgWrapper.classList.remove('scrollbar-visible');
-  }, 0);
-};
+    chatMsgWrapper.classList.remove('scrollbar-visible')
+  }, 0)
+}
 
 // 隐藏滚动条
 const hideScrollbar = () => {
-  const chatMsgWrapper = chatMsgWrapperRef.value;
-  if (!chatMsgWrapper) return;
+  const chatMsgWrapper = chatMsgWrapperRef.value
+  if (!chatMsgWrapper) return
 
   // 兼容 Webkit（Chrome/Safari）
-  chatMsgWrapper.style.scrollbarColor = 'transparent transparent';
-  chatMsgWrapper.style.setProperty('--scrollbar-thumb-bg', 'transparent');
-};
+  chatMsgWrapper.style.scrollbarColor = 'transparent transparent'
+  chatMsgWrapper.style.setProperty('--scrollbar-thumb-bg', 'transparent')
+}
 
 // 文件上传相关方法
 const handleFileUploadClick = () => {
@@ -657,7 +670,7 @@ const sendMessage = async () => {
       ElMessage.error('发送消息异常: ' + response.msg)
     }
   } catch (e) {
-    // 不做处理
+    console.error('发送消息异常：' + e)
   } finally {
     chat.resetChat()
     homeStatus.isNewSession = false
@@ -675,8 +688,10 @@ const beforeSendMessage = () => {
 
   chat.initModelInfo(userProfile)
   chat.modelInfo.messageList = []
+  // TODO(让后端查询数据库 没必要前端传递增加开销) 将之前所有的对话内容都传递
   chat.messageList.forEach((msg) => {
     chat.modelInfo.messageList.push({
+      thinking: msg.thinking,
       content: msg.content,
       type: msg.type,
       role: msg.isUser ? 1 : 2,
@@ -697,6 +712,7 @@ const beforeSendMessage = () => {
     }
     chat.messageList.push(fileMessage)
     chat.modelInfo.messageList.push({
+      thinking: '',
       content: fileMessage.content,
       type: fileMessage.type,
       role: fileMessage.isUser ? 1 : 2,
@@ -712,6 +728,7 @@ const beforeSendMessage = () => {
   }
   chat.messageList.push(message)
   chat.modelInfo.messageList.push({
+    thinking: '',
     content: message.content,
     type: message.type,
     role: message.isUser ? 1 : 2,
@@ -752,10 +769,13 @@ const getAndParseChatData = async (requestData, abortSignal) => {
     streamMsgIdRef.value = Date.now() + '-stream'
     const streamMsg = {
       id: streamMsgIdRef.value,
+      thinking: '',
       content: '',
       isUser: false,
       type: 'text',
       isStreaming: true,
+      showThinking: true,
+      thinkingTitle: '',
     }
     chat.messageList.push(streamMsg)
     await nextTick()
@@ -774,7 +794,7 @@ const getAndParseChatData = async (requestData, abortSignal) => {
 
     let errorMsg = '抱歉，请求异常，请重试'
     if (!response.ok) {
-      await handleChatError(streamMsgIdRef.value, errorMsg)
+      await setMsgEndInfo(streamMsgIdRef.value, errorMsg)
       return
     }
 
@@ -782,7 +802,6 @@ const getAndParseChatData = async (requestData, abortSignal) => {
     const reader = response.body.getReader()
     const decoder = new TextDecoder('utf-8')
     let buffer = ''
-
     while (true) {
       const { done, value } = await reader.read()
       if (done) break
@@ -800,7 +819,6 @@ const getAndParseChatData = async (requestData, abortSignal) => {
         const lines = eventBlock.split('\n').filter((line) => line.trim() !== '')
         let eventName = ''
         let eventData = ''
-
         for (const line of lines) {
           if (line.startsWith('event:')) {
             // 提取事件名（仅关注chunk/finished/error）
@@ -814,72 +832,34 @@ const getAndParseChatData = async (requestData, abortSignal) => {
         if (!eventData) continue
         try {
           const parsedData = JSON.parse(eventData)
-          // 处理分块消息（chunk：实时接收流式内容）
+          const msgIndex = getMsgIndex()
           if (eventName === 'chunk') {
-            if (parsedData.message?.content) {
-              const msgIndex = chat.messageList.findIndex(
-                (item) => item.id === streamMsgIdRef.value,
-              )
-              if (msgIndex !== -1) {
-                chat.$patch({
-                  messageList: chat.messageList.map((item, index) => {
-                    if (index === msgIndex) {
-                      return {
-                        ...item,
-                        content: item.content + parsedData.message.content,
-                      }
-                    }
-                    return item
-                  }),
-                })
-                await nextTick()
-                scrollToBottom()
-              }
-            }
-          }
-
-          // 处理结束事件（finished：完成事件单独返回格式）
-          else if (eventName === 'finished') {
-            const rawChat = toRaw(chat)
-            const msgIndex = rawChat.messageList.findIndex(
-              (item) => item.id === streamMsgIdRef.value,
-            )
-            if (msgIndex !== -1) {
-              // 标记流式结束，优先使用后端返回的最终内容(但是不更新dom)
-              rawChat.messageList[msgIndex].content =
-                parsedData.data?.messageList?.[0]?.content || rawChat.messageList[msgIndex].content
-            }
+            // 处理分块消息（chunk：实时接收流式内容）
+            await updateChunkMsg(parsedData, msgIndex)
+            await nextTick()
+            scrollToBottom()
+          } else if (eventName === 'finished') {
+            // 处理结束事件（finished：完成事件单独返回格式）
+            await updateFinishedMsg(parsedData, msgIndex)
             // 释放资源，结束循环
             reader.releaseLock()
             return
-          }
-
-          // 处理错误事件（error：超时/业务异常）
-          else if (eventName === 'error') {
+          } else if (eventName === 'error') {
+            // 处理错误事件（error：超时/业务异常）
             errorMsg = parsedData.msg || errorMsg
-            await handleChatError(streamMsgIdRef.value, errorMsg)
+            await setMsgEndInfo(streamMsgIdRef.value, errorMsg)
             reader.releaseLock()
           }
         } catch (e) {
-          // 暂不处理
+          console.error('解析服务端消息异常：' + e)
         }
       }
     }
 
     // 流式接收意外结束时，标记消息完成
-    const msgIndex = chat.messageList.findIndex((item) => item.id === streamMsgIdRef.value)
-    if (msgIndex !== -1) {
-      chat.messageList[msgIndex].isStreaming = false
-    }
+    await setMsgEndInfo()
   } catch (e) {
-    if (e.name !== 'AbortError') {
-      // 更新消息状态提示错误
-      const msgIndex = chat.messageList.findIndex((item) => item.id === streamMsgIdRef.value)
-      if (msgIndex !== -1 && !chat.messageList[msgIndex].content.includes('抱歉')) {
-        chat.messageList[msgIndex].content += `\n\n ${e.message || '消息接收中断'}`
-        chat.messageList[msgIndex].isStreaming = false
-      }
-    }
+    await setMsgEndInfo()
   } finally {
     await nextTick()
     setTimeout(() => {
@@ -890,10 +870,101 @@ const getAndParseChatData = async (requestData, abortSignal) => {
   }
 }
 
-const handleChatError = async (msgId, errorMsg) => {
-  const msgIndex = chat.messageList.findIndex((item) => item.id === msgId)
+const getMsgIndex = (newMsgId = -1) => {
+  const list = chat.messageList
+  let msgId = streamMsgIdRef.value
+  if (newMsgId !== -1) {
+    msgId = newMsgId
+  }
+  // 数组为空/目标id为空，直接返回-1
+  if (!list.length || !msgId) return -1
+
+  // 优先校验最后一项
+  const lastIndex = list.length - 1
+  if (list[lastIndex].id === msgId) {
+    return lastIndex
+  }
+  // 异常场景（目标不是最后一项）→ 反向遍历（从倒数第二项开始）
+  for (let i = lastIndex - 1; i >= 0; i--) {
+    if (list[i].id === msgId) {
+      return i
+    }
+  }
+  return -1
+}
+
+const updateChunkMsg = async (parsedData, msgIndex) => {
+  if (
+    !chat.messageList ||
+    !chat.messageList.length ||
+    msgIndex === -1 ||
+    msgIndex >= chat.messageList.length
+  ) {
+    return
+  }
+  const targetMsg = chat.messageList[msgIndex]
+  if (!targetMsg || !parsedData?.message) {
+    return
+  }
+
+  const { thinking, content } = parsedData.message
+  let isNeedUpdate = false
+  const newMsg = { ...targetMsg }
+  if (typeof thinking === 'string' && thinking) {
+    if (newMsg.thinkingTitle === '') {
+      newMsg.thinkingTitle = '思考中'
+    }
+    newMsg.thinking = (targetMsg.thinking || '') + thinking
+    isNeedUpdate = true
+  }
+  if (typeof content === 'string' && content) {
+    if (!newMsg.thinkingTitle || newMsg.thinkingTitle === '思考中') {
+      newMsg.thinkingTitle = '思考完成'
+    }
+    newMsg.showThinking = false
+    newMsg.content = (targetMsg.content || '') + content
+    isNeedUpdate = true
+  }
+
+  if (isNeedUpdate) {
+    // 用$patch函数式修改，直接操作state，无需拷贝整个数组
+    chat.$patch((state) => {
+      state.messageList[msgIndex] = newMsg
+    })
+  }
+}
+
+const updateFinishedMsg = async (parsedData, msgIndex) => {
+  if (
+    !chat.messageList ||
+    !chat.messageList.length ||
+    msgIndex === -1 ||
+    msgIndex >= chat.messageList.length
+  ) {
+    return
+  }
+
+  const rawChat = toRaw(chat)
+  const targetMsg = rawChat.messageList[msgIndex]
+  if (!targetMsg || !parsedData?.data || !parsedData.data.messageList) {
+    return
+  }
+  const { thinking, content } = parsedData.data.messageList[0]
+  if (typeof thinking === 'string' && thinking.trim() !== '') {
+    targetMsg.thinking = thinking
+  }
+  if (typeof content === 'string' && content.trim() !== '') {
+    targetMsg.content = content
+  }
+}
+
+const setMsgEndInfo = async (newMsgId = -1, errorMsg = '') => {
+  const msgIndex = getMsgIndex(newMsgId)
   if (msgIndex !== -1) {
-    chat.messageList[msgIndex].content = errorMsg
+    if (errorMsg.trim() !== '') {
+      chat.messageList[msgIndex].content = errorMsg
+    }
+    chat.messageList[msgIndex].showThinking = false
     chat.messageList[msgIndex].isStreaming = false
   }
   await nextTick()
@@ -1013,7 +1084,7 @@ onUnmounted(() => {
   if (streamAbortCtrl.value) streamAbortCtrl.value.abort()
   requestLock.value = false
   // 清除滚动条定时器
-  if (scrollbarShowTimer.value) clearTimeout(scrollbarShowTimer.value);
+  if (scrollbarShowTimer.value) clearTimeout(scrollbarShowTimer.value)
 })
 
 func.setChatMsgScrollTop(chatMsgScrollTop)
