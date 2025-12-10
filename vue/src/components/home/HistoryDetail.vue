@@ -181,7 +181,8 @@ const loadHistorySession = async (item) => {
     history.loadedSessionId = item.id
     chat.chatTitle = sessionData.sessionTitle
     chat.messageList = messageList.map((msg) => ({
-      content: msg.messageContent,
+      thinking: msg.messageThinking || '',
+      content: msg.messageContent || '',
       isUser: msg.messageType === 1,
       type: msg.type ? msg.type : 'text',
     }))
