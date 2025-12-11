@@ -1,3 +1,13 @@
+// 跳转登录页面
+export const goToLogin = (router) => {
+  router.push('/login')
+}
+
+// 跳转注册页面
+export const goToRegister = (router) => {
+  router.push('/register')
+}
+
 export const validateUsername = (rule, value, callback) => {
   const usernameReg = /^[a-zA-Z][a-zA-Z0-9]{3,19}$/
   if (!value) {

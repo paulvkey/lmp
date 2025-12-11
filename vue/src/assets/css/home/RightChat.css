@@ -53,10 +53,10 @@
 }
 
 /* 对话调节参数按钮 */
-.tuning-params {
+.top-login-btn {
   background: none;
   border: none;
-  color: #666;
+  color: #333;
   font-size: 14px;
   padding: 4px 12px;
   cursor: pointer;
@@ -64,7 +64,7 @@
   transition: all 0.2s;
 }
 
-.tuning-params:hover {
+.top-login-btn:hover {
   color: #1890ff;
   background-color: rgba(22, 163, 255, 0.05);
 }
@@ -187,7 +187,7 @@
 /* 思考内容区域样式 */
 .thinking-msg {
   display: block;
-  max-height: 240px;
+  height: auto;
   font-size: 12px;
   line-height: 1.4;
   padding: 0 6px 0 10px;

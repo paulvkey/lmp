@@ -40,26 +40,6 @@ public class ChatController {
     private static final String CHUNK_EVENT = "chunk";
     private static final String FINISHED_EVENT = "finished";
 
-    @RequestMapping(method = RequestMethod.POST, path = "/session/new")
-    public Result newSession(@RequestBody ChatData chatData) {
-        if (CollectionUtils.isEmpty(chatData.getMessageList())) {
-            return Result.error("消息列表为空");
-        }
-        ChatData result = new ChatData();
-        try {
-            if (chatData.getIsLogin() && chatData.getNewSession()) {
-                result = chatService.createSession(chatData);
-                result.setMessageType(chatData.getMessageType());
-            } else {
-                result.copyFrom(chatData);
-            }
-            result.setNewSession(false);
-        } catch (Exception e) {
-            return Result.error(e.getMessage());
-        }
-        return Result.success(result);
-    }
-
     @RequestMapping(method = RequestMethod.GET, path = "session/history/{userId}")
     public Result getSessionByUserId(@PathVariable("userId") Long userId) {
         if (userId != null && userId > 0) {
@@ -136,6 +116,26 @@ public class ChatController {
         }
     }
 
+    @RequestMapping(method = RequestMethod.POST, path = "/session/chat/new")
+    public Result newSession(@RequestBody ChatData chatData) {
+        if (CollectionUtils.isEmpty(chatData.getMessageList())) {
+            return Result.error("消息列表为空");
+        }
+        ChatData result = new ChatData();
+        try {
+            if (chatData.getIsLogin() && chatData.getNewSession()) {
+                result = chatService.createSession(chatData);
+                result.setMessageType(chatData.getMessageType());
+            } else {
+                result.copyFrom(chatData);
+            }
+            result.setNewSession(false);
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+        return Result.success(result);
+    }
+
     @RequestMapping(method = RequestMethod.POST, path = "/session/chat")
     public SseEmitter chat(@RequestBody ChatData chatData) {
         if (CollectionUtils.isEmpty(chatData.getMessageList())) {
@@ -145,7 +145,6 @@ public class ChatController {
         SseEmitter emitter = new SseEmitter(TimeUnit.MINUTES.toMillis(30));
         Long sessionId = chatData.getIsLogin() ? chatData.getSessionId() : 0L;
         AtomicBoolean isEmitterCompleted = new AtomicBoolean(false);
-
         registerEmitterCallbacks(emitter, isEmitterCompleted, chatData, sessionId);
 
         try {
@@ -219,7 +218,8 @@ public class ChatController {
                                      AtomicBoolean isEmitterCompleted) throws Exception {
         // 保存用户输入
         chatData.setMessageType((byte) 1);
-        ChatData updateData = chatService.updateSession(chatData);
+        ChatData updateData = chatService.updateSession(chatData, true);
+        System.out.println(updateData);
         Long loginSessionId = updateData.getSessionId();
         messageHolder.initContentHolder(loginSessionId);
         log.debug("登录用户SSE初始化完成，sessionId: {}", loginSessionId);
@@ -248,7 +248,7 @@ public class ChatController {
             try {
                 // 调用AI服务处理流式响应
                 chatService.chat(chatData, sessionId, responseData -> {
-                    // 前置校验：Emitter已完成则直接返回
+                    // Emitter已完成则直接返回
                     if (isEmitterCompleted.get()) {
                         log.debug("Emitter已完成，跳过CHUNK事件发送，sessionId: {}", sessionId);
                         return;
@@ -304,10 +304,11 @@ public class ChatController {
         if (isLogin && updateData != null) {
             String thinking = messageHolder.getCompleteContent(sessionId, true);
             String content = messageHolder.getCompleteContent(sessionId, false);
-            Msg msg = new Msg(thinking, content, ChatService.TEXT, 2);
+            Msg msg = new Msg(thinking, content, ChatService.TEXT, 2, "");
             updateData.setMessageList(Collections.singletonList(msg));
             try {
-                finishData = chatService.updateSession(updateData);
+                finishData = chatService.updateSession(updateData, false);
+                System.out.println(finishData);
                 finishData.setMessageType((byte) 2);
                 finishData.setNewSession(false);
             } catch (Exception e) {

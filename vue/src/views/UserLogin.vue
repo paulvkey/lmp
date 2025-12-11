@@ -46,12 +46,12 @@
                 :loading="isLoading"
                 :disabled="isLoading"
               >
-                <template v-if="isLoading">登录中...</template>
-                <template v-else>登 录</template>
+                <div v-if="isLoading">登录中</div>
+                <div v-else>登 录</div>
               </el-button>
             </div>
           </el-form-item>
-          <el-button type="text" class="register-link" @click="goToRegister"
+          <el-button type="text" class="register-link" @click="goToRegister(router)"
             >没有账号？去注册</el-button
           >
         </el-form>
@@ -67,7 +67,7 @@ import request from '@/utils/request.js'
 import { ElMessage } from 'element-plus'
 import { getPublicIp } from '@/utils/ipUtils.js'
 import { useUserProfileStore } from '@/store/userProfile.js'
-import { checkLogin, validatePass, validateUsername } from '@/utils/commonUtils.js'
+import { goToRegister, checkLogin, validatePass, validateUsername } from '@/utils/commonUtils.js'
 
 const userProfile = useUserProfileStore()
 
@@ -149,11 +149,6 @@ const login = async () => {
       }
     }
   })
-}
-
-// 跳转注册页面
-const goToRegister = () => {
-  router.push('/register')
 }
 
 onMounted(async () => {

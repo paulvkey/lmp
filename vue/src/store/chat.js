@@ -29,13 +29,18 @@ export const useChatStore = defineStore('chat', {
       isPinned: 0,
       isCollected: 0,
       messageType: 1,
+      /* 数组内容 {
+        thinking: '',
+        content: '',
+        type: '',
+        role: 1/2,
+        fileIds: ''
+      } */
       messageList: [],
       sendTime: null,
-      fileIds: '',
       tokenCount: 0,
       isDeepThink: 0,
       isNetworkSearch: 0,
-      deepThinkStep: '',
     },
     isInputEnabled: false,
     isSending: false,
@@ -88,11 +93,9 @@ export const useChatStore = defineStore('chat', {
         messageType: 1,
         messageList: [],
         sendTime: null,
-        fileIds: '',
         tokenCount: 0,
         isDeepThink: 0,
         isNetworkSearch: 0,
-        deepThinkStep: '',
       }
     },
     initIsInputEnabled(homeStatus) {

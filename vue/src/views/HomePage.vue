@@ -19,7 +19,7 @@
 <script setup>
 import { ref, provide, nextTick, watch, onMounted, onBeforeUnmount } from 'vue'
 import '@/assets/css/Global.css'
-import { throttle } from '@/utils/commonUtils.js'
+import { checkLogin, throttle } from '@/utils/commonUtils.js'
 import LeftMenu from '@/components/home/LeftMenu.vue'
 import UserProfile from '@/components/home/UserProfile.vue'
 import RightChat from '@/components/home/RightChat.vue'
@@ -28,8 +28,10 @@ import { useHistoryStore } from '@/store/history.js'
 import { useCollectionStore } from '@/store/collection.js'
 import { useChatStore } from '@/store/chat.js'
 import { useFunctionStore } from '@/store/function.js'
+import { useUserProfileStore } from '@/store/userProfile.js'
 
 /* 变量声明或者定义 */
+const userProfile = useUserProfileStore()
 const homeStatus = useHomeStatusStore()
 const history = useHistoryStore()
 const collection = useCollectionStore()
@@ -77,6 +79,16 @@ const resetCurrentChat = () => {
     func.chatMsgInputFocus()
   })
 }
+
+// 监听页面刷新
+window.addEventListener('beforeunload', () => {
+  homeStatus.clearHomeStatus()
+  collection.clearCollection()
+  chat.clearChat()
+  if (!checkLogin(userProfile)) {
+    history.clearHistory()
+  }
+})
 
 onMounted(() => {
   homeStatus.initIsNewSession()

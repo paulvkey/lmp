@@ -37,7 +37,7 @@ export const useCollectionStore = defineStore('collection', {
 
   // 持久化配置
   persist: {
-    enabled: true,
+    enabled: false,
     strategies: [
       {
         key: 'collection',

@@ -34,7 +34,6 @@ public class ChatData implements Serializable {
     private Byte messageType;
     private List<Msg> messageList;
     private LocalDateTime sendTime = DateUtil.now();
-    private String fileIds;
     private Integer tokenCount = 0;
     private Byte isDeepThink = 0;
     private Byte isNetworkSearch = 0;
@@ -54,7 +53,6 @@ public class ChatData implements Serializable {
         this.messageType = chatData.getMessageType();
         this.messageList = chatData.getMessageList();
         this.sendTime = chatData.getSendTime();
-        this.fileIds = chatData.getFileIds();
         this.tokenCount = chatData.getTokenCount();
         this.isDeepThink = chatData.getIsDeepThink();
         this.isNetworkSearch = chatData.getIsNetworkSearch();

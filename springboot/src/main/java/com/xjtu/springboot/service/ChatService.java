@@ -144,7 +144,7 @@ public class ChatService {
                         throw new CustomException(500, "新增对话消息异常");
                     }
                 }
-                return generateChatData(chatSession, chatMessageList);
+                return generateChatData(chatSession, chatMessageList, false);
             } else {
                 throw new CustomException(500, "新增对话异常");
             }
@@ -154,7 +154,7 @@ public class ChatService {
     }
 
     @Transactional
-    public ChatData updateSession(ChatData chatData) {
+    public ChatData updateSession(ChatData chatData, Boolean selectAllMsg) {
         if (!chatData.getNewSession() &&
                 (Objects.nonNull(chatData.getSessionId()) && chatData.getSessionId() > 0)) {
             Long sessionId = chatData.getSessionId();
@@ -168,7 +168,11 @@ public class ChatService {
                             throw new CustomException(500, "新增对话消息异常");
                         }
                     }
-                    return generateChatData(chatSession, chatMessageList);
+                    if (selectAllMsg) {
+                        // 登录用户直接用数据库里面的数据
+                        chatMessageList = chatMessageMapper.selectBySessionId(sessionId);
+                    }
+                    return generateChatData(chatSession, chatMessageList, selectAllMsg);
                 } else {
                     throw new CustomException(500, "更新对话异常");
                 }
@@ -216,13 +220,13 @@ public class ChatService {
             chatMessage.setUserId(chatSession.getUserId());
             chatMessage.setSessionId(chatSession.getId());
             chatMessage.setMessageType(chatData.getMessageType());
-            chatMessage.setType(msg.getType());
             chatMessage.setMessageThinking(msg.getThinking());
             chatMessage.setMessageContent(msg.getContent());
+            chatMessage.setType(msg.getType());
+            chatMessage.setFileIds(msg.getFileIds());
             chatMessage.setTokenCount(msg.getContent().length());
             chatMessage.setIsDeepThink(chatData.getIsDeepThink());
             chatMessage.setIsNetworkSearch(chatData.getIsNetworkSearch());
-            chatMessage.setFileIds(chatData.getFileIds());
             chatMessage.setSendTime(DateUtil.now());
             chatMessageList.add(chatMessage);
         });
@@ -230,37 +234,38 @@ public class ChatService {
         return chatMessageList;
     }
 
-    public ChatData generateChatData(ChatSession chatSession, List<ChatMessage> chatMessageList) {
+    public ChatData generateChatData(ChatSession chatSession, List<ChatMessage> chatMessageList,
+                                     Boolean updateMsgList) {
         ChatData chatData = new ChatData();
         chatData.setIsLogin(true);
         chatData.setUserId(chatSession.getUserId());
         chatData.setSessionId(chatSession.getId());
         chatData.setSessionTitle(chatSession.getSessionTitle());
         chatData.setAiModelId(chatSession.getAiModelId());
+        chatData.setIsPinned(chatSession.getIsPinned());
         chatData.setIsDeleted(chatSession.getIsDeleted());
         chatData.setIsCollected(chatSession.getIsCollected());
         chatData.setCreatedAt(chatSession.getCreatedAt());
         chatData.setUpdatedAt(chatSession.getUpdatedAt());
         chatData.setLastMessageTime(chatSession.getLastMessageTime());
-        chatData.setIsPinned(chatSession.getIsPinned());
-
-        for (ChatMessage chatMessage : chatMessageList) {
-            if (TEXT.equals(chatMessage.getType())) {
-                chatData.setMessageType(chatMessage.getMessageType());
-                chatData.setSendTime(chatMessage.getSendTime());
-                chatData.setFileIds(chatMessage.getFileIds());
-                chatData.setTokenCount(chatMessage.getTokenCount());
-                chatData.setIsDeepThink(chatMessage.getIsDeepThink());
-                chatData.setIsNetworkSearch(chatMessage.getIsNetworkSearch());
-            } else {
-                chatData.setMessageType(chatMessageList.get(0).getMessageType());
-                chatData.setSendTime(chatMessageList.get(0).getSendTime());
-                chatData.setFileIds(chatMessageList.get(0).getFileIds());
-                chatData.setTokenCount(chatMessageList.get(0).getTokenCount());
-                chatData.setIsDeepThink(chatMessageList.get(0).getIsDeepThink());
-                chatData.setIsNetworkSearch(chatMessageList.get(0).getIsNetworkSearch());
-                break;
-            }
+        // 这里只处理消息的基础信息，不处理消息的内容
+        ChatMessage chatMessage = chatMessageList.get(0);
+        chatData.setMessageType(chatMessage.getMessageType());
+        chatData.setSendTime(chatMessage.getSendTime());
+        chatData.setTokenCount(chatMessage.getTokenCount());
+        chatData.setIsDeepThink(chatMessage.getIsDeepThink());
+        chatData.setIsNetworkSearch(chatMessage.getIsNetworkSearch());
+        if (updateMsgList) {
+            chatData.setMessageList(new ArrayList<>());
+            chatMessageList.forEach(chatMsg -> {
+                // TODO 文件传递
+                if (chatMsg.getType().equals(TEXT)) {
+                    Integer role = chatMsg.getMessageType() == (byte)1 ? 1 : 2;
+                    Msg msg = new Msg(chatMsg.getMessageThinking(), chatMsg.getMessageContent(),
+                            chatMsg.getType(), role, chatMsg.getFileIds());
+                    chatData.getMessageList().add(msg);
+                }
+            });
         }
 
         return chatData;

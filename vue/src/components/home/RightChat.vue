@@ -6,9 +6,7 @@
         <div class="chat-title-wrapper" @click="renameTitle">
           <span class="chat-title">{{ chat.chatTitle }}</span>
         </div>
-        <button class="tuning-params" @click="tuningParams">调节参数</button>
-        <!-- TODO 增加调节参数弹窗 -->
-        <TuningParams />
+        <button class="top-login-btn" @click="goToLogin(router)">登录账号</button>
       </div>
     </div>
 
@@ -37,6 +35,7 @@
                       :src="file.previewUrl"
                       :alt="file.name"
                       class="msg-file-preview"
+                      @load="handleImageLoad"
                     />
                     <!-- 非图片文件图标 -->
                     <div v-else class="msg-file-icon">
@@ -68,7 +67,11 @@
           </div>
           <div class="system-msg-wrapper" v-else>
             <!-- 思考过程 折叠/展开按钮 -->
-            <button v-if="msg.thinking" class="toggle-thinking" @click="msg.showThinking = !msg.showThinking">
+            <button
+              v-if="msg.thinking"
+              class="toggle-thinking"
+              @click="msg.showThinking = !msg.showThinking"
+            >
               {{ msg.thinkingTitle }}
             </button>
 
@@ -292,16 +295,15 @@ import { computed, nextTick, onMounted, onUnmounted, ref, toRaw, watch } from 'v
 import { ElMessage } from 'element-plus'
 import 'katex/dist/katex.min.css'
 import '@/assets/css/home/RightChat.css'
+import router from '@/router/index.js'
 import request from '@/utils/request.js'
-import { checkLogin, escapeMsg } from '@/utils/commonUtils.js'
+import { checkLogin, escapeMsg, goToLogin } from '@/utils/commonUtils.js'
 import { formatFileSize, getImageDimensions } from '@/utils/fileUtils.js'
 import RenameBox from '@/components/RenameBox.vue'
-import TuningParams from '@/components/home/TuningParams.vue'
 import UploadFilesBox from '@/components/home/UploadFilesBox.vue'
 import MarkdownRender from 'markstream-vue'
 import 'markstream-vue/index.css'
 import '@/assets/css/Global.css'
-import { debounce } from 'lodash'
 import { useChatStore } from '@/store/chat.js'
 import { useHomeStatusStore } from '@/store/homeStatus.js'
 import { useFunctionStore } from '@/store/function.js'
@@ -367,24 +369,9 @@ const scrollToBottom = (options = {}) => {
   }
 
   try {
-    // 强制重绘，确保DOM尺寸计算准确（针对fixed定位的容器）
-    chatMsgWrapper.style.display = 'none'
-    chatMsgWrapper.offsetHeight
-    chatMsgWrapper.style.display = ''
-
-    // 精准设置scrollTop（优先于scrollIntoView，避免定位偏差）
+    // 设置scrollTop
     chatMsgWrapper.scrollTop = chatMsgWrapper.scrollHeight
-    // scrollIntoView兜底（针对最后一条消息）
-    const lastMessage = chatMsgWrapper.lastElementChild
-    if (lastMessage) {
-      lastMessage.scrollIntoView({
-        behavior: smooth ? 'smooth' : 'instant',
-        block: 'end',
-        inline: 'nearest',
-      })
-    }
-
-    // 最终校准（消除fixed定位导致的像素级偏差）
+    // 最终校准和滚动
     setTimeout(() => {
       // 强制设置到最大滚动高度
       chatMsgWrapper.scrollTop = chatMsgWrapper.scrollHeight
@@ -395,7 +382,7 @@ const scrollToBottom = (options = {}) => {
       // 如果仍有微小滚动余量，强制修正
       const { scrollTop, scrollHeight, clientHeight } = chatMsgWrapper
       const distanceToBottom = scrollHeight - scrollTop - clientHeight
-      if (distanceToBottom > 0) {
+      if (distanceToBottom > 1) {
         chatMsgWrapper.scrollTop += distanceToBottom
       }
     }, STREAM_SCROLL_DELAY)
@@ -656,19 +643,24 @@ const triggerNewChat = async () => {
 
 // 发送消息
 const sendMessage = async () => {
-  if (requestLock.value || !beforeSendMessage()) return
+  if (requestLock.value || !prepareSendMessage()) return
   requestLock.value = true
   try {
-    const response = await request('post', `/session/new`, chat.modelInfo, {
-      signal: globalAbortCtrl.value.signal,
-    })
-    if (response.code === 200) {
+    if (chat.modelInfo.newSession) {
+      const response = await request('post', `/session/chat/new`, chat.modelInfo, {
+        signal: globalAbortCtrl.value.signal,
+      })
+      if (response.code !== 200) {
+        return
+      }
       updateInfoByResponse(response.data)
-      await getAndParseChatData(response.data, globalAbortCtrl.value.signal)
-      updateHistoryByResponse()
-    } else {
-      ElMessage.error('发送消息异常: ' + response.msg)
     }
+    const msgLen = chat.modelInfo.messageList.length
+    if (msgLen > 1) {
+      chat.modelInfo.messageList = [chat.modelInfo.messageList[msgLen - 1]]
+    }
+    await getAndParseChatData(globalAbortCtrl.value.signal)
+    updateHistoryByResponse()
   } catch (e) {
     console.error('发送消息异常：' + e)
   } finally {
@@ -680,7 +672,7 @@ const sendMessage = async () => {
   }
 }
 
-const beforeSendMessage = () => {
+const prepareSendMessage = () => {
   if (chat.isSending) return false
   const inputData = chat.inputData.trim()
   const hasUploadFiles = chat.uploadedFiles.length > 0
@@ -688,15 +680,17 @@ const beforeSendMessage = () => {
 
   chat.initModelInfo(userProfile)
   chat.modelInfo.messageList = []
-  // TODO(让后端查询数据库 没必要前端传递增加开销) 将之前所有的对话内容都传递
-  chat.messageList.forEach((msg) => {
-    chat.modelInfo.messageList.push({
-      thinking: msg.thinking,
-      content: msg.content,
-      type: msg.type,
-      role: msg.isUser ? 1 : 2,
+  // 没有登陆将之前所有的对话内容都传递
+  if (!checkLogin(userProfile)) {
+    chat.messageList.forEach((msg) => {
+      chat.modelInfo.messageList.push({
+        thinking: msg.thinking,
+        content: msg.content,
+        type: msg.type,
+        role: msg.isUser ? 1 : 2,
+      })
     })
-  })
+  }
   if (hasUploadFiles && !chat.filesUploaded) {
     const fileContent = chat.uploadedFiles.map((file) => ({
       name: file.name,
@@ -716,6 +710,7 @@ const beforeSendMessage = () => {
       content: fileMessage.content,
       type: fileMessage.type,
       role: fileMessage.isUser ? 1 : 2,
+      fileIds: '',
     })
     chat.filesUploaded = true
   }
@@ -732,6 +727,7 @@ const beforeSendMessage = () => {
     content: message.content,
     type: message.type,
     role: message.isUser ? 1 : 2,
+    fileIds: chat.uploadedFiles.map((f) => f.id).join(',') || '',
   })
   chat.inputData = ''
   chat.isSending = true
@@ -739,11 +735,11 @@ const beforeSendMessage = () => {
   chat.modelInfo.messageType = 1
   chat.modelInfo.isDeepThink = chat.isDeepActive ? 1 : 0
   chat.modelInfo.isNetworkSearch = chat.isNetworkActive ? 1 : 0
-  chat.modelInfo.fileIds = chat.uploadedFiles.map((f) => f.id).join(',')
   return true
 }
 
 const updateInfoByResponse = (response) => {
+  chat.modelInfo.newSession = false
   chat.modelInfo.sessionId = response.sessionId
   chat.modelInfo.sessionTitle = response.sessionTitle
   chat.modelInfo.aiModelId = response.aiModelId
@@ -756,7 +752,7 @@ const updateInfoByResponse = (response) => {
   homeStatus.renamingSessionId = response.sessionId
 }
 
-const getAndParseChatData = async (requestData, abortSignal) => {
+const getAndParseChatData = async (abortSignal) => {
   // 取消已有流式请求（避免重复）
   if (streamAbortCtrl.value) {
     streamAbortCtrl.value.abort()
@@ -789,7 +785,7 @@ const getAndParseChatData = async (requestData, abortSignal) => {
         'Content-Type': 'application/json',
         Accept: 'text/event-stream',
       },
-      body: JSON.stringify(requestData),
+      body: JSON.stringify(chat.modelInfo),
     })
 
     let errorMsg = '抱歉，请求异常，请重试'
@@ -836,8 +832,6 @@ const getAndParseChatData = async (requestData, abortSignal) => {
           if (eventName === 'chunk') {
             // 处理分块消息（chunk：实时接收流式内容）
             await updateChunkMsg(parsedData, msgIndex)
-            await nextTick()
-            scrollToBottom()
           } else if (eventName === 'finished') {
             // 处理结束事件（finished：完成事件单独返回格式）
             await updateFinishedMsg(parsedData, msgIndex)
@@ -932,6 +926,8 @@ const updateChunkMsg = async (parsedData, msgIndex) => {
       state.messageList[msgIndex] = newMsg
     })
   }
+  await nextTick()
+  scrollToBottom()
 }
 
 const updateFinishedMsg = async (parsedData, msgIndex) => {
@@ -956,6 +952,8 @@ const updateFinishedMsg = async (parsedData, msgIndex) => {
   if (typeof content === 'string' && content.trim() !== '') {
     targetMsg.content = content
   }
+  await nextTick()
+  scrollToBottom()
 }
 
 const setMsgEndInfo = async (newMsgId = -1, errorMsg = '') => {
@@ -1009,6 +1007,13 @@ const updateHistoryByResponse = () => {
     history.selectedSessionId = sessionId
     history.isExpanded = true
   }
+}
+
+// 图片加载完成后重新滚动
+const handleImageLoad = () => {
+  setTimeout(() => {
+    scrollToBottom({ force: true, smooth: false })
+  }, 100)
 }
 
 watch(

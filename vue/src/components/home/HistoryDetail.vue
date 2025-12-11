@@ -2,6 +2,7 @@
   <div class="history-list-wrapper">
     <div class="history-list-detail" v-if="history.isExpanded">
       <div class="history-list-loading" v-if="history.isLoading">加载中...</div>
+
       <div class="history-list" v-else>
         <div
           v-for="(item, index) in history.historyList"
@@ -89,6 +90,7 @@
             </div>
           </div>
         </div>
+
         <div
           class="history-list-empty"
           v-if="history.historyList.length === 0 && !history.isLoading"

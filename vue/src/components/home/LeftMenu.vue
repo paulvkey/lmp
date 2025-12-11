@@ -2,7 +2,7 @@
   <!-- 左侧菜单顶部的内容展示 -->
   <div class="left-menu-info">
     <!-- 左侧顶部标题 -->
-    <div class="left-title">对话平台</div>
+    <div class="left-title">科研助手</div>
 
     <!-- 左侧菜单栏 -->
     <div class="left-menus">
@@ -52,6 +52,7 @@
         </svg>
         <span class="left-menu-text">收藏对话</span>
       </div>
+
       <!-- 收藏对话详情弹窗 -->
       <CollectionBox :loadFunc="loadCollections" />
 
@@ -95,6 +96,7 @@
           <polyline points="12 5 19 12 12 19"></polyline>
         </svg>
       </div>
+
       <!-- 历史对话详情 -->
       <HistoryDetail
         :loadFunc="loadHistoryList"
@@ -261,7 +263,7 @@ const loadHistoryList = async () => {
 
 const doScroll = (targetElement, sessionContainer) => {
   const realScrollContainer = sessionContainer.querySelector('.history-list') || sessionContainer;
-  // 计算目标元素在【真实滚动容器】中的相对位置
+  // 计算目标元素在真实滚动容器中的相对位置
   const containerRect = realScrollContainer.getBoundingClientRect()
   const elementRect = targetElement.getBoundingClientRect()
   const relativeTop = elementRect.top - containerRect.top
