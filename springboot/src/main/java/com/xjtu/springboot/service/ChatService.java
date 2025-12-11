@@ -115,6 +115,10 @@ public class ChatService {
         RequestData requestData = new RequestData();
         List<RequestMessage> requestMessageList = new ArrayList<>();
         for (Msg message : chatData.getMessageList()) {
+            // TODO 文件消息要单独处理
+            if (message.getType().equals(FILE)) {
+                continue;
+            }
             RequestMessage requestMessage = new RequestMessage();
             if (message.getRole() == 1) {
                 requestMessage.setRole(Role.USER.getName());
@@ -254,13 +258,10 @@ public class ChatService {
         if (updateMsgList) {
             chatData.setMessageList(new ArrayList<>());
             chatMessageList.forEach(chatMsg -> {
-                // TODO 文件传递
-                if (chatMsg.getType().equals(TEXT)) {
-                    Integer role = chatMsg.getMessageType() == (byte)1 ? 1 : 2;
-                    Msg msg = new Msg(chatMsg.getMessageThinking(), chatMsg.getMessageContent(),
-                            chatMsg.getType(), role, chatMsg.getFileIds());
-                    chatData.getMessageList().add(msg);
-                }
+                Integer role = chatMsg.getMessageType() == (byte)1 ? 1 : 2;
+                Msg msg = new Msg(chatMsg.getMessageThinking(), chatMsg.getMessageContent(),
+                        chatMsg.getType(), role, chatMsg.getFileIds());
+                chatData.getMessageList().add(msg);
             });
         }
 

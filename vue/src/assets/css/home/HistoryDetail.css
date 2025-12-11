@@ -23,7 +23,8 @@
   transition: max-height 0.3s ease-out;
   scrollbar-width: thin;
   overflow-y: auto;
-  overflow-x: hidden
+  overflow-x: hidden;
+  scroll-behavior: smooth;
 }
 
 /* 滚动条样式 */
@@ -58,8 +59,7 @@
 .history-list {
   position: relative;
   max-height: calc(100vh - 220px - var(--left-profile-height) - var(--left-profile-bottom) - 20px);
-  overflow-y: auto;
-  scroll-behavior: smooth;
+  overflow-y: visible;
 }
 
 /* 历史对话单条 */

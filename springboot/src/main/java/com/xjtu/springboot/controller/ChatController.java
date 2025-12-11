@@ -246,7 +246,7 @@ public class ChatController {
         CompletableFuture.runAsync(() -> {
             try {
                 // 调用AI服务处理流式响应
-                chatService.chat(chatData, sessionId, responseData -> {
+                chatService.chat(updateData, sessionId, responseData -> {
                     // Emitter已完成则直接返回
                     if (isEmitterCompleted.get()) {
                         log.debug("Emitter已完成，跳过CHUNK事件发送，sessionId: {}", sessionId);

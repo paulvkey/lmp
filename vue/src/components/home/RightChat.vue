@@ -6,7 +6,7 @@
         <div class="chat-title-wrapper" @click="renameTitle">
           <span class="chat-title">{{ chat.chatTitle }}</span>
         </div>
-        <button class="top-login-btn" @click="goToLogin(router)">登录账号</button>
+        <button v-if="!checkLogin(userProfile)" class="top-login-btn" @click="goToLogin">登录账号</button>
       </div>
     </div>
 
@@ -297,7 +297,7 @@ import 'katex/dist/katex.min.css'
 import '@/assets/css/home/RightChat.css'
 import router from '@/router/index.js'
 import request from '@/utils/request.js'
-import { checkLogin, escapeMsg, goToLogin } from '@/utils/commonUtils.js'
+import { checkLogin, escapeMsg } from '@/utils/commonUtils.js'
 import { formatFileSize, getImageDimensions } from '@/utils/fileUtils.js'
 import RenameBox from '@/components/RenameBox.vue'
 import UploadFilesBox from '@/components/home/UploadFilesBox.vue'
@@ -435,7 +435,6 @@ const hideScrollbar = () => {
   const chatMsgWrapper = chatMsgWrapperRef.value
   if (!chatMsgWrapper) return
 
-  // 兼容 Webkit（Chrome/Safari）
   chatMsgWrapper.style.scrollbarColor = 'transparent transparent'
   chatMsgWrapper.style.setProperty('--scrollbar-thumb-bg', 'transparent')
 }
@@ -652,10 +651,6 @@ const sendMessage = async () => {
         return
       }
       updateInfoByResponse(response.data)
-    }
-    const msgLen = chat.modelInfo.messageList.length
-    if (msgLen > 1) {
-      chat.modelInfo.messageList = [chat.modelInfo.messageList[msgLen - 1]]
     }
     await getAndParseChatData(globalAbortCtrl.value.signal)
     updateHistoryByResponse()
@@ -1026,6 +1021,10 @@ watch(
   },
   { immediate: true, flush: 'sync' },
 )
+
+const goToLogin = () => {
+  router.push('/login')
+}
 
 onMounted(() => {
   homeStatus.initIsNewSession()

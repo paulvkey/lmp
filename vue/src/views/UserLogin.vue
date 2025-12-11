@@ -3,7 +3,7 @@
     <div class="login-box">
       <!-- 表单容器 -->
       <div class="login-box-form">
-        <el-form ref="formRef" :rules="data.rules" :model="data.form" label-width="0px">
+        <el-form ref="formRef" :rules="data.rules" :model="data.form" label-width="0">
           <!-- 标题 -->
           <div class="login-title">欢迎登录</div>
 
@@ -46,12 +46,12 @@
                 :loading="isLoading"
                 :disabled="isLoading"
               >
-                <div v-if="isLoading">登录中</div>
-                <div v-else>登 录</div>
+                <template  v-if="isLoading">登录中</template >
+                <template  v-else>登 录</template >
               </el-button>
             </div>
           </el-form-item>
-          <el-button type="link" class="register-link" @click="goToRegister(router)"
+          <el-button type="link" class="register-link" @click="goToRegister"
             >没有账号？去注册</el-button
           >
         </el-form>
@@ -67,7 +67,7 @@ import request from '@/utils/request.js'
 import { ElMessage } from 'element-plus'
 import { getPublicIp } from '@/utils/ipUtils.js'
 import { useUserProfileStore } from '@/store/userProfile.js'
-import { goToRegister, checkLogin, validatePass, validateUsername } from '@/utils/commonUtils.js'
+import { checkLogin, validatePass, validateUsername } from '@/utils/commonUtils.js'
 
 const userProfile = useUserProfileStore()
 
@@ -179,6 +179,11 @@ onMounted(async () => {
     console.warn('获取IP失败，使用默认值:', e)
   }
 })
+
+// 跳转注册页面
+const goToRegister = () => {
+  router.push('/register')
+}
 </script>
 
 <style scoped>
@@ -357,6 +362,8 @@ onMounted(async () => {
   margin-right: auto !important;
   transition: color 0.2s;
   padding: 4px 0 !important;
+  background: transparent !important;
+  border: none !important
 }
 
 ::v-deep .register-link:hover {

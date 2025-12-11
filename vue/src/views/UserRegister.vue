@@ -48,7 +48,7 @@
             </div>
           </el-form-item>
           <!-- 已有账号跳转登录 -->
-          <el-button type="link" class="login-link" @click="goToLogin(router)"
+          <el-button type="link" class="login-link" @click="goToLogin"
             >已有账号？去登录</el-button
           >
         </el-form>
@@ -62,7 +62,7 @@ import { reactive, ref } from 'vue'
 import router from '@/router/index.js'
 import request from '@/utils/request.js'
 import { ElMessage } from 'element-plus'
-import { goToLogin, validatePass, validateUsername } from '@/utils/commonUtils.js'
+import { validatePass, validateUsername } from '@/utils/commonUtils.js'
 
 const validateConfirmPass = (rule, value, callback) => {
   if (!value) {
@@ -110,6 +110,11 @@ const register = () => {
       }
     }
   })
+}
+
+// 跳转登录页面
+const goToLogin = () => {
+  router.push('/login')
 }
 </script>
 
@@ -273,6 +278,8 @@ const register = () => {
   margin-right: auto !important;
   transition: color 0.2s;
   padding: 4px 0 !important;
+  background: transparent !important;
+  border: none !important
 }
 
 ::v-deep .login-link:hover {

@@ -28,6 +28,8 @@
 }
 
 .el-message-box__btns .el-button {
-  border-radius: 8px;
-  font-size: 15px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 14px;
+  gap: 10px;
 }

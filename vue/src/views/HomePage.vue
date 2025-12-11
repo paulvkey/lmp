@@ -17,7 +17,7 @@
 </template>
 
 <script setup>
-import { ref, provide, nextTick, watch, onMounted, onBeforeUnmount } from 'vue'
+import { provide, nextTick, onMounted } from 'vue'
 import '@/assets/css/Global.css'
 import { checkLogin, throttle } from '@/utils/commonUtils.js'
 import LeftMenu from '@/components/home/LeftMenu.vue'

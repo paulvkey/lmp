@@ -137,7 +137,7 @@
               <!-- 非编辑模式显示文本，编辑模式显示选择器 -->
               <template v-if="!isProfileEditing">
                 <div class="static-info">
-                  {{ formatTimeDay(profileForm.birthday) || '未设置' }}
+                  {{ formatTimeDay(profileForm.birthday) || '' }}
                 </div>
               </template>
               <template v-else>
@@ -318,7 +318,7 @@ const profileForm = reactive({
   username: userProfile.username || '游客',
   email: userProfile.email || '',
   phone: userProfile.phone || '',
-  sex: userProfile.sex !== undefined ? userProfile.sex.toString() : '3',
+  sex: userProfile.sex ? userProfile.sex.toString() : '3',
   birthday: userProfile.birthday || null,
   loginIp: userProfile.lastLoginIp || '未知',
   loginTime: userProfile.lastLoginTime || null,
@@ -663,7 +663,7 @@ watch(
     profileForm.username = username
     profileForm.phone = phone
     profileForm.email = email
-    profileForm.sex = sex !== undefined ? sex.toString() : '3'
+    profileForm.sex = sex ? sex.toString() : '3'
     profileForm.birthday = birthday
     profileForm.bio = bio
   },
