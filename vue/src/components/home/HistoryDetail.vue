@@ -188,6 +188,7 @@ const loadHistorySession = async (item) => {
       content: msg.messageContent || '',
       isUser: msg.messageType === 1,
       type: msg.type ? msg.type : 'text',
+      thinkingType: '思考完成'
     }))
     chat.modelInfo.sessionId = sessionData.id
     chat.modelInfo.sessionTitle = sessionData.sessionTitle

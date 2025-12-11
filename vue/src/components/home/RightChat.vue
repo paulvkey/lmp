@@ -72,7 +72,7 @@
               class="toggle-thinking"
               @click="msg.showThinking = !msg.showThinking"
             >
-              {{ msg.thinkingTitle }}
+              {{ msg.thinkingType }}
             </button>
 
             <!-- 思考内容区域 -->
@@ -769,7 +769,7 @@ const getAndParseChatData = async (abortSignal) => {
       type: 'text',
       isStreaming: true,
       showThinking: true,
-      thinkingTitle: '',
+      thinkingType: '思考完成',
     }
     chat.messageList.push(streamMsg)
     await nextTick()
@@ -903,15 +903,13 @@ const updateChunkMsg = async (parsedData, msgIndex) => {
   let isNeedUpdate = false
   const newMsg = { ...targetMsg }
   if (typeof thinking === 'string' && thinking) {
-    if (newMsg.thinkingTitle === '') {
-      newMsg.thinkingTitle = '思考中'
-    }
+    newMsg.thinkingType = '思考中'
     newMsg.thinking = (targetMsg.thinking || '') + thinking
     isNeedUpdate = true
   }
   if (typeof content === 'string' && content) {
-    if (!newMsg.thinkingTitle || newMsg.thinkingTitle === '思考中') {
-      newMsg.thinkingTitle = '思考完成'
+    if (!newMsg.thinkingType || newMsg.thinkingType === '思考中') {
+      newMsg.thinkingType = '思考完成'
     }
     newMsg.showThinking = false
     newMsg.content = (targetMsg.content || '') + content
