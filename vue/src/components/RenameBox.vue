@@ -45,9 +45,9 @@ import { ElMessage } from 'element-plus'
 import '@/assets/css/Global.css'
 import '@/assets/css/RenameBox.css'
 import request from '@/utils/request.js'
+import { checkLogin } from '@/utils/commonUtils.js'
 import { useHomeStatusStore } from '@/store/homeStatus.js'
 import { useChatStore } from '@/store/chat.js'
-import { checkLogin } from '@/utils/commonUtils.js'
 import { useUserProfileStore } from '@/store/userProfile.js'
 import { useHistoryStore } from '@/store/history.js'
 
@@ -67,7 +67,7 @@ const useInputLengthLimit = (maxLength) => {
       chat.newChatTitle = value.slice(0, maxLength)
       // 仅在首次达到最大长度时提示
       if (chat.newChatTitle.length === maxLength) {
-        ElMessage.warning(`已达到最大长度（${maxLength}字）`)
+        ElMessage.warning(`输入已达到最大长度（${maxLength}字）`)
       }
     }
   }
@@ -119,66 +119,9 @@ const confirmEditTitle = async () => {
 
   try {
     if (homeStatus.renamingSessionId) {
-      // 处理对话重命名
-      const index = history.historyList.findIndex(
-        (item) => item.id === homeStatus.renamingSessionId,
-      )
-      if (index !== -1) {
-        // 先更新本地显示
-        const originalTitle = history.historyList[index].sessionTitle
-        history.historyList[index].sessionTitle = newChatTitle
-        const response = await request(
-          'patch',
-          `/session/${homeStatus.renamingSessionId}/rename`,
-          null,
-          {
-            params: {
-              sessionTitle: newChatTitle,
-            },
-          },
-        )
-
-        if (response.code !== 200) {
-          // 更新失败，恢复原始标题
-          history.historyList[index].sessionTitle = originalTitle
-          ElMessage.error('修改对话名失败，请重试')
-        } else {
-          ElMessage.success('修改对话名成功')
-          // 如果是当前选中的对话，同时更新聊天标题
-          if (history.renamingSessionId === history.selectedSessionId) {
-            chat.chatTitle = newChatTitle
-          }
-        }
-      }
+      await rightChatRename(newChatTitle)
     } else {
-      // 处理当前对话标题修改
-      if (checkLogin(userProfile)) {
-        // TODO
-        const response = await request('patch', `/session/${modelData.sessionId}/rename`, null, {
-          params: {
-            sessionTitle: newChatTitle,
-          },
-        })
-        if (response.code === 200) {
-          if (newChatTitle) chat.newChatTitle = newChatTitle
-          const currentSessionId = modelData.sessionId
-          if (currentSessionId) {
-            // 找到左侧列表中对应的对话项
-            const sessionIndex = history.historyList.findIndex(
-              (item) => item.id === currentSessionId,
-            )
-            if (sessionIndex !== -1) {
-              // 更新列表中的标题
-              history.historyList[sessionIndex].sessionTitle = newChatTitle
-            }
-          }
-          ElMessage.success('修改对话名成功')
-        } else {
-          ElMessage.error('修改对话名失败，请重试')
-        }
-      } else {
-        if (newChatTitle) chat.chatTitle = newChatTitle
-      }
+      await leftChatRename(newChatTitle)
     }
   } catch (e) {
     ElMessage.error('修改对话名失败，请重试')
@@ -192,6 +135,74 @@ const confirmEditTitle = async () => {
     }
   } finally {
     closeDialog()
+  }
+}
+
+const rightChatRename = async (newChatTitle) => {
+  // 处理对话重命名
+  const index = history.historyList.findIndex(
+    (item) => item.id === homeStatus.renamingSessionId,
+  )
+  if (index !== -1) {
+    // 先更新本地显示
+    const originalTitle = history.historyList[index].sessionTitle
+    history.historyList[index].sessionTitle = newChatTitle
+    const response = await request(
+      'patch',
+      `/session/${homeStatus.renamingSessionId}/rename`,
+      null,
+      {
+        params: {
+          sessionTitle: newChatTitle,
+        },
+      },
+    )
+
+    if (response.code === 200) {
+      ElMessage.success('修改对话名成功')
+      // 如果是当前选中的对话，同时更新聊天标题
+      if (homeStatus.renamingSessionId === history.selectedSessionId) {
+        chat.chatTitle = newChatTitle
+      }
+    } else {
+      // 更新失败，恢复原始标题
+      history.historyList[index].sessionTitle = originalTitle
+      ElMessage.error('修改对话名失败，请重试')
+    }
+  }
+}
+
+const leftChatRename = async (newChatTitle) => {
+// 处理当前对话标题修改
+  if (checkLogin(userProfile)) {
+    const response = await request(
+      'patch',
+      `/session/${chat.modelInfo.sessionId}/rename`,
+      null,
+      {
+        params: {
+          sessionTitle: newChatTitle,
+        },
+      },
+    )
+    if (response.code === 200) {
+      if (newChatTitle) chat.newChatTitle = newChatTitle
+      const currentSessionId = chat.modelInfo.sessionId
+      if (currentSessionId) {
+        // 找到左侧列表中对应的对话项
+        const sessionIndex = history.historyList.findIndex(
+          (item) => item.id === currentSessionId,
+        )
+        if (sessionIndex !== -1) {
+          history.historyList[sessionIndex].sessionTitle = newChatTitle
+        }
+      }
+      ElMessage.success('修改对话名成功')
+    } else {
+      ElMessage.error('修改对话名失败，请重试')
+    }
+  } else {
+    if (newChatTitle) chat.chatTitle = newChatTitle
   }
 }
 

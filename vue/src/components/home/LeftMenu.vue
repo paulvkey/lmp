@@ -255,6 +255,7 @@ const loadHistoryList = async () => {
       );
     await nextTick();
   } catch (e) {
+    console.error('获取历史对话列表失败：' + e)
     history.historyList = [];
   } finally {
     history.isLoading = false;

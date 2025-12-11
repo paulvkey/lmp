@@ -343,8 +343,6 @@ const renameTitle = () => {
   chat.newChatTitle = chat.chatTitle
 }
 
-const tuningParams = () => {}
-
 const chatMsgScrollTop = () => {
   chatMsgWrapperRef.value.scrollTop = 0
 }
@@ -355,7 +353,7 @@ const chatMsgInputFocus = () => {
 
 // 滚动到底部
 const scrollToBottom = (options = {}) => {
-  const { force = false, smooth = false } = options
+  const { force = false } = options
   // 如果不是强制滚动，且用户手动滚动过，则不自动滚动
   if (!force && chat.isUserScrolled && !chat.showScrollBtn) return
 
@@ -382,7 +380,7 @@ const scrollToBottom = (options = {}) => {
       // 如果仍有微小滚动余量，强制修正
       const { scrollTop, scrollHeight, clientHeight } = chatMsgWrapper
       const distanceToBottom = scrollHeight - scrollTop - clientHeight
-      if (distanceToBottom > 1) {
+      if (distanceToBottom > 2) {
         chatMsgWrapper.scrollTop += distanceToBottom
       }
     }, STREAM_SCROLL_DELAY)
@@ -1012,7 +1010,7 @@ const updateHistoryByResponse = () => {
 // 图片加载完成后重新滚动
 const handleImageLoad = () => {
   setTimeout(() => {
-    scrollToBottom({ force: true, smooth: false })
+    scrollToBottom({ force: true })
   }, 100)
 }
 

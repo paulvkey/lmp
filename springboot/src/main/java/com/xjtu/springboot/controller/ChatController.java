@@ -219,7 +219,6 @@ public class ChatController {
         // 保存用户输入
         chatData.setMessageType((byte) 1);
         ChatData updateData = chatService.updateSession(chatData, true);
-        System.out.println(updateData);
         Long loginSessionId = updateData.getSessionId();
         messageHolder.initContentHolder(loginSessionId);
         log.debug("登录用户SSE初始化完成，sessionId: {}", loginSessionId);
@@ -308,7 +307,6 @@ public class ChatController {
             updateData.setMessageList(Collections.singletonList(msg));
             try {
                 finishData = chatService.updateSession(updateData, false);
-                System.out.println(finishData);
                 finishData.setMessageType((byte) 2);
                 finishData.setNewSession(false);
             } catch (Exception e) {

@@ -12,6 +12,7 @@ export const useHistoryStore = defineStore('history', {
     activeSessionMenuId: null,
     isLoadingSession: false,
     isSessionCollected: false,
+    hasLoadedHistory: false,
   }),
 
   actions: {
@@ -24,6 +25,7 @@ export const useHistoryStore = defineStore('history', {
       this.activeSessionMenuId = null
       this.isLoadingSession = false
       this.isSessionCollected = false
+      this.hasLoadedHistory = false;
     }
   },
 

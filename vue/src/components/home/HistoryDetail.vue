@@ -99,6 +99,7 @@
         </div>
       </div>
     </div>
+
     <RenameBox />
   </div>
 </template>
@@ -396,6 +397,7 @@ const checkTextOverflow = () => {
 
 // 加载数据
 const loadHistoryData = async () => {
+  if (history.hasLoadedHistory) return
   if (history.isLoading || isLoadingRequest.value || !checkLogin(userProfile)) {
     return
   }
@@ -403,10 +405,9 @@ const loadHistoryData = async () => {
   try {
     await props.loadFunc()
     checkTextOverflow()
+    history.hasLoadedHistory = true
   } catch (e) {
-    if (history.historyList.length === 0) {
-      history.historyList = []
-    }
+    history.clearHistory()
   } finally {
     isLoadingRequest.value = false
   }
@@ -416,15 +417,14 @@ const loadHistoryData = async () => {
 watch(
   () => [checkLogin(userProfile), history.isExpanded],
   async ([isLogin, isExpanded]) => {
-    if (isLogin && isExpanded && history.historyList.length === 0) {
+    if (isLogin && isExpanded &&
+      !history.hasLoadedHistory && history.historyList.length === 0) {
       // 延迟加载避免初始化多次触发
       setTimeout(async () => {
         await loadHistoryData()
       }, 300)
     } else if (!isLogin) {
-      // 未登录时清空数据+重置状态
-      history.historyList = []
-      history.isLoading = false
+      history.clearHistory()
       isLoadingRequest.value = false
     }
   },
@@ -432,7 +432,8 @@ watch(
 )
 
 onMounted(() => {
-  if (checkLogin(userProfile) && history.isExpanded && history.historyList.length === 0) {
+  if (checkLogin(userProfile) && history.isExpanded &&
+    !history.hasLoadedHistory && history.historyList.length === 0) {
     setTimeout(loadHistoryData, 300)
   }
   window.addEventListener('resize', checkTextOverflow)
