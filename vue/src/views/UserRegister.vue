@@ -48,7 +48,7 @@
             </div>
           </el-form-item>
           <!-- 已有账号跳转登录 -->
-          <el-button type="text" class="login-link" @click="goToLogin(router)"
+          <el-button type="link" class="login-link" @click="goToLogin(router)"
             >已有账号？去登录</el-button
           >
         </el-form>

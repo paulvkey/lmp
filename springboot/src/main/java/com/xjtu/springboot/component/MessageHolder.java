@@ -42,7 +42,7 @@ public class MessageHolder {
      * 累加流式内容
      */
     public void appendContent(Long sessionId, String content, Boolean isThinking) {
-        if (sessionId == null || StringUtils.isBlank(content)) return;
+        if (sessionId == null || content == null) return;
 
         AtomicReference<Pair<StringBuilder, StringBuilder>> contentRef = contentMap.get(sessionId);
         if (contentRef != null) {
@@ -61,7 +61,9 @@ public class MessageHolder {
                     return;
                 }
                 sb.append(content);
-                sessionCreateTime.put(sessionId, System.currentTimeMillis());
+                if (!sessionCreateTime.containsKey(sessionId)) {
+                    sessionCreateTime.put(sessionId, System.currentTimeMillis());
+                }
             }
         }
     }
@@ -72,8 +74,13 @@ public class MessageHolder {
     public String getCompleteContent(Long sessionId, Boolean isThinking) {
         lock.lock();
         try {
-            AtomicReference<Pair<StringBuilder, StringBuilder>> contentRef = contentMap.remove(sessionId);
-            sessionCreateTime.remove(sessionId);
+            AtomicReference<Pair<StringBuilder, StringBuilder>> contentRef = null;
+            if (isThinking) {
+                contentRef = contentMap.get(sessionId);
+            } else {
+                contentRef = contentMap.remove(sessionId);
+                sessionCreateTime.remove(sessionId);
+            }
             if (contentRef != null) {
                 if (isThinking) {
                     return contentRef.get().getLeft().toString();

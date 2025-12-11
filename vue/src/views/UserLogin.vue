@@ -51,7 +51,7 @@
               </el-button>
             </div>
           </el-form-item>
-          <el-button type="text" class="register-link" @click="goToRegister(router)"
+          <el-button type="link" class="register-link" @click="goToRegister(router)"
             >没有账号？去注册</el-button
           >
         </el-form>

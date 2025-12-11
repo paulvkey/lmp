@@ -380,7 +380,7 @@ const scrollToBottom = (options = {}) => {
       // 如果仍有微小滚动余量，强制修正
       const { scrollTop, scrollHeight, clientHeight } = chatMsgWrapper
       const distanceToBottom = scrollHeight - scrollTop - clientHeight
-      if (distanceToBottom > 2) {
+      if (distanceToBottom > 0) {
         chatMsgWrapper.scrollTop += distanceToBottom
       }
     }, STREAM_SCROLL_DELAY)

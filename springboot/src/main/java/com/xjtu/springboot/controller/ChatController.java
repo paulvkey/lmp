@@ -265,7 +265,7 @@ public class ChatController {
                         if (isLogin) {
                             if (StringUtils.isNotEmpty(thinking)) {
                                 messageHolder.appendContent(sessionId, thinking, true);
-                            } else {
+                            } else if (StringUtils.isNotEmpty(content)) {
                                 messageHolder.appendContent(sessionId, content, false);
                             }
                         }
@@ -274,7 +274,7 @@ public class ChatController {
                 });
 
                 // 发送完成事件
-                if (isEmitterCompleted.get()){
+                if (!isEmitterCompleted.get()){
                     ChatData finishData = buildFinishChatData(chatData, sessionId, isLogin, updateData);
                     sendSseEvent(emitter, isEmitterCompleted, FINISHED_EVENT, Result.success(finishData));
                 }
@@ -290,30 +290,32 @@ public class ChatController {
     }
 
     // ========== 构建完成事件的ChatData ==========
-    private ChatData buildFinishChatData(ChatData originalData,
+    private ChatData buildFinishChatData(ChatData chatData,
                                          Long sessionId,
                                          boolean isLogin,
                                          ChatData updateData) {
-        ChatData finishData = new ChatData();
-        finishData.copyFrom(originalData);
-        finishData.setMessageType((byte) 2);
-        finishData.setNewSession(false);
+        ChatData result = new ChatData();
+        result.copyFrom(chatData);
+        result.setMessageType((byte) 2);
+        result.setNewSession(false);
 
-        // 登录用户需要组装完整回复
+        // 登录用户需要组装完整回复保存
         if (isLogin && updateData != null) {
             String thinking = messageHolder.getCompleteContent(sessionId, true);
             String content = messageHolder.getCompleteContent(sessionId, false);
             Msg msg = new Msg(thinking, content, ChatService.TEXT, 2, "");
             updateData.setMessageList(Collections.singletonList(msg));
+            updateData.setMessageType((byte) 2);
+            updateData.setNewSession(false);
             try {
-                finishData = chatService.updateSession(updateData, false);
-                finishData.setMessageType((byte) 2);
-                finishData.setNewSession(false);
+                result = chatService.updateSession(updateData, false);
+                result.setMessageType((byte) 2);
+                result.setNewSession(false);
             } catch (Exception e) {
                 log.error("保存AI回复失败，sessionId: {}", sessionId, e);
             }
         }
-        return finishData;
+        return result;
     }
 
     // ========== 最终完成Emitter并清理资源 ==========

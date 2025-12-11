@@ -139,11 +139,7 @@ public class ChatService {
             ChatSession chatSession = generateSession(chatData);
             if (chatSessionMapper.insert(chatSession) >= 1) {
                 List<ChatMessage> chatMessageList = generateMessage(chatData, chatSession);
-                for (ChatMessage chatMessage : chatMessageList) {
-                    if (chatMessageMapper.insert(chatMessage) < 1) {
-                        throw new CustomException(500, "新增对话消息异常");
-                    }
-                }
+                // 这里不对消息进行插入，而是在后面的对话中进行插入
                 return generateChatData(chatSession, chatMessageList, false);
             } else {
                 throw new CustomException(500, "新增对话异常");
@@ -273,7 +269,7 @@ public class ChatService {
 
     public List<ChatSession> selectSessionByUserId(Long userId) {
         List<ChatSession> chatSessionList = chatSessionMapper.selectSessionByUserId(userId);
-        if (CollectionUtils.isNotEmpty(chatSessionList)) {
+        if (Objects.nonNull(chatSessionList)) {
             return chatSessionList;
         }
         return null;

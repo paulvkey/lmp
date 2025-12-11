@@ -3,7 +3,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 
 // 环境变量适配（推荐用.env文件管理）
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8090'
-// 超时时间（可通过环境变量覆盖）
+// 超时时间（单位：毫秒）
 const TIMEOUT = import.meta.env.VITE_API_TIMEOUT ? Number(import.meta.env.VITE_API_TIMEOUT) : 10000
 // 是否为生产环境
 const isProd = import.meta.env.ENV === 'production'

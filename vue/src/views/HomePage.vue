@@ -84,7 +84,12 @@ const resetCurrentChat = () => {
 window.addEventListener('beforeunload', () => {
   homeStatus.clearHomeStatus()
   collection.clearCollection()
-  chat.clearChat()
+  if (!history.selectedSessionId) {
+    chat.clearChat()
+  } else {
+    homeStatus.currentMenu = 'history'
+  }
+
   if (!checkLogin(userProfile)) {
     history.clearHistory()
   }
