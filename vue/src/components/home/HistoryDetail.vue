@@ -32,12 +32,12 @@
                   height="12"
                   viewBox="0 0 24 24"
                   fill="none"
-                  stroke="black"
-                  stroke-width="3"
+                  stroke="#333"
+                  stroke-width="2"
                   stroke-linecap="round"
                   stroke-linejoin="round"
                 >
-                  <rect x="4" y="5" width="16" height="1" rx="1" ry="1" stroke-width="2" />
+                  <rect x="4" y="5" width="16" height="1" rx="1" ry="1" stroke-width="1" />
                   <line x1="12" y1="13" x2="12" y2="24" />
                   <line x1="12" y1="12" x2="8" y2="19" />
                   <line x1="12" y1="12" x2="16" y2="19" />

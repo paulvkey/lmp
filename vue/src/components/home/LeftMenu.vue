@@ -155,7 +155,7 @@ const handleCollection = async () => {
   }
   if (homeStatus.currentMenu === 'history' || history.selectedSessionId) {
     // 重置当前对话状态
-    resetCurrentChat()
+    await resetCurrentChat()
     // 清除历史对话选中状态
     history.selectedSessionId = null
     history.loadedSessionId = null
