@@ -275,7 +275,7 @@
       <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="#fff">
         <path
           d="M30,40 L50,60 L70,40"
-          stroke="black"
+          stroke="#333"
           stroke-width="4"
           fill="none"
           stroke-linecap="round"
