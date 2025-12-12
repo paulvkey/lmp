@@ -165,7 +165,6 @@
           v-model="chat.inputData"
           placeholder="发送消息（Alt+Enter换行，Enter发送）"
           @keydown="handleKeydown"
-          :disabled="isInputDisabled"
         ></textarea>
 
         <!-- 按钮功能区 -->
@@ -175,7 +174,6 @@
               class="deep-thinking"
               @click="chat.isDeepActive = !chat.isDeepActive"
               :class="{ active: chat.isDeepActive }"
-              :disabled="isInputDisabled"
             >
               深度思考
             </button>
@@ -183,13 +181,12 @@
               class="network-search"
               @click="chat.isNetworkActive = !chat.isNetworkActive"
               :class="{ active: chat.isNetworkActive }"
-              :disabled="isInputDisabled"
             >
               联网搜索
             </button>
 
             <!-- 上传文件按钮 -->
-            <button class="upload-file" @click="handleFileUploadClick" :disabled="isInputDisabled">
+            <button class="upload-file" @click="handleFileUploadClick">
               上传文件
             </button>
 
@@ -201,7 +198,6 @@
               @change="handleFileSelected"
               style="display: none"
               multiple
-              :disabled="isInputDisabled"
             />
           </div>
 
@@ -210,9 +206,9 @@
             class="send-button"
             @click="sendMessage"
             :class="{ 'send-active': chat.inputData.trim() || chat.uploadedFiles.length > 0 }"
-            :disabled="chat.isSending || requestLock.value || isInputDisabled"
+            :disabled="chat.isSending || requestLock.value"
           >
-            <template v-if="chat.isSending && !isInputDisabled">
+            <template v-if="chat.isSending">
               <!-- 加载动画 -->
               <svg
                 width="16"
@@ -334,12 +330,11 @@ const requestLock = ref(false)
 // 全局AbortController：用于取消重复的异步请求
 const globalAbortCtrl = ref(new AbortController())
 
-const isInputDisabled = computed(() => {
-  return !(homeStatus.currentMenu === 'new')
-})
-
 const renameTitle = () => {
   homeStatus.isRenameDialogShow = true
+  if (!chat.modelInfo.newSession) {
+    homeStatus.renamingSessionId = chat.modelInfo.sessionId
+  }
   chat.newChatTitle = chat.chatTitle
 }
 
@@ -569,7 +564,7 @@ const handleFileSelected = async (e) => {
         }
       }
     }
-    // 清空input值，允许重复选择同一文件
+    // 允许重复选择同一文件
     e.target.value = ''
   }
 }
@@ -1012,12 +1007,9 @@ watch(
   async (newMenu) => {
     homeStatus.setCurrentMenu(newMenu)
     homeStatus.initIsNewSession()
-    chat.initIsInputEnabled(homeStatus)
     chat.inputData = ''
-    if (!isInputDisabled.value) {
-      await nextTick()
-      chatMsgInputFocus()
-    }
+    await nextTick()
+    chatMsgInputFocus()
   },
   { immediate: true, flush: 'sync' },
 )
@@ -1028,7 +1020,6 @@ const goToLogin = () => {
 
 onMounted(() => {
   homeStatus.initIsNewSession()
-  chat.initIsInputEnabled(homeStatus)
   // 监听聊天区域的滚动事件，实时检测是否显示按钮
   const chatMsgWrapper = chatMsgWrapperRef.value
   if (chatMsgWrapper) {

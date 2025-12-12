@@ -26,7 +26,7 @@ export const useHistoryStore = defineStore('history', {
       this.isLoadingSession = false
       this.isSessionCollected = false
       this.hasLoadedHistory = false;
-    }
+    },
   },
 
   // 持久化配置

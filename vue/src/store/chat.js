@@ -20,7 +20,7 @@ export const useChatStore = defineStore('chat', {
       isLogin: false,
       userId: 0,
       sessionId: 0,
-      sessionTitle: '新对话',
+      sessionTitle: '',
       aiModelId: 1,
       isDeleted: 0,
       createdAt: null,
@@ -42,7 +42,6 @@ export const useChatStore = defineStore('chat', {
       isDeepThink: 0,
       isNetworkSearch: 0,
     },
-    isInputEnabled: false,
     isSending: false,
     filesUploaded: false,
   }),
@@ -51,6 +50,7 @@ export const useChatStore = defineStore('chat', {
     initModelInfo(userProfile) {
       this.modelInfo.isLogin = userProfile.isLogin
       this.modelInfo.userId = userProfile.userId
+      this.modelInfo.sessionTitle = this.chatTitle
     },
     resetChat() {
       this.inputData = ''
@@ -72,7 +72,6 @@ export const useChatStore = defineStore('chat', {
       this.isScrolling = false
       this.isUserScrolled = false
       this.clearModelInfo()
-      this.isInputEnabled = false
       this.isSending = false
       this.filesUploaded = false
     },
@@ -82,7 +81,7 @@ export const useChatStore = defineStore('chat', {
         isLogin: false,
         userId: 0,
         sessionId: 0,
-        sessionTitle: '新对话',
+        sessionTitle: '',
         aiModelId: 1,
         isDeleted: 0,
         createdAt: null,
@@ -96,11 +95,6 @@ export const useChatStore = defineStore('chat', {
         tokenCount: 0,
         isDeepThink: 0,
         isNetworkSearch: 0,
-      }
-    },
-    initIsInputEnabled(homeStatus) {
-      if (homeStatus.currentMenu === 'new') {
-        this.isInputEnabled = true
       }
     },
   },

@@ -103,7 +103,7 @@ watch(
   { immediate: true },
 )
 
-// 修改确认编辑标题方法，使其能处理对话重命名
+// 编辑标题确认逻辑
 const confirmEditTitle = async () => {
   let newChatTitle = chat.newChatTitle.trim()
   if (!newChatTitle) {
@@ -113,96 +113,65 @@ const confirmEditTitle = async () => {
 
   if (newChatTitle.length > MAX_TITLE_LENGTH) {
     newChatTitle = newChatTitle.slice(0, MAX_TITLE_LENGTH)
-    chat.chatTitle = newChatTitle
     ElMessage.warning(`名称长度已截断为${MAX_TITLE_LENGTH}个字符`)
   }
 
+  let index = getSessionIndex(homeStatus.renamingSessionId, '')
   try {
-    if (homeStatus.renamingSessionId) {
-      await rightChatRename(newChatTitle)
+    if (index !== -1) {
+      await renameChatTitle(newChatTitle, index)
     } else {
-      await leftChatRename(newChatTitle)
+      if (checkLogin(userProfile)) {
+        ElMessage.warning('请先登陆，之后修改对话名')
+      } else {
+        ElMessage.warning('请先开始对话，之后修改对话名')
+      }
     }
   } catch (e) {
     ElMessage.error('修改对话名失败，请重试')
     if (homeStatus.renamingSessionId) {
-      const sessionIndex = history.historyList.findIndex(
-        (item) => item.id === homeStatus.renamingSessionId,
-      )
-      if (sessionIndex !== -1) {
-        history.historyList[sessionIndex].sessionTitle = chat.chatTitle
-      }
+      getSessionIndex(homeStatus.renamingSessionId, chat.chatTitle)
     }
   } finally {
     closeDialog()
   }
 }
 
-const rightChatRename = async (newChatTitle) => {
-  // 处理对话重命名
-  const index = history.historyList.findIndex(
-    (item) => item.id === homeStatus.renamingSessionId,
-  )
-  if (index !== -1) {
-    // 先更新本地显示
-    const originalTitle = history.historyList[index].sessionTitle
-    history.historyList[index].sessionTitle = newChatTitle
-    const response = await request(
-      'patch',
-      `/session/${homeStatus.renamingSessionId}/rename`,
-      null,
-      {
-        params: {
-          sessionTitle: newChatTitle,
-        },
+const renameChatTitle = async (newChatTitle, index) => {
+  const response = await request(
+    'patch',
+    `/session/${homeStatus.renamingSessionId}/rename`,
+    null,
+    {
+      params: {
+        sessionTitle: newChatTitle,
       },
-    )
+    },
+  )
 
-    if (response.code === 200) {
-      ElMessage.success('修改对话名成功')
-      // 如果是当前选中的对话，同时更新聊天标题
-      if (homeStatus.renamingSessionId === history.selectedSessionId) {
-        chat.chatTitle = newChatTitle
-      }
-    } else {
-      // 更新失败，恢复原始标题
-      history.historyList[index].sessionTitle = originalTitle
-      ElMessage.error('修改对话名失败，请重试')
+  if (response.code === 200) {
+    ElMessage.success('修改对话名成功')
+    history.historyList[index].sessionTitle = newChatTitle
+    // 如果是当前选中的对话，同时更新聊天标题
+    if (homeStatus.renamingSessionId === history.selectedSessionId) {
+      setChatTitle(newChatTitle)
     }
+  } else {
+    ElMessage.error('修改对话名失败，请重试')
   }
 }
 
-const leftChatRename = async (newChatTitle) => {
-// 处理当前对话标题修改
-  if (checkLogin(userProfile)) {
-    const response = await request(
-      'patch',
-      `/session/${chat.modelInfo.sessionId}/rename`,
-      null,
-      {
-        params: {
-          sessionTitle: newChatTitle,
-        },
-      },
-    )
-    if (response.code === 200) {
-      if (newChatTitle) chat.newChatTitle = newChatTitle
-      const currentSessionId = chat.modelInfo.sessionId
-      if (currentSessionId) {
-        // 找到左侧列表中对应的对话项
-        const sessionIndex = history.historyList.findIndex(
-          (item) => item.id === currentSessionId,
-        )
-        if (sessionIndex !== -1) {
-          history.historyList[sessionIndex].sessionTitle = newChatTitle
-        }
-      }
-      ElMessage.success('修改对话名成功')
-    } else {
-      ElMessage.error('修改对话名失败，请重试')
-    }
-  } else {
-    if (newChatTitle) chat.chatTitle = newChatTitle
+const getSessionIndex = (id) => {
+  if (id) {
+    return history.historyList.findIndex((item) => item.id === id)
+  }
+  return -1
+}
+
+const setChatTitle = (title) => {
+  if (title) {
+    chat.chatTitle = title
+    chat.modelInfo.sessionTitle = chat.chatTitle
   }
 }
 

@@ -19,6 +19,11 @@ export const useHomeStatusStore = defineStore('homeStatus', {
       this.isRenameDialogShow = false
       this.renamingSessionId = null
     },
+    refreshPage() {
+      this.isNewSession = false
+      this.showUserMenu = false
+      this.isRenameDialogShow = false
+    },
     initIsNewSession() {
       if (this.currentMenu === 'new') {
         this.isNewSession = true

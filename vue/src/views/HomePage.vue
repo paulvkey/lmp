@@ -82,14 +82,11 @@ const resetCurrentChat = () => {
 
 // 监听页面刷新
 window.addEventListener('beforeunload', () => {
-  homeStatus.clearHomeStatus()
+  homeStatus.refreshPage()
   collection.clearCollection()
   if (!history.selectedSessionId) {
     chat.clearChat()
-  } else {
-    homeStatus.currentMenu = 'history'
   }
-
   if (!checkLogin(userProfile)) {
     history.clearHistory()
   }
