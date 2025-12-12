@@ -37,7 +37,6 @@ public class MessageHolder {
 
     }
 
-
     /**
      * 累加流式内容
      */
@@ -95,23 +94,25 @@ public class MessageHolder {
     }
 
     /**
-     * 清除会话的暂存内容（异常时使用）
+     * 清除会话的暂存内容
      */
     public void clearContent(Long sessionId) {
-        lock.lock();
-        try {
-            contentMap.remove(sessionId);
-            sessionCreateTime.remove(sessionId);
-        } finally {
-            lock.unlock();
+        if (contentMap.containsKey(sessionId)) {
+            lock.lock();
+            try {
+                contentMap.remove(sessionId);
+                sessionCreateTime.remove(sessionId);
+            } finally {
+                lock.unlock();
+            }
         }
     }
 
     /**
-     * 定时清理超时会话（每30分钟执行一次）
+     * 定时清理超时会话（每30分钟执行一次）(单位：毫秒)
      * 清理超过1小时未活跃的会话
      */
-    @Scheduled(fixedRate = 1800000) // 30分钟 = 1800000毫秒
+    @Scheduled(fixedRate = 1800000)
     public void cleanTimeoutSessions() {
         lock.lock();
         try {

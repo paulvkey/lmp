@@ -6,7 +6,9 @@
         <div class="chat-title-wrapper" @click="renameTitle">
           <span class="chat-title">{{ chat.chatTitle }}</span>
         </div>
-        <button v-if="!checkLogin(userProfile)" class="top-login-btn" @click="goToLogin">登录账号</button>
+        <button v-if="!checkLogin(userProfile)" class="top-login-btn" @click="goToLogin">
+          登录账号
+        </button>
       </div>
     </div>
 
@@ -186,9 +188,7 @@
             </button>
 
             <!-- 上传文件按钮 -->
-            <button class="upload-file" @click="handleFileUploadClick">
-              上传文件
-            </button>
+            <button class="upload-file" @click="handleFileUploadClick">上传文件</button>
 
             <!-- 隐藏的文件上传输入 -->
             <input
@@ -204,9 +204,9 @@
           <!-- 发送按钮 -->
           <button
             class="send-button"
-            @click="sendMessage"
+            @click="handleSendClick"
             :class="{ 'send-active': chat.inputData.trim() || chat.uploadedFiles.length > 0 }"
-            :disabled="chat.isSending || requestLock.value"
+            :disabled="requestLock.value"
           >
             <template v-if="chat.isSending">
               <!-- 加载动画 -->
@@ -218,28 +218,10 @@
                 stroke="currentColor"
                 stroke-width="2"
               >
-                <circle
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke-dasharray="100"
-                  stroke-dashoffset="0"
-                  transform="rotate(0 12 12)"
-                >
-                  <animate
-                    attributeName="stroke-dashoffset"
-                    values="0;150"
-                    dur="1.5s"
-                    repeatCount="indefinite"
-                  />
-                  <animate
-                    attributeName="transform"
-                    type="rotate"
-                    values="0 12 12;360 12 12"
-                    dur="1.5s"
-                    repeatCount="indefinite"
-                  />
-                </circle>
+                <!-- 外圈圆圈 -->
+                <circle cx="12" cy="12" r="10" stroke="currentColor" />
+                <!-- 中间小方块 -->
+                <rect x="10" y="10" width="4" height="4" fill="currentColor" />
               </svg>
             </template>
             <template v-else>
@@ -633,6 +615,17 @@ const triggerNewChat = async () => {
   }
 }
 
+// 处理发送按钮点击
+const handleSendClick = async () => {
+  if (chat.isSending) {
+    // 正在发送时，点击则终止当前请求
+    await pauseSending()
+  } else {
+    // 未发送时，执行正常发送逻辑
+    await sendMessage()
+  }
+}
+
 // 发送消息
 const sendMessage = async () => {
   if (requestLock.value || !prepareSendMessage()) return
@@ -1000,6 +993,51 @@ const handleImageLoad = () => {
   setTimeout(() => {
     scrollToBottom({ force: true })
   }, 100)
+}
+
+// 取消发送
+const pauseSending = async () => {
+  // 终止流式请求
+  if (streamAbortCtrl.value) {
+    streamAbortCtrl.value.abort('取消发送')
+    streamAbortCtrl.value = null
+  }
+  // 终止全局请求
+  if (globalAbortCtrl.value) {
+    globalAbortCtrl.value.abort('取消发送')
+    globalAbortCtrl.value = new AbortController()
+  }
+  // 重置发送状态
+  chat.isSending = false
+  requestLock.value = false
+  // 标记最后一条消息
+  const lastMsgIndex = chat.messageList.length - 1
+  if (lastMsgIndex >= 0) {
+    const lastMsg = chat.messageList[lastMsgIndex]
+    if (lastMsg.isStreaming) {
+      const content = '已取消发送'
+      chat.$patch((state) => {
+        state.messageList[lastMsgIndex] = {
+          ...lastMsg,
+          isStreaming: false,
+          content: content,
+        }
+      })
+      await pauseSendingMsg(content)
+    }
+  }
+}
+
+const pauseSendingMsg = async (content) => {
+  try {
+    await request('patch', `/session/${chat.modelInfo.sessionId}/pause`, null, {
+      params: {
+        msgContent: content,
+      },
+    })
+  } catch (e) {
+    console.error('取消发送，处理当前消息异常：' + e)
+  }
 }
 
 watch(

@@ -258,9 +258,10 @@ public class ChatService {
         if (updateMsgList) {
             chatData.setMessageList(new ArrayList<>());
             chatMessageList.forEach(chatMsg -> {
-                Integer role = chatMsg.getMessageType() == (byte)1 ? 1 : 2;
+                Integer role = chatMsg.getMessageType() == (byte) 1 ? 1 : 2;
                 Msg msg = new Msg(chatMsg.getMessageThinking(), chatMsg.getMessageContent(),
                         chatMsg.getType(), role, chatMsg.getFileIds());
+                msg.setId(chatMsg.getId());
                 chatData.getMessageList().add(msg);
             });
         }
@@ -324,5 +325,38 @@ public class ChatService {
         }
     }
 
+    @Transactional
+    public Boolean pauseMsgBySessionId(Long id, String msgContent) {
+        List<ChatMessage> chatMessageList = chatMessageMapper.selectBySessionId(id);
+        if (CollectionUtils.isNotEmpty(chatMessageList)) {
+            int size = chatMessageList.size();
+            ChatMessage chatMessage = chatMessageList.get(size - 1);
+            if (chatMessage.getMessageType() == (byte) 1) {
+                ChatMessage newChatMessage = generateMsg(chatMessage.getUserId(), id, msgContent, true);
+                return chatMessageMapper.insert(newChatMessage) > 0;
+            } else if (chatMessage.getMessageType() == (byte) 2) {
+                chatMessage.setMessageContent(msgContent);
+                chatMessage.setSendTime(DateUtil.now());
+                return chatMessageMapper.updateByPrimaryKey(chatMessage) > 0;
+            }
+        }
+        return false;
+    }
 
+    public ChatMessage generateMsg(Long userId, Long sessionId, String msgContent, Boolean isSys) {
+        ChatMessage chatMessage = new ChatMessage();
+        chatMessage.setUserId(userId);
+        chatMessage.setSessionId(sessionId);
+        if (isSys) {
+            chatMessage.setMessageType((byte) 2);
+        } else {
+            chatMessage.setMessageType((byte) 1);
+        }
+        chatMessage.setMessageContent(msgContent);
+        chatMessage.setType(TEXT);
+        chatMessage.setIsDeepThink((byte) 0);
+        chatMessage.setIsNetworkSearch((byte) 0);
+        chatMessage.setSendTime(DateUtil.now());
+        return chatMessage;
+    }
 }

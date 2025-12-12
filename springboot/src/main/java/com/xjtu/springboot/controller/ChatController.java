@@ -92,6 +92,7 @@ public class ChatController {
     public Result deleteSession(@PathVariable("id") Long id) {
         if (id != null && id > 0) {
             if (chatService.deleteSessionById(id)) {
+                messageHolder.clearContent(id);
                 return Result.success();
             } else {
                 return Result.error("删除对话异常");
@@ -110,6 +111,21 @@ public class ChatController {
                 return Result.success();
             } else {
                 return Result.error("获取置顶对话异常");
+            }
+        } else {
+            return Result.error("获取对话请求参数异常");
+        }
+    }
+
+    @RequestMapping(method = RequestMethod.PATCH, path = "/session/{id}/pause")
+    public Result pauseSessionMsg(@PathVariable("id") Long id,
+                                  @RequestParam("msgContent") String msgContent) {
+        if (id != null && id > 0 && StringUtils.isNotEmpty(msgContent)) {
+            if (chatService.pauseMsgBySessionId(id, msgContent)) {
+                messageHolder.clearContent(id);
+                return Result.success();
+            } else {
+                return Result.error("终止对话消息异常");
             }
         } else {
             return Result.error("获取对话请求参数异常");
@@ -274,7 +290,7 @@ public class ChatController {
                 });
 
                 // 发送完成事件
-                if (!isEmitterCompleted.get()){
+                if (!isEmitterCompleted.get()) {
                     ChatData finishData = buildFinishChatData(chatData, sessionId, isLogin, updateData);
                     sendSseEvent(emitter, isEmitterCompleted, FINISHED_EVENT, Result.success(finishData));
                 }
