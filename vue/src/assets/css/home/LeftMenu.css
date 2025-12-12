@@ -67,6 +67,7 @@
 /* 历史对话样式 */
 /* 历史对话右侧图标 */
 .history-chats .expand-icon {
+  margin-top: 2px;
   margin-left: auto;
   margin-right: 4px;
   transition: transform 0.2s ease;

@@ -118,10 +118,9 @@ public class ChatController {
     }
 
     @RequestMapping(method = RequestMethod.PATCH, path = "/session/{id}/pause")
-    public Result pauseSessionMsg(@PathVariable("id") Long id,
-                                  @RequestParam("msgContent") String msgContent) {
-        if (id != null && id > 0 && StringUtils.isNotEmpty(msgContent)) {
-            if (chatService.pauseMsgBySessionId(id, msgContent)) {
+    public Result pauseSessionMsg(@PathVariable("id") Long id) {
+        if (id != null && id > 0) {
+            if (chatService.pauseMsgBySessionId(id)) {
                 messageHolder.clearContent(id);
                 return Result.success();
             } else {

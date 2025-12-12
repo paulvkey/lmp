@@ -75,6 +75,23 @@
               @click="msg.showThinking = !msg.showThinking"
             >
               {{ msg.thinkingType }}
+              <svg
+                class="expand-icon"
+                :style="{ transform: msg.showThinking ? 'rotate(0)' : 'rotate(-90deg)' }"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M5,8 L12,16 L19,8"
+                />
+              </svg>
             </button>
 
             <!-- 思考内容区域 -->
@@ -250,7 +267,10 @@
       class="scroll-bottom"
       @click="scrollToBottom"
       v-show="chat.showScrollBtn"
-      :class="{ active: chat.showScrollBtn }"
+      :class="{
+        active: chat.showScrollBtn,
+        sending: chat.isSending,
+      }"
     >
       <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="#fff">
         <path
@@ -653,6 +673,7 @@ const sendMessage = async () => {
   }
 }
 
+// 发送消息前数据准备
 const prepareSendMessage = () => {
   if (chat.isSending) return false
   const inputData = chat.inputData.trim()
@@ -719,6 +740,7 @@ const prepareSendMessage = () => {
   return true
 }
 
+// 新对话创建之后更新已有的信息
 const updateInfoByResponse = (response) => {
   chat.modelInfo.newSession = false
   chat.modelInfo.sessionId = response.sessionId
@@ -733,6 +755,7 @@ const updateInfoByResponse = (response) => {
   homeStatus.renamingSessionId = response.sessionId
 }
 
+// 获取并解析流式消息
 const getAndParseChatData = async (abortSignal) => {
   // 取消已有流式请求（避免重复）
   if (streamAbortCtrl.value) {
@@ -845,6 +868,7 @@ const getAndParseChatData = async (abortSignal) => {
   }
 }
 
+// 获取当前会话消息的位置
 const getMsgIndex = (newMsgId = -1) => {
   const list = chat.messageList
   let msgId = streamMsgIdRef.value
@@ -868,6 +892,7 @@ const getMsgIndex = (newMsgId = -1) => {
   return -1
 }
 
+// 更新流式消息以及DOM渲染
 const updateChunkMsg = async (parsedData, msgIndex) => {
   if (
     !chat.messageList ||
@@ -909,6 +934,7 @@ const updateChunkMsg = async (parsedData, msgIndex) => {
   scrollToBottom()
 }
 
+// 更新最终的完成消息但不更新DOM渲染
 const updateFinishedMsg = async (parsedData, msgIndex) => {
   if (
     !chat.messageList ||
@@ -935,6 +961,7 @@ const updateFinishedMsg = async (parsedData, msgIndex) => {
   scrollToBottom()
 }
 
+// 流式消息完成后设置相关的信息
 const setMsgEndInfo = async (newMsgId = -1, errorMsg = '') => {
   const msgIndex = getMsgIndex(newMsgId)
   if (msgIndex !== -1) {
@@ -948,6 +975,7 @@ const setMsgEndInfo = async (newMsgId = -1, errorMsg = '') => {
   scrollToBottom()
 }
 
+// 消息接收到了之后在历史对话中添加当前会话
 const updateHistoryByResponse = () => {
   if (checkLogin(userProfile)) {
     const sessionId = chat.modelInfo.sessionId
@@ -1015,28 +1043,20 @@ const pauseSending = async () => {
   if (lastMsgIndex >= 0) {
     const lastMsg = chat.messageList[lastMsgIndex]
     if (lastMsg.isStreaming) {
-      const content = '已取消发送'
       chat.$patch((state) => {
         state.messageList[lastMsgIndex] = {
           ...lastMsg,
           isStreaming: false,
-          content: content,
+          content: '已取消发送',
         }
       })
-      await pauseSendingMsg(content)
     }
-  }
-}
-
-const pauseSendingMsg = async (content) => {
-  try {
-    await request('patch', `/session/${chat.modelInfo.sessionId}/pause`, null, {
-      params: {
-        msgContent: content,
-      },
-    })
-  } catch (e) {
-    console.error('取消发送，处理当前消息异常：' + e)
+    // 更新后端数据(直接删除对应的消息)
+    try {
+      await request('patch', `/session/${chat.modelInfo.sessionId}/pause`, null, {})
+    } catch (e) {
+      console.error('取消发送，处理当前消息异常：' + e)
+    }
   }
 }
 
