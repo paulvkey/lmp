@@ -138,7 +138,7 @@ const props = defineProps({
   },
 })
 
-const SCROLL_BOTTOM_DELAY = 150
+const SCROLL_BOTTOM_DELAY = 300
 const isLoadingRequest = ref(false)
 if (history.isLoading === undefined || history.isLoading) {
   history.isLoading = false
@@ -184,6 +184,7 @@ const loadHistorySession = async (item) => {
     history.loadedSessionId = item.id
     chat.chatTitle = sessionData.sessionTitle
     chat.messageList = messageList.map((msg) => ({
+      id: `${Date.now()}-${Math.random().toString(36).slice(2)}-${msg.type}`,
       thinking: msg.messageThinking || '',
       content: msg.messageContent || '',
       isUser: msg.messageType === 1,
@@ -203,7 +204,10 @@ const loadHistorySession = async (item) => {
     history.isSessionCollected = sessionData.isCollected === 1
     await nextTick()
     setTimeout(() => {
-      func.scrollToBottom()
+      nextTick(() => {
+        func.scrollToBottom({ force: true })
+        func.checkScrollBottomBtn()
+      })
     }, SCROLL_BOTTOM_DELAY)
   } catch (e) {
     chat.messageList = []

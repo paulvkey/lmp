@@ -69,15 +69,12 @@ const hideMenuOutsideClick = throttle((e) => {
 })
 
 // 重置当前对话窗口
-const resetCurrentChat = () => {
+const resetCurrentChat = async () => {
+  await nextTick()
   chat.clearChat()
-  nextTick(() => {
-    func.chatMsgScrollTop()
-    chat.showScrollBtn = false
-  })
-  nextTick(() => {
-    func.chatMsgInputFocus()
-  })
+  func.chatMsgScrollTop()
+  chat.showScrollBtn = false
+  func.chatMsgInputFocus()
 }
 
 // 监听页面刷新

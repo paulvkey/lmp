@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia'
+import { nextTick } from 'vue'
 
 // 定义信息存储
 export const useChatStore = defineStore('chat', {
-  // 状态（存储信息）
   state: () => ({
     chatTitle: '新对话',
     newChatTitle: '',
@@ -29,13 +29,6 @@ export const useChatStore = defineStore('chat', {
       isPinned: 0,
       isCollected: 0,
       messageType: 1,
-      /* 数组内容 {
-        thinking: '',
-        content: '',
-        type: '',
-        role: 1/2,
-        fileIds: ''
-      } */
       messageList: [],
       sendTime: null,
       tokenCount: 0,
@@ -63,7 +56,12 @@ export const useChatStore = defineStore('chat', {
       this.chatTitle = '新对话'
       this.newChatTitle = ''
       this.inputData = ''
-      this.messageList = []
+      if (this.messageList.length > 0) {
+        this.messageList.splice(0, this.messageList.length)
+        nextTick().then(() => {
+          this.messageList = []
+        })
+      }
       this.uploadedFiles = []
       this.showAllFiles = false
       this.isDeepActive = false

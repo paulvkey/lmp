@@ -136,7 +136,7 @@ const SCROLL_DELAY = 200
 // 新对话点击事件
 const handleNewChat = async () => {
   // 重置当前对话窗口状态
-  resetCurrentChat()
+  await resetCurrentChat()
   // 切换菜单状态
   homeStatus.currentMenu = 'new'
   homeStatus.isNewSession = true

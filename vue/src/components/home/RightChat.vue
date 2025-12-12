@@ -701,7 +701,7 @@ const prepareSendMessage = () => {
       previewUrl: file.previewUrl,
     }))
     const fileMessage = {
-      id: Date.now() + '-file',
+      id: `${Date.now()}-${Math.random().toString(36).slice(2)}-file`,
       content: JSON.stringify(fileContent),
       isUser: true,
       type: 'file',
@@ -718,7 +718,7 @@ const prepareSendMessage = () => {
   }
 
   const message = {
-    id: Date.now() + '-text',
+    id: `${Date.now()}-${Math.random().toString(36).slice(2)}-text`,
     content: inputData,
     isUser: true,
     type: 'text',
@@ -766,7 +766,7 @@ const getAndParseChatData = async (abortSignal) => {
 
   try {
     // 创建流式消息项（初始空内容+加载状态）
-    streamMsgIdRef.value = Date.now() + '-stream'
+    streamMsgIdRef.value = `${Date.now()}-${Math.random().toString(36).slice(2)}-stream`
     const streamMsg = {
       id: streamMsgIdRef.value,
       thinking: '',

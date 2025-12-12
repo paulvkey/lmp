@@ -23,7 +23,7 @@
     "katex": "^0.16.25",
     "lodash": "^4.17.21",
     "lodash.debounce": "^4.0.8",
-    "markstream-vue": "^0.0.2",
+    "markstream-vue": "^0.0.3-beta.3",
     "mermaid": "^11.12.2",
     "pinia": "^3.0.3",
     "pinia-plugin-persistedstate": "^4.5.0",

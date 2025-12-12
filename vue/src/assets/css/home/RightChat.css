@@ -90,8 +90,10 @@
 
 /* 对话消息展示区域 */
 .chat-msg-wrapper {
+  position: relative;
   display: block;
   flex-grow: 1;
+  height: 100%;
   width: 70%;
   max-width: 80%;
   padding: 0 6px;
@@ -123,10 +125,16 @@
   width: 100%;
   margin-bottom: 12px;
   transition: all 0.2s ease-out;
+  transform: translateZ(0);
+  will-change: height, padding;
 }
 
 .chat-msg-item:first-child {
   margin-top: 12px;
+}
+
+.chat-msg-item:last-child {
+  margin-bottom: 24px;
 }
 
 .chat-msg {
@@ -213,6 +221,7 @@
   overflow-y: auto;
   transition: all 0.3s ease;
   scrollbar-width: thin;
+  transform: translateZ(0);
 }
 
 /* 思考内容折叠状态 */
@@ -346,7 +355,7 @@
   padding: 8px 10px;
   margin: 0 auto;
   background: #fff;
-  border-radius: 10px;
+  border-radius: 16px;
   border: 1px solid #eee;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
   box-sizing: border-box;
