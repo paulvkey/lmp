@@ -473,13 +473,6 @@
   outline: none;
 }
 
-.chat-msg-input:disabled {
-  background-color: #f5f7fa;
-  cursor: not-allowed;
-  color: #b3b3b3;
-  border-radius: 10px;
-}
-
 /* 对话发送框下方的按钮组 */
 .chat-buttons {
   display: flex;
@@ -516,24 +509,6 @@
   background-color: #e6f7ff;
   color: #1890ff;
   border-color: #91d5ff;
-}
-
-/* 禁用状态按钮样式 */
-.deep-thinking:disabled,
-.network-search:disabled,
-.upload-file:disabled {
-  background-color: #f5f7fa;
-  color: #b3b3b3;
-  border-color: #e8e8e8;
-  cursor: not-allowed;
-}
-
-/* 禁用状态下hover不触发效果 */
-.deep-thinking:disabled:hover,
-.network-search:disabled:hover,
-.upload-file:disabled:hover {
-  background-color: #f5f5f5;
-  border-color: #e8e8e8;
 }
 
 /* 发送按钮 */
