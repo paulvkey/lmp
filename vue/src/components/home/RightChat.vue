@@ -88,20 +88,18 @@
                 stroke-linecap="round"
                 stroke-linejoin="round"
               >
-                <path
-                  d="M5,8 L12,16 L19,8"
-                />
+                <path d="M5,8 L12,16 L19,8" />
               </svg>
             </button>
 
             <!-- 思考内容区域 -->
             <div class="thinking-msg" :class="{ collapsed: !msg.showThinking }">
-              <MarkdownRender :content="msg.thinking" />
+              <MarkdownRender :content="msg.thinking" :is-dark="false"/>
             </div>
 
             <!-- 结果消息区域 -->
             <div class="chat-msg">
-              <MarkdownRender :content="msg.content" />
+              <MarkdownRender :content="msg.content" :is-dark="false"/>
             </div>
           </div>
         </div>
@@ -184,6 +182,8 @@
           v-model="chat.inputData"
           placeholder="发送消息（Alt+Enter换行，Enter发送）"
           @keydown="handleKeydown"
+          @compositionstart="() => (isComposing.value = true)"
+          @compositionend="() => (isComposing.value = false)"
         ></textarea>
 
         <!-- 按钮功能区 -->
@@ -319,6 +319,7 @@ const SCROLL_DEBOUNCE_DELAY = 100
 const SCROLLBAR_SHOW_DURATION = 500
 const MAX_FILE_SHOW = 5
 
+const isComposing = ref(false)
 const scrollDebounceTimer = ref(null)
 const scrollbarShowTimer = ref(null)
 const chatMsgWrapperRef = ref(null)
@@ -604,6 +605,7 @@ const removeUploadedFile = (index) => {
 
 // 处理输入框键盘事件
 const handleKeydown = (e) => {
+  if (isComposing.value) return
   if (e.keyCode === 13) {
     if (e.altKey || e.metaKey) {
       const cursorPos = e.target.selectionStart
@@ -613,6 +615,7 @@ const handleKeydown = (e) => {
       }, 0)
       e.preventDefault()
     } else {
+      if (requestLock.value || chat.isSending) return
       e.preventDefault()
       sendMessage()
     }

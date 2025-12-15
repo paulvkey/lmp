@@ -16,6 +16,8 @@
               prefix-icon="User"
               autocomplete="username"
               clearable
+              @compositionstart="handleCompositionStart"
+              @compositionend="handleCompositionEnd"
             ></el-input>
           </el-form-item>
 
@@ -28,6 +30,8 @@
               prefix-icon="Lock"
               show-password
               clearable
+              @compositionstart="handleCompositionStart"
+              @compositionend="handleCompositionEnd"
             ></el-input>
           </el-form-item>
 
@@ -46,8 +50,8 @@
                 :loading="isLoading"
                 :disabled="isLoading"
               >
-                <template  v-if="isLoading">登录中</template >
-                <template  v-else>登 录</template >
+                <template v-if="isLoading">登录中</template>
+                <template v-else>登 录</template>
               </el-button>
             </div>
           </el-form-item>
@@ -61,7 +65,7 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { onMounted, onUnmounted, reactive, ref } from 'vue'
 import router from '@/router/index.js'
 import request from '@/utils/request.js'
 import { ElMessage } from 'element-plus'
@@ -75,6 +79,8 @@ const userProfile = useUserProfileStore()
 const isLoading = ref(false)
 // 记住密码开关
 const rememberMe = ref(false)
+// 标记是否处于输入法组合输入状态
+const isComposing = ref(false)
 
 const data = reactive({
   form: {
@@ -141,6 +147,34 @@ const login = async () => {
   })
 }
 
+const handleEnterKey = (e) => {
+  if (
+    e.key === 'Enter' &&
+    !e.altKey &&
+    !e.ctrlKey &&
+    !e.metaKey &&
+    !isComposing.value &&
+    !isLoading.value
+  ) {
+    e.preventDefault()
+    login()
+  }
+}
+
+// 输入法状态切换
+const handleCompositionStart = () => {
+  isComposing.value = true
+}
+
+const handleCompositionEnd = () => {
+  isComposing.value = false
+}
+
+// 跳转注册页面
+const goToRegister = () => {
+  router.push('/register')
+}
+
 onMounted(async () => {
   // 读取记住的密码
   if (userProfile.rememberMe.isRemember) {
@@ -165,12 +199,13 @@ onMounted(async () => {
   } catch (e) {
     console.warn('获取IP失败，使用默认值:', e)
   }
+
+  document.addEventListener('keydown', handleEnterKey)
 })
 
-// 跳转注册页面
-const goToRegister = () => {
-  router.push('/register')
-}
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleEnterKey)
+})
 </script>
 
 <style scoped>
@@ -350,7 +385,7 @@ const goToRegister = () => {
   transition: color 0.2s;
   padding: 4px 0 !important;
   background: transparent !important;
-  border: none !important
+  border: none !important;
 }
 
 ::v-deep .register-link:hover {
