@@ -361,7 +361,7 @@ const deleteSession = async (id, index) => {
       const response = await request('delete', `/session/${id}/delete`)
       if (response.code === 200) {
         history.historyList.splice(index, 1)
-        history.historySet.delete(id)
+        history.deleteHistoryId(id)
         ElMessage.success('对话已删除')
         // 若删除的是当前选中的对话，清除存储
         if (id === history.selectedSessionId) {
@@ -411,7 +411,7 @@ const loadHistoryData = async () => {
     await props.loadFunc()
     checkTextOverflow()
     history.hasLoadedHistory = true
-    history.initHistorySet()
+    history.initHistoryIds()
   } catch (e) {
     history.clearHistory()
   } finally {

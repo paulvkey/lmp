@@ -182,8 +182,8 @@
           v-model="chat.inputData"
           placeholder="发送消息（Alt+Enter换行，Enter发送）"
           @keydown="handleKeydown"
-          @compositionstart="() => (isComposing.value = true)"
-          @compositionend="() => (isComposing.value = false)"
+          @compositionstart="handleCompositionStart"
+          @compositionend="handleCompositionEnd"
         ></textarea>
 
         <!-- 按钮功能区 -->
@@ -347,6 +347,13 @@ const chatMsgScrollTop = () => {
 
 const chatMsgInputFocus = () => {
   chatMsgInputRef.value?.focus()
+}
+
+const handleCompositionStart = () => {
+  isComposing.value = true
+}
+const handleCompositionEnd = () => {
+  isComposing.value = false
 }
 
 // 滚动到底部
@@ -1001,7 +1008,8 @@ const updateHistoryByResponse = () => {
     const updatedAt = chat.modelInfo.updatedAt
 
     // 检查历史列表中是否已存在该对话
-    if (!history.historySet.has(sessionId)) {
+    const index = history.getHistoryIdx(sessionId)
+    if (index === -1) {
       const newSessionData = {
         id: sessionId,
         userId: userProfile.userId,
@@ -1016,7 +1024,7 @@ const updateHistoryByResponse = () => {
       const insertIndex =
         firstNonPinnedIndex !== -1 ? firstNonPinnedIndex : history.historyList.length
       history.historyList.splice(insertIndex, 0, newSessionData)
-      history.historySet.add(sessionId)
+      history.historyIds.push(sessionId)
     }
 
     history.currentSessionId = sessionId

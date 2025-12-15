@@ -46,7 +46,6 @@ export const useChatStore = defineStore('chat', {
     clearInput() {
       this.inputData = ''
       this.isSending = false
-      this.clearModelInfo()
     },
     clearChatFiles() {
       this.inputData = ''

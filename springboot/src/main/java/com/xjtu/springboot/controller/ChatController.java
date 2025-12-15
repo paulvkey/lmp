@@ -233,7 +233,9 @@ public class ChatController {
                                      AtomicBoolean isEmitterCompleted) throws Exception {
         // 保存用户输入
         chatData.setMessageType((byte) 1);
+        System.out.println("==================================" + chatData.toString());
         ChatData updateData = chatService.updateSession(chatData, true);
+        System.out.println("==================================" + updateData.toString());
         Long loginSessionId = updateData.getSessionId();
         messageHolder.initContentHolder(loginSessionId);
         log.debug("登录用户SSE初始化完成，sessionId: {}", loginSessionId);

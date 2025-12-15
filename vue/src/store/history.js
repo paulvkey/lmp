@@ -13,19 +13,30 @@ export const useHistoryStore = defineStore('history', {
     isSessionCollected: false,
     hasLoadedHistory: false,
     currentSessionId: null,
-    historySet: new Set(),
+    historyIds: [],
   }),
 
+  getters: {
+    getHistoryIdx: (state) => (targetId) => {
+      if (!targetId || !state.historyIds.length) return -1;
+      return state.historyIds.findIndex((id) => {
+        return id === targetId;
+      });
+    },
+  },
+
   actions: {
-    initHistorySet() {
-      this.historySet.clear();
+    initHistoryIds() {
+      this.historyIds = [];
       if (this.historyList.length > 0) {
         this.historyList.filter(history => {
-          if (!this.historySet.has(history.id)) {
-            this.historySet.add(history.id);
-          }
+          this.historyIds.push(history.id)
         });
       }
+    },
+    deleteHistoryId(targetId) {
+      if (!targetId || !this.historyIds.length) return;
+      this.historyIds = this.historyIds.filter(id => id !== targetId);
     },
     clearCurrent() {
       this.activeSessionMenuId = null
@@ -42,7 +53,7 @@ export const useHistoryStore = defineStore('history', {
       this.isSessionCollected = false
       this.hasLoadedHistory = false
       this.currentSessionId = null
-      this.historySet.clear();
+      this.historyIds = [];
     },
   },
 
@@ -53,17 +64,6 @@ export const useHistoryStore = defineStore('history', {
       {
         key: 'history',
         storage: localStorage,
-        paths: [
-          'isExpanded',
-          'isLoading',
-          'historyList',
-          'selectedSessionId',
-          'activeSessionMenuId',
-          'isLoadingSession',
-          'isSessionCollected',
-          'hasLoadedHistory',
-          'currentSessionId'
-        ],
       },
     ],
   },
