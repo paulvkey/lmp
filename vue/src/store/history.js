@@ -7,25 +7,42 @@ export const useHistoryStore = defineStore('history', {
     isExpanded: false,
     isLoading: false,
     historyList: [],
-    needReloadSession: false,
     selectedSessionId: null,
     activeSessionMenuId: null,
     isLoadingSession: false,
     isSessionCollected: false,
     hasLoadedHistory: false,
+    currentSessionId: null,
+    historySet: new Set(),
   }),
 
   actions: {
+    initHistorySet() {
+      this.historySet.clear();
+      if (this.historyList.length > 0) {
+        this.historyList.filter(history => {
+          if (!this.historySet.has(history.id)) {
+            this.historySet.add(history.id);
+          }
+        });
+      }
+    },
+    clearCurrent() {
+      this.activeSessionMenuId = null
+      this.selectedSessionId = null
+      this.currentSessionId = null
+    },
     clearHistory() {
       this.isExpanded = false
       this.isLoading = false
       this.historyList = []
-      this.needReloadSession = false
       this.selectedSessionId = null
       this.activeSessionMenuId = null
       this.isLoadingSession = false
       this.isSessionCollected = false
-      this.hasLoadedHistory = false;
+      this.hasLoadedHistory = false
+      this.currentSessionId = null
+      this.historySet.clear();
     },
   },
 
@@ -36,6 +53,17 @@ export const useHistoryStore = defineStore('history', {
       {
         key: 'history',
         storage: localStorage,
+        paths: [
+          'isExpanded',
+          'isLoading',
+          'historyList',
+          'selectedSessionId',
+          'activeSessionMenuId',
+          'isLoadingSession',
+          'isSessionCollected',
+          'hasLoadedHistory',
+          'currentSessionId'
+        ],
       },
     ],
   },

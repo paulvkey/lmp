@@ -248,7 +248,7 @@ public class ChatController {
                                         AtomicBoolean isEmitterCompleted) {
         Long nonLoginSessionId = 0L;
         // 异步执行AI流式处理
-        executeAiChatAsync(chatData, nonLoginSessionId, emitter, isEmitterCompleted, false, null);
+        executeAiChatAsync(chatData, nonLoginSessionId, emitter, isEmitterCompleted, false, chatData);
     }
 
     // ========== 通用AI异步处理逻辑 ==========
@@ -318,7 +318,11 @@ public class ChatController {
         if (isLogin && updateData != null) {
             String thinking = messageHolder.getCompleteContent(sessionId, true);
             String content = messageHolder.getCompleteContent(sessionId, false);
-            Msg msg = new Msg(thinking, content, ChatService.TEXT, 2, "");
+            Msg msg = Msg.builder().thinking(thinking)
+                    .content(content)
+                    .type(ChatService.TEXT)
+                    .role(2)
+                    .build();
             updateData.setMessageList(Collections.singletonList(msg));
             updateData.setMessageType((byte) 2);
             updateData.setNewSession(false);

@@ -7,7 +7,7 @@
     <!-- 左侧菜单栏 -->
     <div class="left-menus">
       <!-- 新对话菜单 -->
-      <div class="new-chat menu-item" :class="{ active: true }" @click.stop="handleNewChat">
+      <div class="new-chat menu-item" @click.stop="handleNewChat">
         <svg
           class="menu-icon"
           xmlns="http://www.w3.org/2000/svg"
@@ -61,7 +61,6 @@
       <!-- 历史对话菜单 -->
       <div
         class="history-chats menu-item"
-        :class="{ active: homeStatus.currentMenu === 'history' }"
         @click.stop="handleHistoryList"
       >
         <svg
@@ -109,9 +108,9 @@
 </template>
 
 <script setup>
-import '@/assets/css/home/LeftMenu.css'
 import { inject, nextTick, provide } from 'vue'
 import { ElMessage } from 'element-plus'
+import '@/assets/css/home/LeftMenu.css'
 import CollectionBox from '@/components/home/CollectionBox.vue'
 import HistoryDetail from '@/components/home/HistoryDetail.vue'
 import request from '@/utils/request.js'
@@ -144,7 +143,6 @@ const handleNewChat = async () => {
   // 清除历史对话相关高亮
   history.selectedSessionId = null
   history.activeSessionMenuId = null
-  history.needReloadSession = false
 }
 
 // 收藏对话点击事件

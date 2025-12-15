@@ -3,20 +3,22 @@ package com.xjtu.springboot.pojo;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
+import java.io.Serializable;
+
 @Data
-public class Options {
+public class Options implements Serializable {
     private static final long serialVersionUID = 1L;
-    private Integer seed;
-    private Double temperature;
+    private Integer seed = 12345;
+    private Double temperature = 0.6;
     @JsonProperty("top_k")
-    private Integer topK;
+    private Integer topK = 20;
     @JsonProperty("top_p")
-    private Double topP;
+    private Double topP = 0.95;
     @JsonProperty("min_p")
-    private Double minP;
+    private Double minP = 0.0;
     private String stop;
     @JsonProperty("num_ctx")
-    private Integer numCtx;
+    private Integer numCtx = 4096;
     @JsonProperty("num_predict")
-    private Integer numPredict;
+    private Integer numPredict = 4096;
 }

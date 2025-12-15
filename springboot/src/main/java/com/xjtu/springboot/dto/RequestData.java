@@ -16,7 +16,7 @@ public class RequestData {
     private String format;
     private Options options;
     private Boolean stream = true;
-    private Boolean think;
+    private Boolean think = false;
     @JsonProperty("keep_alive")
-    private String keepAlive;
+    private String keepAlive = "30m";
 }

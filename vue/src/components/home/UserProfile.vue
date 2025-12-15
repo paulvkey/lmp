@@ -75,7 +75,6 @@ const logout = () => {
   history.clearHistory()
   collection.clearCollection()
   chat.clearChat()
-  localStorage.removeItem('currentSessionId')
   ElMessage.success('已退出登录')
   setTimeout(() => {
     window.open('/home', '_blank')

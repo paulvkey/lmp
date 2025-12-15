@@ -114,6 +114,14 @@ public class ChatService {
     private RequestData genrateRequestData(ChatData chatData) {
         RequestData requestData = new RequestData();
         List<RequestMessage> requestMessageList = new ArrayList<>();
+        Options options = new Options();
+        if (chatData.getIsDeepThink() == (byte) 1) {
+            requestData.setThink(true);
+            options.setSeed(11223);
+            options.setTemperature(0.55);
+            options.setTopP(0.96);
+        }
+        requestData.setOptions(options);
         for (Msg message : chatData.getMessageList()) {
             // TODO 文件消息要单独处理
             if (message.getType().equals(FILE)) {
@@ -129,10 +137,6 @@ public class ChatService {
             requestMessageList.add(requestMessage);
         }
         requestData.setMessages(requestMessageList);
-
-        Options options = new Options();
-        options.setTemperature(0.6);
-        requestData.setOptions(options);
         return requestData;
     }
 
@@ -144,7 +148,7 @@ public class ChatService {
             if (chatSessionMapper.insert(chatSession) >= 1) {
                 List<ChatMessage> chatMessageList = generateMessage(chatData, chatSession);
                 // 这里不对消息进行插入，而是在后面的对话中进行插入
-                return generateChatData(chatSession, chatMessageList, false);
+                return generateChatData(chatData, chatSession, chatMessageList, false);
             } else {
                 throw new CustomException(500, "新增对话异常");
             }
@@ -172,7 +176,7 @@ public class ChatService {
                         // 登录用户直接用数据库里面的数据
                         chatMessageList = chatMessageMapper.selectBySessionId(sessionId);
                     }
-                    return generateChatData(chatSession, chatMessageList, selectAllMsg);
+                    return generateChatData(chatData, chatSession, chatMessageList, selectAllMsg);
                 } else {
                     throw new CustomException(500, "更新对话异常");
                 }
@@ -234,38 +238,43 @@ public class ChatService {
         return chatMessageList;
     }
 
-    public ChatData generateChatData(ChatSession chatSession, List<ChatMessage> chatMessageList,
+    public ChatData generateChatData(ChatData chatData, ChatSession chatSession,
+                                     List<ChatMessage> chatMessageList,
                                      Boolean updateMsgList) {
-        ChatData chatData = new ChatData();
-        chatData.setIsLogin(true);
-        chatData.setUserId(chatSession.getUserId());
-        chatData.setSessionId(chatSession.getId());
-        chatData.setSessionTitle(chatSession.getSessionTitle());
-        chatData.setAiModelId(chatSession.getAiModelId());
-        chatData.setIsPinned(chatSession.getIsPinned());
-        chatData.setIsDeleted(chatSession.getIsDeleted());
-        chatData.setIsCollected(chatSession.getIsCollected());
-        chatData.setCreatedAt(chatSession.getCreatedAt());
-        chatData.setUpdatedAt(chatSession.getUpdatedAt());
-        chatData.setLastMessageTime(chatSession.getLastMessageTime());
+        ChatData result = new ChatData();
+        result.setIsLogin(true);
+        result.setUserId(chatSession.getUserId());
+        result.setSessionId(chatSession.getId());
+        result.setSessionTitle(chatSession.getSessionTitle());
+        result.setAiModelId(chatSession.getAiModelId());
+        result.setIsPinned(chatSession.getIsPinned());
+        result.setIsDeleted(chatSession.getIsDeleted());
+        result.setIsCollected(chatSession.getIsCollected());
+        result.setCreatedAt(chatSession.getCreatedAt());
+        result.setUpdatedAt(chatSession.getUpdatedAt());
+        result.setLastMessageTime(chatSession.getLastMessageTime());
+        result.setIsDeepThink(chatData.getIsDeepThink());
+        result.setIsNetworkSearch(chatData.getIsNetworkSearch());
         // 这里只处理消息的基础信息，不处理消息的内容
-        ChatMessage chatMessage = chatMessageList.get(0);
-        chatData.setMessageType(chatMessage.getMessageType());
-        chatData.setSendTime(chatMessage.getSendTime());
-        chatData.setTokenCount(chatMessage.getTokenCount());
-        chatData.setIsDeepThink(chatMessage.getIsDeepThink());
-        chatData.setIsNetworkSearch(chatMessage.getIsNetworkSearch());
+        ChatMessage chatMessage = chatMessageList.get(chatMessageList.size() - 1);
+        result.setMessageType(chatMessage.getMessageType());
+        result.setSendTime(chatMessage.getSendTime());
+        result.setTokenCount(chatMessage.getTokenCount());
         if (updateMsgList) {
-            chatData.setMessageList(new ArrayList<>());
+            result.setMessageList(new ArrayList<>());
             chatMessageList.forEach(chatMsg -> {
                 Integer role = chatMsg.getMessageType() == (byte) 1 ? 1 : 2;
-                Msg msg = new Msg(chatMsg.getMessageThinking(), chatMsg.getMessageContent(),
-                        chatMsg.getType(), role, chatMsg.getFileIds());
-                chatData.getMessageList().add(msg);
+                Msg msg = Msg.builder().thinking(chatMsg.getMessageThinking())
+                        .content(chatMsg.getMessageContent())
+                        .type(chatMsg.getType())
+                        .role(role)
+                        .fileIds(chatMsg.getFileIds())
+                        .build();
+                result.getMessageList().add(msg);
             });
         }
 
-        return chatData;
+        return result;
     }
 
     public List<ChatSession> selectSessionByUserId(Long userId) {
@@ -280,14 +289,12 @@ public class ChatService {
     public boolean deleteSessionById(Long id) {
         ChatSession chatSession = selectSessionById(id);
         if (Objects.nonNull(chatSession)) {
-            if (chatSessionMapper.deleteByPrimaryKey(id) >= 1
-                    && chatMessageMapper.deleteBySessionId(id) >= 1) {
-                if (Objects.nonNull(userCollectionMapper.selectBySessionId(id))) {
-                    return userCollectionMapper.deleteBySessionId(id) >= 1;
-                }
+            if (chatSessionMapper.deleteByPrimaryKey(id) >= 1) {
+                chatMessageMapper.deleteBySessionId(id);
+                userCollectionMapper.deleteBySessionId(id);
                 return true;
             } else {
-                throw new CustomException(500, "删除对话关联信息异常");
+                throw new CustomException(500, "删除对话信息异常");
             }
         } else {
             throw new CustomException(500, "查询待删除对话异常");

@@ -7,11 +7,13 @@ export const useChatStore = defineStore('chat', {
     chatTitle: '新对话',
     newChatTitle: '',
     inputData: '',
+    isSending: false,
     messageList: [],
     uploadedFiles: [],
     showAllFiles: false,
-    isDeepActive: false,
-    isNetworkActive: false,
+    filesUploaded: false,
+    isDeepThink: false,
+    isNetworkSearch: false,
     showScrollBtn: false,
     isScrolling: false,
     isUserScrolled: false,
@@ -32,11 +34,7 @@ export const useChatStore = defineStore('chat', {
       messageList: [],
       sendTime: null,
       tokenCount: 0,
-      isDeepThink: 0,
-      isNetworkSearch: 0,
     },
-    isSending: false,
-    filesUploaded: false,
   }),
 
   actions: {
@@ -45,17 +43,23 @@ export const useChatStore = defineStore('chat', {
       this.modelInfo.userId = userProfile.userId
       this.modelInfo.sessionTitle = this.chatTitle
     },
-    resetChat() {
+    clearInput() {
       this.inputData = ''
+      this.isSending = false
+      this.clearModelInfo()
+    },
+    clearChatFiles() {
+      this.inputData = ''
+      this.isSending = false
       this.uploadedFiles = []
       this.showAllFiles = false
-      this.isSending = false
       this.filesUploaded = false
     },
     clearChat() {
       this.chatTitle = '新对话'
       this.newChatTitle = ''
       this.inputData = ''
+      this.isSending = false
       if (this.messageList.length > 0) {
         this.messageList.splice(0, this.messageList.length)
         nextTick().then(() => {
@@ -64,14 +68,13 @@ export const useChatStore = defineStore('chat', {
       }
       this.uploadedFiles = []
       this.showAllFiles = false
-      this.isDeepActive = false
-      this.isNetworkActive = false
+      this.filesUploaded = false
+      this.isDeepThink = false
+      this.isNetworkSearch = false
       this.showScrollBtn = false
       this.isScrolling = false
       this.isUserScrolled = false
       this.clearModelInfo()
-      this.isSending = false
-      this.filesUploaded = false
     },
     clearModelInfo() {
       this.modelInfo = {

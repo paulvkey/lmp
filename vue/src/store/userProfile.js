@@ -18,6 +18,12 @@ export const useUserProfileStore = defineStore('userProfile', {
     bio: '',
     isLogin: false,
     token: null,
+    rememberMe: {
+      isRemember: false,
+      username: '',
+      password: '',
+      expires: '',
+    },
   }),
 
   actions: {
@@ -36,12 +42,21 @@ export const useUserProfileStore = defineStore('userProfile', {
       this.bio = info.bio
       this.isLogin = true
     },
-
     setUserToken(token) {
       this.token = token
     },
-
-    // 清除信息
+    setRememberMe(username, password, expires) {
+      this.rememberMe.username = username
+      this.rememberMe.password = password
+      this.rememberMe.expires = expires
+      this.rememberMe.isRemember = true
+    },
+    clearRememberMe() {
+      this.rememberMe.username = ''
+      this.rememberMe.password = ''
+      this.rememberMe.expires = ''
+      this.rememberMe.isRemember = false
+    },
     clearUserProfile() {
       this.userId = 0
       this.username = '游客'
@@ -56,6 +71,7 @@ export const useUserProfileStore = defineStore('userProfile', {
       this.bio = ''
       this.isLogin = false
       this.token = null
+      this.clearRememberMe()
     },
   },
 

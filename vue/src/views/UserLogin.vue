@@ -117,19 +117,10 @@ const login = async () => {
           userProfile.setUserProfile(response.data)
           userProfile.setUserToken(response.data.token)
 
-          // 记住密码（存储到localStorage，7天有效期）
+          // 记住密码（7天有效期）
           if (rememberMe.value) {
             const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-            localStorage.setItem(
-              'rememberedUser',
-              JSON.stringify({
-                username: data.form.username,
-                password: data.form.password,
-                expires,
-              }),
-            )
-          } else {
-            localStorage.removeItem('rememberedUser')
+            userProfile.setRememberMe(data.form.username, data.form.password, expires)
           }
 
           ElMessage.success('登录成功，跳转至首页')
@@ -141,8 +132,7 @@ const login = async () => {
           data.form.password = ''
         }
       } catch (error) {
-        console.error('登录请求异常:', error)
-        ElMessage.error('网络异常，请检查网络连接')
+        ElMessage.error(error)
         data.form.password = ''
       } finally {
         isLoading.value = false
@@ -153,21 +143,18 @@ const login = async () => {
 
 onMounted(async () => {
   // 读取记住的密码
-  const remembered = localStorage.getItem('rememberedUser')
-  if (remembered) {
+  if (userProfile.rememberMe.isRemember) {
     try {
-      const { username, password, expires } = JSON.parse(remembered)
-      // 检查是否过期
-      if (new Date(expires) > new Date()) {
-        data.form.username = username
-        data.form.password = password
+      if (new Date(userProfile.rememberMe.expires) > new Date()) {
+        data.form.username = userProfile.rememberMe.username
+        data.form.password = userProfile.rememberMe.password
         rememberMe.value = true
       } else {
-        localStorage.removeItem('rememberedUser') // 过期则清除
+        userProfile.clearRememberMe()
       }
     } catch (e) {
       console.error('解析记住的用户信息失败:', e)
-      localStorage.removeItem('rememberedUser')
+      userProfile.clearRememberMe()
     }
   }
 

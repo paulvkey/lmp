@@ -191,15 +191,15 @@
           <div class="chat-left-buttons">
             <button
               class="deep-thinking"
-              @click="chat.isDeepActive = !chat.isDeepActive"
-              :class="{ active: chat.isDeepActive }"
+              @click="handleDeepThink"
+              :class="{ active: chat.isDeepThink }"
             >
               深度思考
             </button>
             <button
               class="network-search"
-              @click="chat.isNetworkActive = !chat.isNetworkActive"
-              :class="{ active: chat.isNetworkActive }"
+              @click="handleNetwork"
+              :class="{ active: chat.isNetworkSearch }"
             >
               联网搜索
             </button>
@@ -635,6 +635,16 @@ const triggerNewChat = async () => {
   }
 }
 
+// 处理深度思考开启/禁用
+const handleDeepThink = () => {
+  chat.isDeepThink = !chat.isDeepThink
+}
+
+// 处理联网搜索开启/禁用
+const handleNetwork = () => {
+  chat.isNetworkSearch = !chat.isNetworkSearch
+}
+
 // 处理发送按钮点击
 const handleSendClick = async () => {
   if (chat.isSending) {
@@ -651,7 +661,7 @@ const sendMessage = async () => {
   if (requestLock.value || !prepareSendMessage()) return
   requestLock.value = true
   try {
-    if (chat.modelInfo.newSession) {
+    if (chat.modelInfo.newSession && checkLogin(userProfile)) {
       const response = await request('post', `/session/chat/new`, chat.modelInfo, {
         signal: globalAbortCtrl.value.signal,
       })
@@ -660,17 +670,20 @@ const sendMessage = async () => {
       }
       updateInfoByResponse(response.data)
     }
-    await getAndParseChatData(globalAbortCtrl.value.signal)
+
     updateHistoryByResponse()
+    await getAndParseChatData(globalAbortCtrl.value.signal)
   } catch (e) {
     console.error('发送消息异常：' + e)
+    return
   } finally {
-    chat.resetChat()
-    homeStatus.isNewSession = false
+    chat.clearInput()
     requestLock.value = false
     await nextTick()
     scrollToBottom()
   }
+
+  chat.clearChatFiles()
 }
 
 // 发送消息前数据准备
@@ -735,8 +748,8 @@ const prepareSendMessage = () => {
   chat.isSending = true
   chat.modelInfo.newSession = homeStatus.isNewSession
   chat.modelInfo.messageType = 1
-  chat.modelInfo.isDeepThink = chat.isDeepActive ? 1 : 0
-  chat.modelInfo.isNetworkSearch = chat.isNetworkActive ? 1 : 0
+  chat.modelInfo.isDeepThink = chat.isDeepThink ? 1 : 0
+  chat.modelInfo.isNetworkSearch = chat.isNetworkSearch ? 1 : 0
   return true
 }
 
@@ -752,6 +765,8 @@ const updateInfoByResponse = (response) => {
   chat.modelInfo.createdAt = response.createdAt
   chat.modelInfo.sendTime = response.sendTime
   chat.modelInfo.lastMessageTime = response.lastMessageTime
+  homeStatus.isNewSession = chat.modelInfo.newSession
+  homeStatus.setCurrentMenu('history')
   homeStatus.renamingSessionId = response.sessionId
 }
 
@@ -775,7 +790,7 @@ const getAndParseChatData = async (abortSignal) => {
       type: 'text',
       isStreaming: true,
       showThinking: true,
-      thinkingType: '思考完成',
+      thinkingType: '',
     }
     chat.messageList.push(streamMsg)
     await nextTick()
@@ -916,7 +931,7 @@ const updateChunkMsg = async (parsedData, msgIndex) => {
     isNeedUpdate = true
   }
   if (typeof content === 'string' && content) {
-    if (!newMsg.thinkingType || newMsg.thinkingType === '思考中') {
+    if (newMsg.thinkingType === '思考中') {
       newMsg.thinkingType = '思考完成'
     }
     newMsg.showThinking = false
@@ -977,21 +992,13 @@ const setMsgEndInfo = async (newMsgId = -1, errorMsg = '') => {
 
 // 消息接收到了之后在历史对话中添加当前会话
 const updateHistoryByResponse = () => {
-  if (checkLogin(userProfile)) {
+  if (checkLogin(userProfile) && chat.modelInfo.sessionId > 0) {
     const sessionId = chat.modelInfo.sessionId
     const sessionTitle = chat.modelInfo.sessionTitle
     const updatedAt = chat.modelInfo.updatedAt
 
     // 检查历史列表中是否已存在该对话
-    const existSessionIdx = history.historyList.findIndex((item) => item.id === sessionId)
-    if (existSessionIdx !== -1) {
-      // 已有对话：更新标题和时间（不新增）
-      history.historyList[existSessionIdx] = {
-        ...history.historyList[existSessionIdx],
-        sessionTitle: sessionTitle,
-        updatedAt: updatedAt,
-      }
-    } else {
+    if (!history.historySet.has(sessionId)) {
       const newSessionData = {
         id: sessionId,
         userId: userProfile.userId,
@@ -1006,11 +1013,10 @@ const updateHistoryByResponse = () => {
       const insertIndex =
         firstNonPinnedIndex !== -1 ? firstNonPinnedIndex : history.historyList.length
       history.historyList.splice(insertIndex, 0, newSessionData)
+      history.historySet.add(sessionId)
     }
 
-    // 保存新对话ID到localStorage
-    localStorage.setItem('currentSessionId', sessionId)
-    // 高亮选中新对话
+    history.currentSessionId = sessionId
     history.selectedSessionId = sessionId
     history.isExpanded = true
   }
@@ -1059,18 +1065,6 @@ const pauseSending = async () => {
     }
   }
 }
-
-watch(
-  () => homeStatus.currentMenu,
-  async (newMenu) => {
-    homeStatus.setCurrentMenu(newMenu)
-    homeStatus.initIsNewSession()
-    chat.inputData = ''
-    await nextTick()
-    chatMsgInputFocus()
-  },
-  { immediate: true, flush: 'sync' },
-)
 
 const goToLogin = () => {
   router.push('/login')

@@ -179,8 +179,7 @@ const loadHistorySession = async (item) => {
     const sessionData = response.data.chatSession
     const messageList = response.data.chatMessageList || []
 
-    localStorage.setItem('currentSessionId', item.id)
-    localStorage.setItem('needReloadSession', true)
+    history.currentSessionId = item.id
     history.loadedSessionId = item.id
     chat.chatTitle = sessionData.sessionTitle
     chat.messageList = messageList.map((msg) => ({
@@ -362,11 +361,12 @@ const deleteSession = async (id, index) => {
       const response = await request('delete', `/session/${id}/delete`)
       if (response.code === 200) {
         history.historyList.splice(index, 1)
+        history.historySet.delete(id)
         ElMessage.success('对话已删除')
         // 若删除的是当前选中的对话，清除存储
         if (id === history.selectedSessionId) {
-          history.selectedSessionId = null
-          localStorage.removeItem('currentSessionId')
+          history.clearCurrent()
+          homeStatus.setCurrentMenu('new')
           // 直接使用新对话窗口
           await props.newChatFunc()
         }
@@ -377,7 +377,6 @@ const deleteSession = async (id, index) => {
       ElMessage.error('删除对话异常，请重试')
     }
   }
-  history.activeSessionMenuId = null
 }
 
 // 检测文字是否溢出并添加标识类
@@ -412,6 +411,7 @@ const loadHistoryData = async () => {
     await props.loadFunc()
     checkTextOverflow()
     history.hasLoadedHistory = true
+    history.initHistorySet()
   } catch (e) {
     history.clearHistory()
   } finally {
