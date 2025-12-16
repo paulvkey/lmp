@@ -94,12 +94,12 @@
 
             <!-- 思考内容区域 -->
             <div class="thinking-msg" :class="{ collapsed: !msg.showThinking }">
-              <MarkdownRender :content="msg.thinking" :is-dark="false"/>
+              <MarkdownRender :content="msg.thinking"/>
             </div>
 
             <!-- 结果消息区域 -->
             <div class="chat-msg">
-              <MarkdownRender :content="msg.content" :is-dark="false"/>
+              <MarkdownRender :content="msg.content"/>
             </div>
           </div>
         </div>
@@ -684,7 +684,7 @@ const sendMessage = async () => {
     updateHistoryByResponse()
     await getAndParseChatData(globalAbortCtrl.value.signal)
   } catch (e) {
-    console.error('发送消息异常：' + e)
+    console.error('发送消息异常' + e)
     return
   } finally {
     chat.clearInput()
@@ -790,7 +790,7 @@ const getAndParseChatData = async (abortSignal) => {
   const combinedSignal = AbortSignal.any([abortSignal, streamAbortCtrl.value.signal])
 
   try {
-    // 创建流式消息项（初始空内容+加载状态）
+    // 创建流式消息项
     streamMsgIdRef.value = `${Date.now()}-${Math.random().toString(36).slice(2)}-stream`
     const streamMsg = {
       id: streamMsgIdRef.value,
@@ -874,22 +874,16 @@ const getAndParseChatData = async (abortSignal) => {
             reader.releaseLock()
           }
         } catch (e) {
-          console.error('解析服务端消息异常：' + e)
+          console.error('解析服务端消息异常', e)
         }
       }
     }
-
-    // 流式接收意外结束时，标记消息完成
-    await setMsgEndInfo()
   } catch (e) {
-    await setMsgEndInfo()
+    console.error('解析数据流异常', e)
   } finally {
-    await nextTick()
-    setTimeout(() => {
-      scrollToBottom({ force: true })
-      chat.isSending = false
-      streamAbortCtrl.value = null
-    }, STREAM_SCROLL_DELAY)
+    await setMsgEndInfo()
+    chat.isSending = false
+    streamAbortCtrl.value = null
   }
 }
 
@@ -988,16 +982,20 @@ const updateFinishedMsg = async (parsedData, msgIndex) => {
 
 // 流式消息完成后设置相关的信息
 const setMsgEndInfo = async (newMsgId = -1, errorMsg = '') => {
-  const msgIndex = getMsgIndex(newMsgId)
-  if (msgIndex !== -1) {
-    if (errorMsg.trim() !== '') {
-      chat.messageList[msgIndex].content = errorMsg
+  if (newMsgId !== -1) {
+    const msgIndex = getMsgIndex(newMsgId)
+    if (msgIndex !== -1) {
+      if (errorMsg.trim() !== '') {
+        chat.messageList[msgIndex].content = errorMsg
+      }
+      chat.messageList[msgIndex].showThinking = false
+      chat.messageList[msgIndex].isStreaming = false
     }
-    chat.messageList[msgIndex].showThinking = false
-    chat.messageList[msgIndex].isStreaming = false
   }
   await nextTick()
-  scrollToBottom()
+  setTimeout(() => {
+    scrollToBottom({ force: true })
+  }, STREAM_SCROLL_DELAY)
 }
 
 // 消息接收到了之后在历史对话中添加当前会话

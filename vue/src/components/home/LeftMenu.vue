@@ -7,7 +7,9 @@
     <!-- 左侧菜单栏 -->
     <div class="left-menus">
       <!-- 新对话菜单 -->
-      <div class="new-chat menu-item" @click.stop="handleNewChat">
+      <div class="new-chat menu-item"
+           :class="{active: homeStatus.currentMenu === 'new'}"
+           @click.stop="handleNewChat">
         <svg
           class="menu-icon"
           xmlns="http://www.w3.org/2000/svg"
@@ -250,10 +252,11 @@ const loadHistoryList = async () => {
           ? new Date(b.updatedAt) - new Date(a.updatedAt)
           : b.isPinned - a.isPinned,
       )
+    history.initHistoryIds()
     await nextTick()
   } catch (e) {
     console.error('获取历史对话列表失败：' + e)
-    history.historyList = []
+    history.clearHistoryList()
   } finally {
     history.isLoading = false
   }

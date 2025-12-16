@@ -38,22 +38,26 @@ export const useHistoryStore = defineStore('history', {
       if (!targetId || !this.historyIds.length) return;
       this.historyIds = this.historyIds.filter(id => id !== targetId);
     },
+    clearHistoryList() {
+      this.historyList = []
+      this.historyIds = []
+    },
     clearCurrent() {
       this.activeSessionMenuId = null
       this.selectedSessionId = null
       this.currentSessionId = null
+      this.loadedSessionId = null
     },
     clearHistory() {
       this.isExpanded = false
       this.isLoading = false
-      this.historyList = []
       this.selectedSessionId = null
       this.activeSessionMenuId = null
       this.isLoadingSession = false
       this.isSessionCollected = false
       this.hasLoadedHistory = false
       this.currentSessionId = null
-      this.historyIds = [];
+      this.clearHistoryList()
     },
   },
 

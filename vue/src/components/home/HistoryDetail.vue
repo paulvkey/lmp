@@ -153,9 +153,10 @@ const handleHistoryItem = async (item) => {
 // 获取历史对话中某个对话的详情
 const loadHistorySession = async (item) => {
   // 如果是同一个对话且已加载过数据，直接更新选中状态并滚动到底部，不重复请求
-  history.isSessionCollected = item.isCollected
   if (item.id === history.loadedSessionId && chat.messageList.length > 0) {
     history.selectedSessionId = item.id
+    history.currentSessionId = item.id
+    history.isSessionCollected = item.isCollected
     homeStatus.currentMenu = 'history'
     await nextTick()
     setTimeout(() => {
@@ -166,14 +167,12 @@ const loadHistorySession = async (item) => {
     }, SCROLL_BOTTOM_DELAY)
     return
   }
-  // 如果正在加载中，阻止重复请求
+
   if (history.isLoadingSession) return
-  // 准备加载新对话
   history.isLoadingSession = true
   history.selectedSessionId = item.id
   homeStatus.currentMenu = 'history'
   chat.messageList = []
-
   try {
     const response = await request('get', `/session/${item.id}`)
     const sessionData = response.data.chatSession
@@ -188,7 +187,7 @@ const loadHistorySession = async (item) => {
       content: msg.messageContent || '',
       isUser: msg.messageType === 1,
       type: msg.type ? msg.type : 'text',
-      thinkingType: '思考完成'
+      thinkingType: msg.messageThinking ?'思考完成' : ''
     }))
     chat.modelInfo.newSession = false
     chat.modelInfo.sessionId = sessionData.id
@@ -209,8 +208,10 @@ const loadHistorySession = async (item) => {
       })
     }, SCROLL_BOTTOM_DELAY)
   } catch (e) {
+    console.log('加载历史对话详情异常', e)
+    ElMessage.error('加载历史对话详情异常，请重新加载')
     chat.messageList = []
-    history.loadedSessionId = null
+    history.clearCurrent()
   } finally {
     history.isLoadingSession = false
   }
@@ -370,10 +371,9 @@ const deleteSession = async (id, index) => {
           // 直接使用新对话窗口
           await props.newChatFunc()
         }
-      } else {
-        ElMessage.error(response.msg)
       }
     } catch (e) {
+      console.log('删除对话异常', e)
       ElMessage.error('删除对话异常，请重试')
     }
   }
@@ -411,8 +411,8 @@ const loadHistoryData = async () => {
     await props.loadFunc()
     checkTextOverflow()
     history.hasLoadedHistory = true
-    history.initHistoryIds()
   } catch (e) {
+    console.error("加载历史数据异常", e)
     history.clearHistory()
   } finally {
     isLoadingRequest.value = false
@@ -428,7 +428,7 @@ watch(
       // 延迟加载避免初始化多次触发
       setTimeout(async () => {
         await loadHistoryData()
-      }, 300)
+      }, 500)
     } else if (!isLogin) {
       history.clearHistory()
       isLoadingRequest.value = false
