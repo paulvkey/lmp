@@ -212,7 +212,7 @@
               type="file"
               ref="chatInputFileRef"
               class="file-input"
-              @change="handleFileSelected"
+              @change="handleFileUpload"
               style="display: none"
               multiple
             />
@@ -451,24 +451,84 @@ const handleFileUploadClick = () => {
 }
 
 // 多文件上传（并发控制）
-const handleFileSelected = async (e) => {
+const handleFileUpload = async (e) => {
   const files = e.target.files
-  if (files.length > 0) {
-    // 先添加到界面显示，再进行上传
-    const newFiles = []
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i]
-      const isDuplicate = chat.uploadedFiles.some(
-        (existingFile) =>
-          existingFile.name === file.name &&
-          existingFile.size === file.size &&
-          existingFile.type === file.type,
-      )
-      if (isDuplicate) {
-        continue
+  if (!files || files.length === 0) {
+    return
+  }
+
+  try {
+    const { newFiles, formData } = await prepareUpload(files)
+    const startIndex = chat.uploadedFiles.length - newFiles.length
+    const totalNewFiles = newFiles.length
+
+    const fileCount = formData.getAll("multipartFileList").length
+    if (fileCount === 0) {
+      chat.uploadedFiles.splice(startIndex, totalNewFiles)
+      e.target.value = ""
+      return
+    }
+
+    const response = await request("post", "/files/upload", formData, {
+      onUploadProgress: (progressEvent) => {
+        if (!progressEvent.lengthComputable) return
+        const percent = Math.round((progressEvent.loaded / progressEvent.total) * 100)
+        newFiles.forEach((_, i) => {
+          const index = startIndex + i
+          if (chat.uploadedFiles[index] && !chat.uploadedFiles[index].uploaded && !chat.uploadedFiles[index].error) {
+            chat.uploadedFiles[index].progress = percent
+            chat.uploadedFiles[index].uploading = percent < 100
+          }
+        })
+      },
+    })
+
+    if (response && response.code === 200) {
+      const { successCount, failCount } = afterUploadFiles(response.data, startIndex, totalNewFiles)
+      if (failCount > 0) {
+        console.warn(`上传完成：成功${successCount}个，失败${failCount}个`)
       }
+    } else {
+      markAllFilesFailed(startIndex, totalNewFiles, response?.msg || "接口返回异常")
+    }
+  } catch (e) {
+    const errorMsg = e?.msg || e?.message || "网络异常，上传失败"
+    const tempFiles = chat.uploadedFiles.filter(f => f.uploading)
+    if (tempFiles.length > 0) {
+      const rollbackIndex = chat.uploadedFiles.indexOf(tempFiles[0])
+      chat.uploadedFiles.splice(rollbackIndex, tempFiles.length)
+      markAllFilesFailed(rollbackIndex, tempFiles.length, errorMsg)
+    }
+    console.error("上传失败详情：", e)
+  } finally {
+    // 重置文件选择器，允许重复选择
+    e.target.value = ""
+  }
+}
+
+// 上传文件前数据准备
+const prepareUpload = async (files) => {
+  const newFiles = []
+  const uploadFiles = []
+  if (!files || files.length === 0) return
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i]
+    if (!file.name || !file.size) continue
+
+    // 过滤重复文件
+    const isDuplicate = chat.uploadedFiles.some(
+      (existingFile) =>
+        existingFile.name === file.name &&
+        existingFile.size === file.size &&
+        existingFile.lastModified === file.lastModified
+    )
+    if (isDuplicate) continue
+
+    try {
+      // 获取图片维度/预览（兼容非图片文件）
       const { isImage, width, height, preview } = await getImageDimensions(file)
-      // 获取文件属性信息
+      // 初始化文件状态
       const fileInfo = {
         name: file.name,
         size: file.size,
@@ -478,110 +538,139 @@ const handleFileSelected = async (e) => {
         height: height,
         lastModified: file.lastModified,
         lastModifiedDate: file.lastModifiedDate,
-        uploading: false,
+        uploading: true,
         progress: 0,
         uploaded: false,
         error: false,
-        errorMessage: '',
+        errorMessage: "",
         previewUrl: preview,
       }
       newFiles.push(fileInfo)
-    }
-
-    // 添加到上传列表
-    const startIndex = chat.uploadedFiles.length
-    chat.uploadedFiles.push(...newFiles)
-
-    // 执行并发上传
-    try {
-      // 准备多文件上传的FormData
-      const formData = new FormData()
-      // 收集文件元数据列表
-      const fileMetaList = newFiles.map((file) => ({
-        fileName: file.name,
-        fileSize: file.size,
-        userId: userProfile.userId || 0,
-        sessionId: chat.modelInfo.sessionId || 0,
-        isImage: file.isImage ? 1 : 0,
-        imageWidth: file.width,
-        imageHeight: file.height,
-      }))
-      // 添加文件列表和元数据列表
-      formData.append('fileListJson', JSON.stringify(fileMetaList))
-      // 添加所有文件
-      for (let i = 0; i < files.length; i++) {
-        formData.append('multipartFileList', files[i])
-      }
-
-      // 执行多文件上传
-      const response = await request('post', '/files/upload', formData, {
-        headers: { 'Content-Type': undefined },
-        onUploadProgress: (progressEvent) => {
-          // 这里只能获取整体进度，实际项目中可能需要后端支持单个文件进度
-          const percent = Math.round((progressEvent.loaded / progressEvent.total) * 100)
-          // 更新所有上传中文件的进度
-          newFiles.forEach((_, i) => {
-            const index = startIndex + i
-            if (chat.uploadedFiles[index]) {
-              // 只有未完成的文件才更新进度
-              if (!chat.uploadedFiles[index].uploaded && !chat.uploadedFiles[index].error) {
-                chat.uploadedFiles[index].progress = percent
-                chat.uploadedFiles[index].uploading = percent < 100
-              }
-            }
-          })
-        },
+      uploadFiles.push(file)
+    } catch (e) {
+      console.warn(`文件${file.name}元数据解析失败：`, e)
+      // 解析失败仍添加文件（标记为错误）
+      newFiles.push({
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        isImage: false,
+        width: 0,
+        height: 0,
+        lastModified: file.lastModified,
+        uploading: false,
+        progress: 0,
+        uploaded: false,
+        error: true,
+        errorMessage: "文件元数据解析失败",
+        previewUrl: "",
       })
+    }
+  }
 
-      if (response.code === 200) {
-        // 更新每个文件的上传结果
-        const uploadedResults = response.data
-        for (let i = 0; i < uploadedResults.length; i++) {
-          const index = startIndex + i
-          if (chat.uploadedFiles[index]) {
-            chat.uploadedFiles[index] = {
-              ...chat.uploadedFiles[index],
-              id: uploadedResults[i].id,
-              url: uploadedResults[i].filePath,
-              uploading: false,
-              progress: 100,
-              uploaded: true,
-              error: false,
-            }
-          }
-        }
+  // 将新文件添加到上传列表
+  chat.uploadedFiles.push(...newFiles)
+  const formData = new FormData()
+  // 构建文件元数据（与上传文件一一对应）
+  const fileMetaList = newFiles.map((file) => ({
+    fileName: file.name,
+    fileSize: file.size,
+    userId: userProfile.userId || 0,
+    sessionId: chat.modelInfo.sessionId || 0,
+    isImage: file.isImage ? 1 : 0,
+    imageWidth: file.width,
+    imageHeight: file.height,
+  }))
+  formData.append("fileListJson", JSON.stringify(fileMetaList))
+  uploadFiles.forEach((file) => {
+    formData.append("multipartFileList", file)
+  })
 
-        // 收集成功上传的文件ID
-        const fileIds = uploadedResults.map((file) => file.id).join(',')
-        // 更新模型中的文件ID列表
-        if (fileIds) {
-          chat.modelInfo.fileIds = chat.modelInfo.fileIds
-            ? `${chat.modelInfo.fileIds},${fileIds}`
-            : fileIds
-        }
-      } else {
-        ElMessage.error('文件上传失败')
+  return { newFiles, formData }
+}
+
+// 上传文件后端数据解析
+const afterUploadFiles = (uploadedResults, startIndex, totalNewFiles) => {
+  let successCount = 0
+  let failCount = 0
+  const failFiles = []
+
+  // 遍历每个文件的上传结果
+  for (let i = 0; i < totalNewFiles; i++) {
+    const resultIndex = i
+    const fileIndex = startIndex + i
+    // 防止返回结果长度与文件数量不匹配
+    const fileResult = uploadedResults[resultIndex] || {}
+    const currentFile = chat.uploadedFiles[fileIndex]
+
+    if (!currentFile) continue
+
+    // id>0表示上传成功，否则失败
+    if (fileResult.id && fileResult.id > 0) {
+      // 上传成功：更新文件信息
+      chat.uploadedFiles[fileIndex] = {
+        ...currentFile,
+        id: fileResult.id,
+        url: fileResult.filePath || '',
+        uploading: false,
+        progress: 100,
+        uploaded: true,
+        error: false,
+        errorMessage: '',
       }
-    } catch (error) {
-      ElMessage.error(`${error.msg || '未知错误'}`)
-      // 更新文件状态为错误
-      for (let i = 0; i < newFiles.length; i++) {
-        const index = startIndex + i
-        if (chat.uploadedFiles[index]) {
-          chat.uploadedFiles[index].uploading = false
-          chat.uploadedFiles[index].error = true
-          chat.uploadedFiles[index].errorMessage = error.msg || '上传失败'
-        }
+      successCount++
+
+      // 同步更新modelInfo的fileIds（仅成功文件）
+      if (fileResult.id) {
+        chat.modelInfo.fileIds = chat.modelInfo.fileIds
+          ? `${chat.modelInfo.fileIds},${fileResult.id}`
+          : fileResult.id
+      }
+    } else {
+      // 上传失败：标记错误状态
+      chat.uploadedFiles[fileIndex] = {
+        ...currentFile,
+        uploading: false,
+        progress: 0,
+        uploaded: false,
+        error: true,
+        errorMessage: fileResult.msg || `文件ID无效（返回ID：${fileResult.id}）`,
+      }
+      failCount++
+      failFiles.push(currentFile.name)
+    }
+  }
+
+  // 打印失败文件日志
+  if (failCount > 0) {
+    console.warn('上传失败的文件：', failFiles)
+  }
+
+  return { successCount, failCount, failFiles }
+}
+
+// 批量标记文件为失败
+const markAllFilesFailed = (startIndex, totalFiles, errorMsg) => {
+  if (totalFiles === 0 || startIndex < 0) return
+
+  for (let i = 0; i < totalFiles; i++) {
+    const fileIndex = startIndex + i
+    if (chat.uploadedFiles[fileIndex]) {
+      chat.uploadedFiles[fileIndex] = {
+        ...chat.uploadedFiles[fileIndex],
+        uploading: false,
+        progress: 0,
+        uploaded: false,
+        error: true,
+        errorMessage: errorMsg,
       }
     }
-    // 允许重复选择同一文件
-    e.target.value = ''
   }
 }
 
 // 可见文件
 const visibleFiles = computed(() => {
-  return chat.uploadedFiles.slice(0, MAX_FILE_SHOW)
+  return chat.showAllFiles ? chat.uploadedFiles : chat.uploadedFiles.slice(0, MAX_FILE_SHOW)
 })
 
 // 是否有更多文件
@@ -596,15 +685,31 @@ const moreFilesCount = computed(() => {
 
 // 移除特定文件
 const removeUploadedFile = (index) => {
-  if (index < 0 || index >= chat.uploadedFiles.length) {
-    console.warn('无效的文件索引:', index)
+  // 获取 visibleFiles 对应的原数组索引
+  const targetFile = visibleFiles.value[index]
+  if (!targetFile) {
+    console.warn("无效的文件索引：", index)
     return
   }
-  const file = chat.uploadedFiles[index]
-  if (file.isImage && file.previewUrl) {
-    URL.revokeObjectURL(file.previewUrl)
+  // 查找文件在原数组中的真实索引
+  const realIndex = chat.uploadedFiles.findIndex(
+    (item) =>
+      item.name === targetFile.name &&
+      item.size === targetFile.size &&
+      item.lastModified === targetFile.lastModified
+  )
+  if (realIndex === -1) {
+    console.warn(`未找到文件：${targetFile.name}`)
+    return
   }
-  chat.uploadedFiles.splice(index, 1)
+  // 清理图片预览 URL（避免内存泄漏）
+  const fileToRemove = chat.uploadedFiles[realIndex]
+  if (fileToRemove.isImage && fileToRemove.previewUrl) {
+    URL.revokeObjectURL(fileToRemove.previewUrl)
+  }
+  // 删除文件
+  chat.uploadedFiles.splice(realIndex, 1)
+  // 隐藏“更多文件”按钮
   if (chat.uploadedFiles.length <= MAX_FILE_SHOW) {
     chat.showAllFiles = false
   }

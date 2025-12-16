@@ -1,12 +1,15 @@
 package com.xjtu.springboot.service;
 
 import cn.hutool.core.io.FileUtil;
+import com.xjtu.springboot.controller.ChatController;
 import com.xjtu.springboot.exception.CustomException;
 import com.xjtu.springboot.mapper.FileFolderMapper;
 import com.xjtu.springboot.mapper.FileMapper;
 import com.xjtu.springboot.pojo.File;
 import com.xjtu.springboot.pojo.FileFolder;
 import com.xjtu.springboot.util.DateUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,38 +27,41 @@ public class FileService {
     @Autowired
     private FileFolderMapper fileFolderMapper;
 
+    private static final Logger log = LoggerFactory.getLogger(FileService.class);
+
     private static final String FILE_IDS_SEPARATOR = ",";
     private static final String FILE_PATH_PREFIX = "/files/";
     private static final String FILE_PATH = System.getProperty("user.dir") + FILE_PATH_PREFIX;
     private static final String LOCALHOST = "http://localhost:8090";
 
     public File uploadFile(MultipartFile multipartFile, File file) {
-        if (!FileUtil.isDirectory(FILE_PATH)) {
-            FileUtil.mkdir(FILE_PATH);
-        }
-
-        String originalFilename = multipartFile.getOriginalFilename();
-        String fileName = System.currentTimeMillis() + "_" + originalFilename;
-        String realFileName = FILE_PATH + fileName;
-        try {
-            FileUtil.writeBytes(multipartFile.getBytes(), realFileName);
-        } catch (IOException e) {
-            throw new CustomException(500, "上传文件异常");
-        }
-
         File localFile = new File();
-        localFile.copyFrom(file);
-        localFile.setFileName(fileName);
-        // TODO 暂时放在本地文件夹
-        localFile.setFilePath(LOCALHOST + FILE_PATH_PREFIX + fileName);
-        localFile.setUploadTime(DateUtil.now());
-        if (!uploadFile(localFile)) {
-            throw new CustomException(500, "更新上传文件信息异常");
+        try {
+            if (!FileUtil.isDirectory(FILE_PATH)) {
+                FileUtil.mkdir(FILE_PATH);
+            }
+
+            String originalFilename = multipartFile.getOriginalFilename();
+            String fileName = System.currentTimeMillis() + "_" + originalFilename;
+            String realFileName = FILE_PATH + fileName;
+            FileUtil.writeBytes(multipartFile.getBytes(), realFileName);
+
+            localFile.copyFrom(file);
+            localFile.setFileName(fileName);
+            // TODO 暂时放在本地文件夹
+            localFile.setFilePath(LOCALHOST + FILE_PATH_PREFIX + fileName);
+            localFile.setUploadTime(DateUtil.now());
+
+            // 上传文件
+            uploadFile(localFile);
+        } catch (Exception e) {
+            log.error("上传文件异常：{}", e.getMessage(), e);
         }
+
         return localFile;
     }
 
-    public boolean uploadFile(File file) {
+    public void uploadFile(File file) {
         Long userId = file.getUserId();
         Long sessionId = file.getSessionId();
         FileFolder fileFolder = fileFolderMapper.selectByUserSessionId(userId, sessionId);
@@ -76,9 +82,7 @@ public class FileService {
         file.setFolderId(fileFolder.getId());
         if (fileMapper.insert(file) <= 0) {
             throw new CustomException(500, "添加文件信息异常");
-
         }
-        return true;
     }
 
     public List<File> uploadFiles(List<MultipartFile> multipartFileList, List<File> fileList) {

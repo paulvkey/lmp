@@ -202,10 +202,8 @@ const loadHistorySession = async (item) => {
     history.isSessionCollected = sessionData.isCollected === 1
     await nextTick()
     setTimeout(() => {
-      nextTick(() => {
-        func.scrollToBottom({ force: true })
-        func.checkScrollBottomBtn()
-      })
+      func.scrollToBottom({ force: true })
+      func.checkScrollBottomBtn()
     }, SCROLL_BOTTOM_DELAY)
   } catch (e) {
     console.log('加载历史对话详情异常', e)
