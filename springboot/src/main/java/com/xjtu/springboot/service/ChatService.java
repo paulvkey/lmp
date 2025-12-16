@@ -66,7 +66,8 @@ public class ChatService {
         }
     }
 
-    public void chat(ChatData chatData, Long sessionId, Consumer<ResponseData> contentConsumer) throws Exception {
+    public void chat(ChatData chatData, Long sessionId,
+                     Consumer<ResponseData> contentConsumer) throws Exception {
         // 构建请求体
         // https://docs.ollama.com/api/chat#response-load-duration
         // https://github.com/ollama/ollama/blob/main/docs/api.md
@@ -261,17 +262,21 @@ public class ChatService {
         result.setSendTime(chatMessage.getSendTime());
         result.setTokenCount(chatMessage.getTokenCount());
         if (updateMsgList) {
+            // 查询出的数据按照时间倒序了，需要从后往前遍历
             result.setMessageList(new ArrayList<>());
-            chatMessageList.forEach(chatMsg -> {
+            int size = chatMessageList.size();
+            for (int i = size - 1; i >= 0; i--) {
+                ChatMessage chatMsg = chatMessageList.get(i);
                 Integer role = chatMsg.getMessageType() == (byte) 1 ? 1 : 2;
-                Msg msg = Msg.builder().thinking(chatMsg.getMessageThinking())
+                Msg msg = Msg.builder()
+                        .thinking(chatMsg.getMessageThinking())
                         .content(chatMsg.getMessageContent())
                         .type(chatMsg.getType())
                         .role(role)
                         .fileIds(chatMsg.getFileIds())
                         .build();
                 result.getMessageList().add(msg);
-            });
+            }
         }
 
         return result;
@@ -336,15 +341,18 @@ public class ChatService {
         List<ChatMessage> chatMessageList = chatMessageMapper.selectBySessionId(id);
         if (CollectionUtils.isNotEmpty(chatMessageList)) {
             int size = chatMessageList.size();
+            if (size < 1) {
+                return true;
+            }
             ChatMessage chatMessage = chatMessageList.get(size - 1);
             boolean isDeleted = chatMessageMapper.deleteByPrimaryKey(chatMessage.getId()) > 0;
             if (chatMessage.getMessageType() == (byte) 1) {
                 return isDeleted;
-            } else if (chatMessage.getMessageType() == (byte) 2) {
+            } else if (chatMessage.getMessageType() == (byte) 2 && size >= 2) {
                 chatMessage = chatMessageList.get(size - 2);
                 return isDeleted && chatMessageMapper.deleteByPrimaryKey(chatMessage.getId()) > 0;
             }
         }
-        return false;
+        return true;
     }
 }

@@ -2,6 +2,7 @@ package com.xjtu.springboot.mapper;
 
 import com.xjtu.springboot.pojo.ChatMessage;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface ChatMessageMapper {

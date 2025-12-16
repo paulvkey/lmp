@@ -104,6 +104,6 @@ common:
     pool:
       configs:
         chat:
-          coreSize: 10          # 核心线程数
-          shutdownTimeout: 5    # 关闭超时时间（秒）
+          coreSize: 10           # 核心线程数
+          shutdownTimeout: 60    # 关闭超时时间（秒）
           threadNamePrefix: chat # 线程名前缀

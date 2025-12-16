@@ -86,17 +86,17 @@
 
     <select id="selectBySessionId" parameterType="java.lang.Long" resultMap="BaseResultMap">
         select id,
-               user_id,
-               session_id,
-               message_type,
-               message_thinking,
-               message_content,
-               type,
-               file_ids,
-               token_count,
-               is_deep_think,
-               is_network_search,
-               send_time
+        user_id,
+        session_id,
+        message_type,
+        message_thinking,
+        message_content,
+        type,
+        file_ids,
+        token_count,
+        is_deep_think,
+        is_network_search,
+        send_time
         from chat_message
         where session_id = #{sessionId}
         order by send_time

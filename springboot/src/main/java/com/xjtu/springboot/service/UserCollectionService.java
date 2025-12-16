@@ -29,7 +29,6 @@ public class UserCollectionService {
     public PageInfo<UserCollection> getUserCollectionByUserId(Long userId, int pageNum, int pageSize) {
         try (Page<UserCollection> page = PageHelper.startPage(pageNum, pageSize)
                 .doSelectPage(() -> userCollectionMapper.selectAllByUserId(userId))) {
-
             return new PageInfo<>(page);
         } catch (Exception ex) {
             throw new CustomException(500, "查询更多收藏失败");
