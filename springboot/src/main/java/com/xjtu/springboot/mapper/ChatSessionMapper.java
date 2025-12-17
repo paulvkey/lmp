@@ -5,15 +5,15 @@ import com.xjtu.springboot.pojo.ChatSession;
 import java.util.List;
 
 public interface ChatSessionMapper {
-    int deleteByPrimaryKey(Long id);
+    int deleteByPrimaryKey(ChatSession row);
 
     int insert(ChatSession row);
-
-    ChatSession selectByPrimaryKey(Long id);
 
     List<ChatSession> selectAll();
 
     int updateByPrimaryKey(ChatSession row);
 
     List<ChatSession> selectSessionByUserId(Long userId);
+
+    ChatSession selectSessionByIds(Long userId, Long sessionId);
 }

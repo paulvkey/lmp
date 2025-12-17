@@ -1,0 +1,31 @@
+2025-12-17 16:53:44.641 [main] INFO  com.xjtu.springboot.SpringbootApplication - Starting SpringbootApplication using Java 17.0.16 with PID 26032 (D:\develop\project\lmp\springboot\target\classes started by admin in D:\develop\project\lmp)
+2025-12-17 16:53:44.642 [main] DEBUG com.xjtu.springboot.SpringbootApplication - Running with Spring Boot v3.5.6, Spring v6.2.11
+2025-12-17 16:53:44.643 [main] INFO  com.xjtu.springboot.SpringbootApplication - No active profile set, falling back to 1 default profile: "default"
+2025-12-17 16:53:45.181 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8090"]
+2025-12-17 16:53:45.181 [main] INFO  org.apache.catalina.core.StandardService - Starting service [Tomcat]
+2025-12-17 16:53:45.181 [main] INFO  org.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.46]
+2025-12-17 16:53:45.203 [main] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2025-12-17 16:53:45.286 [main] INFO  c.xjtu.springboot.component.pool.StringBufferPool - StringBuffer 池初始化完成，池大小：1000，初始容量：1024
+2025-12-17 16:53:45.293 [main] DEBUG c.xjtu.springboot.component.storage.MessageHolder - MessageHolder 初始化完成，配置：MessageHolderConfig(defaultSessionTimeout=3600000, maxContentLength=5242880, cleanFixedRate=1800000, cleanBatchSize=100, enableSoftReference=true, bufferPoolSize=1000, bufferInitialCapacity=1024)
+2025-12-17 16:53:45.361 [main] INFO  c.a.d.s.b.a.DruidDataSourceAutoConfigure - Init DruidDataSource
+2025-12-17 16:53:45.485 [main] INFO  com.alibaba.druid.pool.DruidDataSource - {dataSource-1} inited
+2025-12-17 16:53:45.841 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8090"]
+2025-12-17 16:53:45.854 [main] INFO  com.xjtu.springboot.SpringbootApplication - Started SpringbootApplication in 1.449 seconds (process running for 1.739)
+2025-12-17 16:53:46.292 [RMI TCP Connection(2)-172.22.128.1] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-12-17 17:22:55.595 [SpringApplicationShutdownHook] INFO  com.alibaba.druid.pool.DruidDataSource - {dataSource-1} closing ...
+2025-12-17 17:22:55.598 [SpringApplicationShutdownHook] INFO  com.alibaba.druid.pool.DruidDataSource - {dataSource-1} closed
+2025-12-17 17:22:55.598 [SpringApplicationShutdownHook] DEBUG com.xjtu.springboot.component.ThreadPoolManager - 所有线程池关闭完成
+2025-12-17 17:22:58.221 [main] INFO  com.xjtu.springboot.SpringbootApplication - Starting SpringbootApplication using Java 17.0.16 with PID 33576 (D:\develop\project\lmp\springboot\target\classes started by admin in D:\develop\project\lmp)
+2025-12-17 17:22:58.222 [main] DEBUG com.xjtu.springboot.SpringbootApplication - Running with Spring Boot v3.5.6, Spring v6.2.11
+2025-12-17 17:22:58.222 [main] INFO  com.xjtu.springboot.SpringbootApplication - No active profile set, falling back to 1 default profile: "default"
+2025-12-17 17:22:58.774 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8090"]
+2025-12-17 17:22:58.775 [main] INFO  org.apache.catalina.core.StandardService - Starting service [Tomcat]
+2025-12-17 17:22:58.775 [main] INFO  org.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.46]
+2025-12-17 17:22:58.800 [main] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2025-12-17 17:22:58.885 [main] INFO  c.xjtu.springboot.component.pool.StringBufferPool - StringBuffer 池初始化完成，池大小：1000，初始容量：1024
+2025-12-17 17:22:58.892 [main] DEBUG c.xjtu.springboot.component.storage.MessageHolder - MessageHolder 初始化完成，配置：MessageHolderConfig(defaultSessionTimeout=3600000, maxContentLength=5242880, cleanFixedRate=1800000, cleanBatchSize=100, enableSoftReference=true, bufferPoolSize=1000, bufferInitialCapacity=1024)
+2025-12-17 17:22:58.964 [main] INFO  c.a.d.s.b.a.DruidDataSourceAutoConfigure - Init DruidDataSource
+2025-12-17 17:22:59.091 [main] INFO  com.alibaba.druid.pool.DruidDataSource - {dataSource-1} inited
+2025-12-17 17:22:59.469 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8090"]
+2025-12-17 17:22:59.481 [main] INFO  com.xjtu.springboot.SpringbootApplication - Started SpringbootApplication in 1.494 seconds (process running for 1.763)
+2025-12-17 17:22:59.890 [RMI TCP Connection(1)-172.22.128.1] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'

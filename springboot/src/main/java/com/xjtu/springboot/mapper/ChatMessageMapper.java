@@ -6,17 +6,13 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface ChatMessageMapper {
-    int deleteByPrimaryKey(Long id);
+    int deleteByPrimaryKey(ChatMessage row);
 
     int insert(ChatMessage row);
 
-    ChatMessage selectByPrimaryKey(Long id);
-
-    List<ChatMessage> selectAll();
-
     int updateByPrimaryKey(ChatMessage row);
 
-    List<ChatMessage> selectBySessionId(Long sessionId);
+    int deleteByIds(Long userId, Long sessionId);
 
-    int deleteBySessionId(Long sessionId);
+    List<ChatMessage> selectByIds(Long userId, Long sessionId);
 }

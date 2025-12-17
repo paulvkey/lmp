@@ -2,7 +2,12 @@
   <!-- 用户信息 -->
   <div class="user-profile" @click.stop="toggleUserMenu">
     <img ref="avatarRef" alt="头像" class="user-avatar" />
-    <span ref="usernameRef" class="user-name" />
+    <div v-if="userProfile.isLogin">
+      <span ref="usernameRef" class="user-name" />
+    </div>
+    <div v-else>
+      <span ref="usernameRef" class="user-name">登录</span>
+    </div>
   </div>
 
   <!-- 用户功能菜单 -->
@@ -25,6 +30,7 @@ import router from '@/router/index.js'
 import { useHistoryStore } from '@/store/history.js'
 import { useChatStore } from '@/store/chat.js'
 import { useCollectionStore } from '@/store/collection.js'
+import { checkLogin } from '@/utils/commonUtils.js'
 
 const userProfile = useUserProfileStore()
 const homeStatus = useHomeStatusStore()
@@ -47,14 +53,18 @@ const setUserInfo = async () => {
 watch(() => [userProfile.username, userProfile.avatar], setUserInfo, { immediate: true })
 
 const toggleUserMenu = async () => {
-  // 菜单切换逻辑
-  homeStatus.showUserMenu = !homeStatus.showUserMenu
-  if (homeStatus.showUserMenu) {
-    const avatarRect = avatarRef.value.getBoundingClientRect()
-    const userMenuEl = document.querySelector('.user-menus')
-    if (userMenuEl) {
-      userMenuEl.style.left = `${avatarRect.left}px`
-      userMenuEl.style.bottom = `${window.innerHeight - avatarRect.top}px`
+  if (!checkLogin(userProfile)) {
+    goToLogin()
+  } else {
+    // 菜单切换逻辑
+    homeStatus.showUserMenu = !homeStatus.showUserMenu
+    if (homeStatus.showUserMenu) {
+      const avatarRect = avatarRef.value.getBoundingClientRect()
+      const userMenuEl = document.querySelector('.user-menus')
+      if (userMenuEl) {
+        userMenuEl.style.left = `${avatarRect.left}px`
+        userMenuEl.style.bottom = `${window.innerHeight - avatarRect.top}px`
+      }
     }
   }
 }

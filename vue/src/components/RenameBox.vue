@@ -140,10 +140,11 @@ const confirmEditTitle = async () => {
 const renameChatTitle = async (newChatTitle, index) => {
   const response = await request(
     'patch',
-    `/session/${homeStatus.renamingSessionId}/rename`,
+    `/session/${userProfile.userId}/rename`,
     null,
     {
       params: {
+        sessionId: homeStatus.renamingSessionId,
         sessionTitle: newChatTitle,
       },
     },

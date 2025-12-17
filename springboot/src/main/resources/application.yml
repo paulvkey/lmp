@@ -107,3 +107,30 @@ common:
           coreSize: 10           # 核心线程数
           shutdownTimeout: 60    # 关闭超时时间（秒）
           threadNamePrefix: chat # 线程名前缀
+
+# 消息暂存器核心配置
+message:
+  holder:
+    # 全局默认会话超时时间（毫秒）
+    default-session-timeout: 3600000
+    # 单会话最大内容长度（字节）
+    max-content-length: 5242880
+    # 定时清理频率（毫秒）
+    clean-fixed-rate: 1800000
+    # 定时清理分批大小（每次遍历N个用户，避免全量遍历）
+    clean-batch-size: 100
+    # 是否启用软引用回收（内存紧张时自动释放）
+    enable-soft-reference: true
+    # StringBuffer 池配置
+    buffer-pool-size: 1000
+    buffer-initial-capacity: 1024
+
+# 监控配置（暴露 Prometheus 端点）
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus,health,info
+  metrics:
+    tags:
+      application: message-holder

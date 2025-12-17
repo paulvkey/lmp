@@ -9,10 +9,7 @@ import com.xjtu.springboot.service.FileService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedOutputStream;
@@ -59,6 +56,8 @@ public class FileController {
 
     @RequestMapping(method = RequestMethod.GET, path = "/file/download")
     public Result downloadFile(
+            @RequestParam("userId") Long userId,
+            @RequestParam("sessionId")  Long sessionId,
             @RequestParam("fileName") String fileName,
             HttpServletResponse response) {
         if (!StringUtils.isEmpty(fileName)) {
@@ -66,7 +65,7 @@ public class FileController {
         }
 
         try {
-            byte[] fileBytes = fileService.downloadFile(fileName);
+            byte[] fileBytes = fileService.downloadFile(userId, sessionId, fileName);
             if (fileBytes == null || fileBytes.length == 0) {
                 return Result.error("文件不存在或内容为空");
             }

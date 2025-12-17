@@ -1,7 +1,7 @@
 package com.xjtu.springboot.controller;
 
 import com.xjtu.springboot.common.Result;
-import com.xjtu.springboot.component.MessageHolder;
+import com.xjtu.springboot.component.storage.MessageHolder;
 import com.xjtu.springboot.component.ThreadPoolManager;
 import com.xjtu.springboot.dto.ChatData;
 import com.xjtu.springboot.dto.Msg;
@@ -9,6 +9,7 @@ import com.xjtu.springboot.dto.SessionData;
 import com.xjtu.springboot.pojo.ChatMessage;
 import com.xjtu.springboot.pojo.ChatSession;
 import com.xjtu.springboot.service.ChatService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -25,6 +26,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@Slf4j
 @RestController
 public class ChatController {
     @Autowired
@@ -33,8 +35,6 @@ public class ChatController {
     private MessageHolder messageHolder;
     @Autowired
     private ThreadPoolManager threadPoolManager;
-
-    private static final Logger log = LoggerFactory.getLogger(ChatController.class);
 
     private static final String ERROR_EVENT = "error";
     private static final String CHUNK_EVENT = "chunk";
@@ -51,13 +51,14 @@ public class ChatController {
         return Result.error("获取对话历史异常");
     }
 
-    @RequestMapping(method = RequestMethod.GET, path = "session/{id}")
-    public Result getSessionById(@PathVariable("id") Long id) {
-        if (id != null && id > 0) {
-            ChatSession chatSession = chatService.selectSessionById(id);
+    @RequestMapping(method = RequestMethod.GET, path = "session/{userId}")
+    public Result getSessionById(@PathVariable("userId") Long userId,
+                                 @RequestParam("sessionId") Long sessionId) {
+        if (userId != null && userId > 0 && sessionId != null && sessionId > 0) {
+            ChatSession chatSession = chatService.selectSessionById(userId, sessionId);
             if (Objects.nonNull(chatSession)) {
                 List<ChatMessage> chatMessageList =
-                        chatService.selectMessageBySessionId(chatSession.getId());
+                        chatService.selectMessageBySessionId(chatSession.getUserId(), chatSession.getId());
                 if (CollectionUtils.isNotEmpty(chatMessageList)) {
                     SessionData sessionData = new SessionData();
                     sessionData.setChatSession(chatSession);
@@ -73,11 +74,14 @@ public class ChatController {
         return Result.error("获取对话请求参数异常");
     }
 
-    @RequestMapping(method = RequestMethod.PATCH, path = "/session/{id}/rename")
-    public Result renameSession(@PathVariable("id") Long id,
+    @RequestMapping(method = RequestMethod.PATCH, path = "/session/{userId}/rename")
+    public Result renameSession(@PathVariable("userId") Long userId,
+                                @RequestParam("sessionId") Long sessionId,
                                 @RequestParam("sessionTitle") String sessionTitle) {
-        if (id != null && id > 0 && StringUtils.isNotEmpty(sessionTitle)) {
-            ChatSession chatSession = chatService.renameSessionById(id, sessionTitle);
+        if (userId != null && userId > 0 &&
+                sessionId != null && sessionId > 0 &&
+                StringUtils.isNotEmpty(sessionTitle)) {
+            ChatSession chatSession = chatService.renameSessionById(userId, sessionId, sessionTitle);
             if (Objects.nonNull(chatSession)) {
                 return Result.success(chatSession);
             } else {
@@ -88,11 +92,12 @@ public class ChatController {
         }
     }
 
-    @RequestMapping(method = RequestMethod.DELETE, path = "/session/{id}/delete")
-    public Result deleteSession(@PathVariable("id") Long id) {
-        if (id != null && id > 0) {
-            if (chatService.deleteSessionById(id)) {
-                messageHolder.clearContent(id);
+    @RequestMapping(method = RequestMethod.DELETE, path = "/session/{userId}/delete")
+    public Result deleteSession(@PathVariable("userId") Long userId,
+                                @RequestParam("sessionId") Long sessionId) {
+        if (userId != null && userId > 0 && sessionId != null && sessionId > 0) {
+            if (chatService.deleteSessionById(userId, sessionId)) {
+                messageHolder.clearContent(userId, sessionId);
                 return Result.success();
             } else {
                 return Result.error("删除对话异常");
@@ -102,11 +107,12 @@ public class ChatController {
         }
     }
 
-    @RequestMapping(method = RequestMethod.PATCH, path = "/session/{id}/pinned")
-    public Result updateSessionPinned(@PathVariable("id") Long id,
+    @RequestMapping(method = RequestMethod.PATCH, path = "/session/{userId}/pinned")
+    public Result updateSessionPinned(@PathVariable("userId") Long userId,
+                                      @RequestParam("sessionId") Long sessionId,
                                       @RequestParam("isPinned") Integer isPinned) {
-        if (id != null && id > 0) {
-            ChatSession chatSession = chatService.pinnedSessionById(id, isPinned);
+        if (userId != null && userId > 0 && sessionId != null && sessionId > 0) {
+            ChatSession chatSession = chatService.pinnedSessionById(userId, sessionId, isPinned);
             if (Objects.nonNull(chatSession)) {
                 return Result.success();
             } else {
@@ -117,11 +123,12 @@ public class ChatController {
         }
     }
 
-    @RequestMapping(method = RequestMethod.PATCH, path = "/session/{id}/pause")
-    public Result pauseSessionMsg(@PathVariable("id") Long id) {
-        if (id != null && id > 0) {
-            if (chatService.pauseMsgBySessionId(id)) {
-                messageHolder.clearContent(id);
+    @RequestMapping(method = RequestMethod.PATCH, path = "/session/{userId}/pause")
+    public Result pauseSessionMsg(@PathVariable("userId") Long userId,
+                                  @RequestParam("sessionId") Long sessionId) {
+        if (userId != null && userId > 0 && sessionId != null && sessionId > 0) {
+            if (chatService.pauseMsgBySessionId(userId, sessionId)) {
+                messageHolder.clearContent(userId, sessionId);
                 return Result.success();
             } else {
                 return Result.error("终止对话消息异常");
@@ -154,29 +161,28 @@ public class ChatController {
     @RequestMapping(method = RequestMethod.POST, path = "/session/chat")
     public SseEmitter chat(@RequestBody ChatData chatData) {
         if (CollectionUtils.isEmpty(chatData.getMessageList())) {
-            return createEmptyErrorEmitter("对话消息列表为空");
+            return emptyErrorEmitter("对话消息列表为空");
         }
 
         SseEmitter emitter = new SseEmitter(TimeUnit.MINUTES.toMillis(30));
-        Long sessionId = chatData.getIsLogin() ? chatData.getSessionId() : 0L;
-        AtomicBoolean isEmitterCompleted = new AtomicBoolean(false);
-        registerEmitterCallbacks(emitter, isEmitterCompleted, chatData, sessionId);
+        AtomicBoolean isSseCompleted = new AtomicBoolean(false);
+        registerSseCallbacks(emitter, chatData, isSseCompleted);
 
         try {
             if (chatData.getIsLogin()) {
-                handleLoginUserChat(chatData, emitter, isEmitterCompleted);
+                handleLoginChat(emitter, chatData, isSseCompleted);
             } else {
-                handleNonLoginUserChat(chatData, emitter, isEmitterCompleted);
+                handleNonLoginChat(emitter, chatData, isSseCompleted);
             }
         } catch (Exception e) {
-            handleSyncException(emitter, isEmitterCompleted, chatData, sessionId, e);
+            handleSyncException(emitter, chatData, isSseCompleted, e);
         }
 
         return emitter;
     }
 
     // ========== 初始化空错误Emitter ==========
-    private SseEmitter createEmptyErrorEmitter(String errorMsg) {
+    private SseEmitter emptyErrorEmitter(String errorMsg) {
         SseEmitter emptyEmitter = new SseEmitter(0L);
         try {
             emptyEmitter.send(SseEmitter.event()
@@ -191,25 +197,25 @@ public class ChatController {
     }
 
     // ========== 注册Emitter回调 ==========
-    private void registerEmitterCallbacks(SseEmitter emitter,
-                                          AtomicBoolean isEmitterCompleted,
-                                          ChatData chatData,
-                                          Long sessionId) {
+    private void registerSseCallbacks(SseEmitter emitter, ChatData chatData,
+                                      AtomicBoolean isSseCompleted) {
+        Long userId = chatData.getUserId();
+        Long sessionId = chatData.getSessionId();
         // 完成回调
         emitter.onCompletion(() -> {
-            isEmitterCompleted.set(true);
-            log.debug("SSE连接完成，sessionId: {}, 登录状态: {}", sessionId, chatData.getIsLogin());
+            isSseCompleted.set(true);
+            log.debug("SSE连接完成, userId: {}, sessionId: {}", userId, sessionId);
             cleanupResources(chatData, "连接完成");
         });
 
         // 超时回调
         emitter.onTimeout(() -> {
-            isEmitterCompleted.set(true);
-            log.warn("SSE连接超时，sessionId: {}, 登录状态: {}", sessionId, chatData.getIsLogin());
+            isSseCompleted.set(true);
+            log.warn("SSE连接超时, userId: {}, sessionId: {}", userId, sessionId);
             try {
                 emitter.send(SseEmitter.event()
                         .name(ERROR_EVENT)
-                        .data(Result.error(408, "请求超时，请重试")));
+                        .data(Result.error(408, "请求超时, 请重试")));
             } catch (IOException e) {
                 log.error("发送超时事件失败", e);
             } finally {
@@ -220,58 +226,55 @@ public class ChatController {
 
         // 错误回调
         emitter.onError(e -> {
-            isEmitterCompleted.set(true);
-            log.error("SSE连接异常，sessionId: {}, 登录状态: {}", sessionId, chatData.getIsLogin(), e);
+            isSseCompleted.set(true);
+            log.error("SSE连接异常, userId: {}, sessionId: {}", userId, sessionId, e);
             cleanupResources(chatData, "连接异常");
             emitter.completeWithError(e);
         });
     }
 
     // ========== 处理登录用户对话逻辑 ==========
-    private void handleLoginUserChat(ChatData chatData,
-                                     SseEmitter emitter,
-                                     AtomicBoolean isEmitterCompleted) throws Exception {
+    private void handleLoginChat(SseEmitter emitter, ChatData chatData,
+                                 AtomicBoolean isSseCompleted) {
         // 保存用户输入
         chatData.setMessageType((byte) 1);
-        System.out.println("==================================" + chatData.toString());
         ChatData updateData = chatService.updateSession(chatData, true);
-        System.out.println("==================================" + updateData.toString());
-        Long loginSessionId = updateData.getSessionId();
-        messageHolder.initContentHolder(loginSessionId);
-        log.debug("登录用户SSE初始化完成，sessionId: {}", loginSessionId);
+        Long userId = updateData.getUserId();
+        Long sessionId = updateData.getSessionId();
+        updateData.setIsLogin(true);
+        messageHolder.initHolder(userId, sessionId);
+        log.debug("登录用户SSE初始化完成, userId: {}, sessionId: {}", userId, sessionId);
 
-        // 异步执行AI流式处理
-        executeAiChatAsync(chatData, loginSessionId, emitter, isEmitterCompleted, true, updateData);
+        executeAiChatAsync(chatData, emitter, isSseCompleted, updateData);
     }
 
     // ========== 处理未登录用户对话逻辑 ==========
-    private void handleNonLoginUserChat(ChatData chatData,
-                                        SseEmitter emitter,
-                                        AtomicBoolean isEmitterCompleted) {
-        Long nonLoginSessionId = 0L;
-        // 异步执行AI流式处理
-        executeAiChatAsync(chatData, nonLoginSessionId, emitter, isEmitterCompleted, false, chatData);
+    private void handleNonLoginChat(SseEmitter emitter, ChatData chatData,
+                                    AtomicBoolean isSseCompleted) {
+        chatData.setIsLogin(false);
+        chatData.setSessionId(0L);
+        executeAiChatAsync(chatData, emitter, isSseCompleted, chatData);
     }
 
     // ========== 通用AI异步处理逻辑 ==========
     private void executeAiChatAsync(ChatData chatData,
-                                    Long sessionId,
                                     SseEmitter emitter,
-                                    AtomicBoolean isEmitterCompleted,
-                                    boolean isLogin,
+                                    AtomicBoolean isSseCompleted,
                                     ChatData updateData) {
+        Boolean isLogin = chatData.getIsLogin();
+        Long userId = chatData.getUserId();
+        Long sessionId = updateData.getSessionId();
         CompletableFuture.runAsync(() -> {
             try {
                 // 调用AI服务处理流式响应
-                chatService.chat(updateData, sessionId, responseData -> {
+                chatService.chat(updateData, responseData -> {
                     // Emitter已完成则直接返回
-                    if (isEmitterCompleted.get()) {
-                        log.debug("Emitter已完成，跳过CHUNK事件发送，sessionId: {}", sessionId);
+                    if (isSseCompleted.get()) {
+                        log.debug("Emitter已完成, 跳过CHUNK事件发送, userId: {}, sessionId: {}", userId, sessionId);
                         return;
                     }
-                    // 非空校验
                     if (responseData == null || responseData.getMessage() == null) {
-                        log.warn("AI回调数据为空，sessionId: {}", sessionId);
+                        log.warn("AI回调数据为空, userId: {}, sessionId: {}", userId, sessionId);
                         return;
                     }
 
@@ -281,45 +284,47 @@ public class ChatController {
                     if (StringUtils.isNotEmpty(content) || StringUtils.isNotEmpty(thinking)) {
                         if (isLogin) {
                             if (StringUtils.isNotEmpty(thinking)) {
-                                messageHolder.appendContent(sessionId, thinking, true);
+                                messageHolder.appendContent(userId, sessionId, thinking, true);
                             } else if (StringUtils.isNotEmpty(content)) {
-                                messageHolder.appendContent(sessionId, content, false);
+                                messageHolder.appendContent(userId, sessionId, content, false);
                             }
                         }
-                        sendSseEvent(emitter, isEmitterCompleted, CHUNK_EVENT, responseData);
+                        sendSseEvent(emitter, isSseCompleted, CHUNK_EVENT, responseData);
                     }
                 });
 
                 // 发送完成事件
-                if (!isEmitterCompleted.get()) {
-                    ChatData finishData = buildFinishChatData(chatData, sessionId, isLogin, updateData);
-                    sendSseEvent(emitter, isEmitterCompleted, FINISHED_EVENT, Result.success(finishData));
+                if (!isSseCompleted.get()) {
+                    ChatData finishData = buildFinishChatData(chatData, updateData);
+                    sendSseEvent(emitter, isSseCompleted, FINISHED_EVENT, Result.success(finishData));
                 }
             } catch (Exception e) {
                 // 异步异常处理
-                log.error("AI服务执行异常，sessionId: {}", sessionId, e);
-                sendSseEvent(emitter, isEmitterCompleted, ERROR_EVENT, Result.error(e.getMessage()));
+                log.error("AI服务执行异常, userId: {}, sessionId: {}", userId, sessionId, e);
+                sendSseEvent(emitter, isSseCompleted, ERROR_EVENT, Result.error(e.getMessage()));
             } finally {
-                // 最终确保Emitter完成，清理资源
-                completeEmitterFinally(emitter, isEmitterCompleted, sessionId, isLogin);
+                // 最终确保Emitter完成, 清理资源
+                completeSseFinally(emitter, updateData, isSseCompleted);
             }
         }, threadPoolManager.getThreadPool("chat"));
     }
 
     // ========== 构建完成事件的ChatData ==========
     private ChatData buildFinishChatData(ChatData chatData,
-                                         Long sessionId,
-                                         boolean isLogin,
                                          ChatData updateData) {
+        Boolean isLogin = updateData.getIsLogin();
+        Long userId = updateData.getUserId();
+        Long sessionId = updateData.getSessionId();
+
         ChatData result = new ChatData();
         result.copyFrom(chatData);
         result.setMessageType((byte) 2);
         result.setNewSession(false);
 
         // 登录用户需要组装完整回复保存
-        if (isLogin && updateData != null) {
-            String thinking = messageHolder.getCompleteContent(sessionId, true);
-            String content = messageHolder.getCompleteContent(sessionId, false);
+        if (isLogin && userId > 0 && sessionId > 0) {
+            String thinking = messageHolder.getCompleteContent(userId, sessionId, true);
+            String content = messageHolder.getCompleteContent(userId, sessionId, false);
             Msg msg = Msg.builder().thinking(thinking)
                     .content(content)
                     .type(ChatService.TEXT)
@@ -333,37 +338,36 @@ public class ChatController {
                 result.setMessageType((byte) 2);
                 result.setNewSession(false);
             } catch (Exception e) {
-                log.error("保存AI回复失败，sessionId: {}", sessionId, e);
+                log.error("保存AI回复失败, userId: {}, sessionId: {}", userId, sessionId, e);
             }
         }
         return result;
     }
 
     // ========== 最终完成Emitter并清理资源 ==========
-    private void completeEmitterFinally(SseEmitter emitter,
-                                        AtomicBoolean isEmitterCompleted,
-                                        Long sessionId,
-                                        boolean isLogin) {
-        if (!isEmitterCompleted.get()) {
-            isEmitterCompleted.set(true);
+    private void completeSseFinally(SseEmitter emitter,
+                                    ChatData updateData,
+                                    AtomicBoolean isSseCompleted) {
+        if (!isSseCompleted.get()) {
+            isSseCompleted.set(true);
             emitter.complete();
         }
         // 登录用户清理MessageHolder
-        if (isLogin) {
-            messageHolder.clearContent(sessionId);
+        Long userId = updateData.getUserId();
+        Long sessionId = updateData.getSessionId();
+        if (updateData.getIsLogin() && userId > 0 && sessionId > 0) {
+            messageHolder.clearContent(userId, sessionId);
         }
     }
 
     // ========== 处理同步异常 ==========
-    private void handleSyncException(SseEmitter emitter,
-                                     AtomicBoolean isEmitterCompleted,
-                                     ChatData chatData,
-                                     Long sessionId,
-                                     Exception e) {
-        log.error("SSE同步初始化异常，sessionId: {}", sessionId, e);
-        isEmitterCompleted.set(true);
+    private void handleSyncException(SseEmitter emitter, ChatData chatData,
+                                     AtomicBoolean isSseCompleted, Exception e) {
+        log.error("SSE同步初始化异常, userId: {}, sessionId: {}",
+                chatData.getUserId(), chatData.getSessionId(), e);
+        isSseCompleted.set(true);
         try {
-            sendSseEvent(emitter, isEmitterCompleted, ERROR_EVENT, Result.error(e.getMessage()));
+            sendSseEvent(emitter, isSseCompleted, ERROR_EVENT, Result.error(e.getMessage()));
         } catch (Exception ex) {
             log.error("发送同步异常事件失败", ex);
         } finally {
@@ -374,11 +378,11 @@ public class ChatController {
 
     // ========== 通用SSE事件发送方法 ==========
     private void sendSseEvent(SseEmitter emitter,
-                              AtomicBoolean isEmitterCompleted,
+                              AtomicBoolean isSseCompleted,
                               String eventName,
                               Object data) {
-        if (isEmitterCompleted.get()) {
-            log.warn("Emitter已完成，跳过发送{}事件", eventName);
+        if (isSseCompleted.get()) {
+            log.warn("Emitter已完成, 跳过发送{}事件", eventName);
             return;
         }
         try {
@@ -387,16 +391,18 @@ public class ChatController {
                     .data(data));
         } catch (IOException e) {
             log.error("发送{}事件失败", eventName, e);
-            isEmitterCompleted.set(true);
+            isSseCompleted.set(true);
             emitter.completeWithError(e);
         }
     }
 
     // 资源清理通用方法
     private void cleanupResources(ChatData chatData, String reason) {
-        log.debug("清理资源，原因：{}", reason);
-        if (chatData.getIsLogin() && chatData.getSessionId() != null) {
-            messageHolder.clearContent(chatData.getSessionId());
+        log.debug("清理资源, 原因：{}", reason);
+        Long userId = chatData.getUserId();
+        Long sessionId = chatData.getSessionId();
+        if (chatData.getIsLogin() && userId > 0 && sessionId > 0) {
+            messageHolder.clearContent(userId, sessionId);
         }
     }
 

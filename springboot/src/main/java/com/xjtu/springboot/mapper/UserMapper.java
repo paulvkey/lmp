@@ -9,6 +9,8 @@ public interface UserMapper {
 
     List<User> selectAll();
 
+    User selectByPrimaryKey(Long id);
+
     User selectByUsername(String username);
 
     int updatePassword(User res);

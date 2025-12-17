@@ -5,11 +5,9 @@ import com.xjtu.springboot.pojo.UserCollection;
 import java.util.List;
 
 public interface UserCollectionMapper {
-    int deleteByPrimaryKey(Long id);
+    int deleteByPrimaryKey(UserCollection row);
 
     int insert(UserCollection row);
-
-    UserCollection selectByPrimaryKey(Long id);
 
     List<UserCollection> selectAll();
 
@@ -17,7 +15,7 @@ public interface UserCollectionMapper {
 
     List<UserCollection> selectAllByUserId(Long userId);
 
-    int deleteBySessionId(Long sessionId);
+    int deleteByIds(Long userId, Long sessionId);
 
-    UserCollection selectBySessionId(Long sessionId);
+    UserCollection selectByIds(Long userId, Long sessionId);
 }

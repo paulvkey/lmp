@@ -6,9 +6,6 @@
         <div class="chat-title-wrapper" @click="renameTitle">
           <span class="chat-title">{{ chat.chatTitle }}</span>
         </div>
-        <button v-if="!checkLogin(userProfile)" class="top-login-btn" @click="goToLogin">
-          登录账号
-        </button>
       </div>
     </div>
 
@@ -1173,15 +1170,15 @@ const pauseSending = async () => {
     }
     // 更新后端数据(直接删除对应的消息)
     try {
-      await request('patch', `/session/${chat.modelInfo.sessionId}/pause`, null, {})
+      await request('patch', `/session/${userProfile.userId}/pause`, null, {
+        params: {
+          sessionId: chat.modelInfo.sessionId
+        }
+      })
     } catch (e) {
       console.error('取消发送，处理当前消息异常：' + e)
     }
   }
-}
-
-const goToLogin = () => {
-  router.push('/login')
 }
 
 onMounted(() => {

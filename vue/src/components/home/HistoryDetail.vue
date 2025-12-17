@@ -174,7 +174,11 @@ const loadHistorySession = async (item) => {
   homeStatus.currentMenu = 'history'
   chat.messageList = []
   try {
-    const response = await request('get', `/session/${item.id}`)
+    const response = await request('get', `/session/${userProfile.userId}`, null, {
+      params: {
+        sessionId: item.id,
+      },
+    })
     const sessionData = response.data.chatSession
     const messageList = response.data.chatMessageList || []
 
@@ -187,7 +191,7 @@ const loadHistorySession = async (item) => {
       content: msg.messageContent || '',
       isUser: msg.messageType === 1,
       type: msg.type ? msg.type : 'text',
-      thinkingType: msg.messageThinking ?'思考完成' : ''
+      thinkingType: msg.messageThinking ? '思考完成' : '',
     }))
     chat.modelInfo.newSession = false
     chat.modelInfo.sessionId = sessionData.id
@@ -281,8 +285,11 @@ const pinSession = async (id, pinned) => {
   const index = history.historyList.findIndex((item) => item.id === id)
   if (index !== -1) {
     history.historyList[index].isPinned = pinned ? 1 : 0
-    const response = await request('patch', `/session/${id}/pinned`, null, {
-      params: { isPinned: pinned ? 1 : 0 },
+    const response = await request('patch', `/session/${userProfile.userId}/pinned`, null, {
+      params: {
+        sessionId: id,
+        isPinned: pinned ? 1 : 0
+      },
     })
     if (response.code === 200) {
       if (pinned) {
@@ -314,9 +321,17 @@ const collectSession = async (sessionId) => {
   try {
     // 切换状态（先乐观更新UI）
     if (newState) {
-      await request('put', `/collection/${sessionId}/add`)
+      await request('put', `/collection/${userProfile.userId}/add`, null, {
+        params: {
+          sessionId: sessionId,
+        },
+      })
     } else {
-      await request('delete', `/collection/session/${sessionId}/delete`)
+      await request('delete', `/collection/session/${userProfile.userId}/delete`, null, {
+        params: {
+          sessionId: sessionId,
+        },
+      })
     }
     if (sessionId === history.selectedSessionId) {
       history.isSessionCollected = newState
@@ -357,7 +372,11 @@ const deleteSession = async (id, index) => {
 
   if (confirmDelete) {
     try {
-      const response = await request('delete', `/session/${id}/delete`)
+      const response = await request('delete', `/session/${userProfile.userId}/delete`, null, {
+        params: {
+          sessionId: id,
+        },
+      })
       if (response.code === 200) {
         history.historyList.splice(index, 1)
         history.deleteHistoryId(id)
@@ -410,7 +429,7 @@ const loadHistoryData = async () => {
     checkTextOverflow()
     history.hasLoadedHistory = true
   } catch (e) {
-    console.error("加载历史数据异常", e)
+    console.error('加载历史数据异常', e)
     history.clearHistory()
   } finally {
     isLoadingRequest.value = false
@@ -421,8 +440,7 @@ const loadHistoryData = async () => {
 watch(
   () => [checkLogin(userProfile), history.isExpanded],
   async ([isLogin, isExpanded]) => {
-    if (isLogin && isExpanded &&
-      !history.hasLoadedHistory && history.historyList.length === 0) {
+    if (isLogin && isExpanded && !history.hasLoadedHistory && history.historyList.length === 0) {
       // 延迟加载避免初始化多次触发
       setTimeout(async () => {
         await loadHistoryData()
@@ -432,12 +450,16 @@ watch(
       isLoadingRequest.value = false
     }
   },
-  { immediate: true, flush: 'post' }
+  { immediate: true, flush: 'post' },
 )
 
 onMounted(() => {
-  if (checkLogin(userProfile) && history.isExpanded &&
-    !history.hasLoadedHistory && history.historyList.length === 0) {
+  if (
+    checkLogin(userProfile) &&
+    history.isExpanded &&
+    !history.hasLoadedHistory &&
+    history.historyList.length === 0
+  ) {
     setTimeout(loadHistoryData, 300)
   }
   window.addEventListener('resize', checkTextOverflow)

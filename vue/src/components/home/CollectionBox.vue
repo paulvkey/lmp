@@ -71,7 +71,9 @@ import request from '@/utils/request.js'
 import { useCollectionStore } from '@/store/collection.js'
 import { useChatStore } from '@/store/chat.js'
 import { useFunctionStore } from '@/store/function.js'
+import { useUserProfileStore } from '@/store/userProfile.js'
 
+const userProfile = useUserProfileStore()
 const collection = useCollectionStore()
 const chat = useChatStore()
 const func = useFunctionStore()
@@ -89,7 +91,11 @@ const SCROLL_DELAY = 150
 
 const handleViewCollection = async (id) => {
   try {
-    const response = await request('get', `/collection/${id}`)
+    const response = await request('get', `/collection/${userProfile.userId}`, null, {
+      params: {
+        collectionId: id
+      }
+    })
     const sessionData = response.data.sessionData
     const chatSession = sessionData.chatSession
     const chatMessages = sessionData.chatMessageList
@@ -133,7 +139,11 @@ const handleDeleteCollection = async (id) => {
   })
 
   try {
-    const response = await request('delete', `/collection/${id}/delete`)
+    const response = await request('delete', `/collection/${userProfile.userId}/delete`, null, {
+      params: {
+        collectionId: id
+      }
+    })
     if (response.code === 200) {
       const currentListLength = collection.pageInfo.list.length
       const isLastPage = collection.pageInfo.pageNum === collection.pageInfo.pages

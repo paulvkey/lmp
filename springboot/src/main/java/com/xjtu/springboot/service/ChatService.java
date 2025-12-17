@@ -11,6 +11,7 @@ import com.xjtu.springboot.mapper.ChatSessionMapper;
 import com.xjtu.springboot.mapper.UserCollectionMapper;
 import com.xjtu.springboot.pojo.*;
 import com.xjtu.springboot.util.DateUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +29,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
+@Slf4j
 @Service
 public class ChatService {
     @Autowired
@@ -36,8 +38,6 @@ public class ChatService {
     ChatMessageMapper chatMessageMapper;
     @Autowired
     private UserCollectionMapper userCollectionMapper;
-
-    private static final Logger log = LoggerFactory.getLogger(ChatService.class);
 
     public final static String TEXT = "text";
     private final static String FILE = "file";
@@ -48,8 +48,8 @@ public class ChatService {
             .connectTimeout(Duration.ofMinutes(10))
             .build();
 
-    public ChatSession selectSessionById(Long sessionId) {
-        ChatSession chatSession = chatSessionMapper.selectByPrimaryKey(sessionId);
+    public ChatSession selectSessionById(Long userId, Long sessionId) {
+        ChatSession chatSession = chatSessionMapper.selectSessionByIds(userId, sessionId);
         if (Objects.nonNull(chatSession)) {
             return chatSession;
         } else {
@@ -57,8 +57,8 @@ public class ChatService {
         }
     }
 
-    public List<ChatMessage> selectMessageBySessionId(Long sessionId) {
-        List<ChatMessage> chatMessageList = chatMessageMapper.selectBySessionId(sessionId);
+    public List<ChatMessage> selectMessageBySessionId(Long userId, Long sessionId) {
+        List<ChatMessage> chatMessageList = chatMessageMapper.selectByIds(userId, sessionId);
         if (CollectionUtils.isNotEmpty(chatMessageList)) {
             return chatMessageList;
         } else {
@@ -66,7 +66,7 @@ public class ChatService {
         }
     }
 
-    public void chat(ChatData chatData, Long sessionId,
+    public void chat(ChatData chatData,
                      Consumer<ResponseData> contentConsumer) throws Exception {
         // 构建请求体
         // https://docs.ollama.com/api/chat#response-load-duration
@@ -162,8 +162,9 @@ public class ChatService {
     public ChatData updateSession(ChatData chatData, Boolean selectAllMsg) {
         if (!chatData.getNewSession() &&
                 (Objects.nonNull(chatData.getSessionId()) && chatData.getSessionId() > 0)) {
+            Long userId = chatData.getUserId();
             Long sessionId = chatData.getSessionId();
-            ChatSession chatSession = selectSessionById(sessionId);
+            ChatSession chatSession = selectSessionById(userId, sessionId);
             if (Objects.nonNull(chatSession)) {
                 updateSession(chatData, chatSession);
                 if (chatSessionMapper.updateByPrimaryKey(chatSession) >= 1) {
@@ -175,7 +176,7 @@ public class ChatService {
                     }
                     if (selectAllMsg) {
                         // 登录用户直接用数据库里面的数据
-                        chatMessageList = chatMessageMapper.selectBySessionId(sessionId);
+                        chatMessageList = chatMessageMapper.selectByIds(userId, sessionId);
                     }
                     return generateChatData(chatData, chatSession, chatMessageList, selectAllMsg);
                 } else {
@@ -291,12 +292,12 @@ public class ChatService {
     }
 
     @Transactional
-    public boolean deleteSessionById(Long id) {
-        ChatSession chatSession = selectSessionById(id);
+    public boolean deleteSessionById(Long userId, Long sessionId) {
+        ChatSession chatSession = selectSessionById(userId, sessionId);
         if (Objects.nonNull(chatSession)) {
-            if (chatSessionMapper.deleteByPrimaryKey(id) >= 1) {
-                chatMessageMapper.deleteBySessionId(id);
-                userCollectionMapper.deleteBySessionId(id);
+            if (chatSessionMapper.deleteByPrimaryKey(chatSession) >= 1) {
+                chatMessageMapper.deleteByIds(userId, sessionId);
+                userCollectionMapper.deleteByIds(userId, sessionId);
                 return true;
             } else {
                 throw new CustomException(500, "删除对话信息异常");
@@ -307,8 +308,8 @@ public class ChatService {
     }
 
     @Transactional
-    public ChatSession renameSessionById(Long id, String sessionTitle) {
-        ChatSession chatSession = chatSessionMapper.selectByPrimaryKey(id);
+    public ChatSession renameSessionById(Long userId, Long sessionId, String sessionTitle) {
+        ChatSession chatSession = chatSessionMapper.selectSessionByIds(userId, sessionId);
         if (Objects.nonNull(chatSession)) {
             chatSession.setSessionTitle(sessionTitle);
             if (chatSessionMapper.updateByPrimaryKey(chatSession) >= 1) {
@@ -322,8 +323,8 @@ public class ChatService {
     }
 
     @Transactional
-    public ChatSession pinnedSessionById(Long id, Integer pinned) {
-        ChatSession chatSession = chatSessionMapper.selectByPrimaryKey(id);
+    public ChatSession pinnedSessionById(Long userId, Long sessionId, Integer pinned) {
+        ChatSession chatSession = chatSessionMapper.selectSessionByIds(userId, sessionId);
         if (Objects.nonNull(chatSession)) {
             chatSession.setIsPinned(Byte.valueOf(pinned.toString()));
             if (chatSessionMapper.updateByPrimaryKey(chatSession) >= 1) {
@@ -337,20 +338,20 @@ public class ChatService {
     }
 
     @Transactional
-    public Boolean pauseMsgBySessionId(Long id) {
-        List<ChatMessage> chatMessageList = chatMessageMapper.selectBySessionId(id);
+    public Boolean pauseMsgBySessionId(Long userId, Long sessionId) {
+        List<ChatMessage> chatMessageList = chatMessageMapper.selectByIds(userId, sessionId);
         if (CollectionUtils.isNotEmpty(chatMessageList)) {
             int size = chatMessageList.size();
             if (size < 1) {
                 return true;
             }
             ChatMessage chatMessage = chatMessageList.get(size - 1);
-            boolean isDeleted = chatMessageMapper.deleteByPrimaryKey(chatMessage.getId()) > 0;
+            boolean isDeleted = chatMessageMapper.deleteByPrimaryKey(chatMessage) > 0;
             if (chatMessage.getMessageType() == (byte) 1) {
                 return isDeleted;
             } else if (chatMessage.getMessageType() == (byte) 2 && size >= 2) {
                 chatMessage = chatMessageList.get(size - 2);
-                return isDeleted && chatMessageMapper.deleteByPrimaryKey(chatMessage.getId()) > 0;
+                return isDeleted && chatMessageMapper.deleteByPrimaryKey(chatMessage) > 0;
             }
         }
         return true;

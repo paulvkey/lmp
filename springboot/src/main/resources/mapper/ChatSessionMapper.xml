@@ -14,10 +14,11 @@
         <result column="updated_at" jdbcType="TIMESTAMP" property="updatedAt"/>
         <result column="last_message_time" jdbcType="TIMESTAMP" property="lastMessageTime"/>
     </resultMap>
-    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+    <delete id="deleteByPrimaryKey" parameterType="com.xjtu.springboot.pojo.ChatSession">
         delete
         from chat_session
-        where id = #{id,jdbcType=BIGINT}
+        where user_id = #{userId,jdbcType=BIGINT}
+            and id = #{id,jdbcType=BIGINT}
     </delete>
     <insert id="insert" parameterType="com.xjtu.springboot.pojo.ChatSession">
         <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
@@ -46,20 +47,6 @@
             last_message_time = #{lastMessageTime,jdbcType=TIMESTAMP}
         where id = #{id,jdbcType=BIGINT}
     </update>
-    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
-        select id,
-               user_id,
-               ai_model_id,
-               session_title,
-               is_pinned,
-               is_collected,
-               is_deleted,
-               created_at,
-               updated_at,
-               last_message_time
-        from chat_session
-        where id = #{id,jdbcType=BIGINT}
-    </select>
     <select id="selectAll" resultMap="BaseResultMap">
         select id,
                user_id,
@@ -74,7 +61,7 @@
         from chat_session
     </select>
 
-    <select id="selectSessionByUserId" resultMap="BaseResultMap">
+    <select id="selectSessionByUserId" parameterType="java.lang.Long" resultMap="BaseResultMap">
         select id,
                user_id,
                ai_model_id,
@@ -87,5 +74,21 @@
                last_message_time
         from chat_session
         where user_id = #{userId}
+    </select>
+
+    <select id="selectSessionByIds" resultMap="BaseResultMap">
+        select id,
+               user_id,
+               ai_model_id,
+               session_title,
+               is_pinned,
+               is_collected,
+               is_deleted,
+               created_at,
+               updated_at,
+               last_message_time
+        from chat_session
+        where user_id = #{param1}
+            and id = #{param2}
     </select>
 </mapper>

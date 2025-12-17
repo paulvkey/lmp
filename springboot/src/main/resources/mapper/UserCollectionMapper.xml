@@ -10,10 +10,11 @@
         <result column="collection_note" jdbcType="VARCHAR" property="collectionNote"/>
         <result column="collected_at" jdbcType="TIMESTAMP" property="collectedAt"/>
     </resultMap>
-    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+    <delete id="deleteByPrimaryKey" parameterType="com.xjtu.springboot.pojo.UserCollection">
         delete
         from user_collection
-        where id = #{id,jdbcType=BIGINT}
+        where user_id = #{userId,jdbcType=BIGINT}
+          and id = #{id,jdbcType=BIGINT}
     </delete>
     <insert id="insert" parameterType="com.xjtu.springboot.pojo.UserCollection" keyColumn="id"
             keyProperty="id" useGeneratedKeys="true">
@@ -33,34 +34,32 @@
             session_title   = #{sessionTitle,jdbcType=VARCHAR},
             collection_note = #{collectionNote,jdbcType=VARCHAR},
             collected_at    = #{collectedAt,jdbcType=TIMESTAMP}
-        where id = #{id,jdbcType=BIGINT}
+        where user_id = #{userId,jdbcType=BIGINT}
+          and id = #{id,jdbcType=BIGINT}
     </update>
-    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
-        select id, user_id, session_id, session_title, collection_note, collected_at
-        from user_collection
-        where id = #{id,jdbcType=BIGINT}
-    </select>
     <select id="selectAll" resultMap="BaseResultMap">
         select id, user_id, session_id, session_title, collection_note, collected_at
         from user_collection
     </select>
 
-    <select id="selectAllByUserId" resultMap="BaseResultMap">
+    <select id="selectAllByUserId" parameterType="java.lang.Long" resultMap="BaseResultMap">
         select id, user_id, session_id, session_title, collection_note, collected_at
         from user_collection
         where user_id = #{userId}
         order by collected_at desc
     </select>
 
-    <delete id="deleteBySessionId" parameterType="java.lang.Long">
+    <delete id="deleteByIds">
         delete
         from user_collection
-        where session_id = #{sessionId}
+        where user_id = #{param1}
+          and session_id = #{param2}
     </delete>
 
-    <select id="selectBySessionId" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    <select id="selectByIds" resultMap="BaseResultMap">
         select id, user_id, session_id, session_title, collection_note, collected_at
         from user_collection
-        where session_id = #{sessionId}
+        where user_id = #{param1}
+            session_id = #{param2}
     </select>
 </mapper>

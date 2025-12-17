@@ -35,12 +35,12 @@ public class UserCollectionService {
         }
     }
 
-    public CollectionData getUserCollectionById(Long id) {
-        UserCollection userCollection = userCollectionMapper.selectByPrimaryKey(id);
+    public CollectionData getUserCollectionById(Long userId, Long collectionId) {
+        UserCollection userCollection = userCollectionMapper.selectByIds(userId, collectionId);
         if (Objects.nonNull(userCollection)) {
             Long sessionId = userCollection.getSessionId();
-            ChatSession chatSession = chatService.selectSessionById(sessionId);
-            List<ChatMessage> chatMessageList = chatService.selectMessageBySessionId(sessionId);
+            ChatSession chatSession = chatService.selectSessionById(userId, sessionId);
+            List<ChatMessage> chatMessageList = chatService.selectMessageBySessionId(userId, sessionId);
             SessionData sessionData = new SessionData();
             sessionData.setChatSession(chatSession);
             sessionData.setChatMessageList(chatMessageList);
@@ -55,11 +55,11 @@ public class UserCollectionService {
     }
 
     @Transactional
-    public UserCollection addCollection(Long sessionId) {
-        ChatSession chatSession = chatService.selectSessionById(sessionId);
+    public UserCollection addCollection(Long userId, Long sessionId) {
+        ChatSession chatSession = chatService.selectSessionById(userId, sessionId);
         if (Objects.nonNull(chatSession)) {
             UserCollection userCollection = new UserCollection();
-            userCollection.setUserId(chatSession.getUserId());
+            userCollection.setUserId(userId);
             userCollection.setSessionId(sessionId);
             userCollection.setSessionTitle(chatSession.getSessionTitle());
             userCollection.setCollectionNote("");
@@ -86,15 +86,15 @@ public class UserCollectionService {
     }
 
     @Transactional
-    public boolean deleteCollection(Long id) {
-        UserCollection userCollection = userCollectionMapper.selectByPrimaryKey(id);
+    public boolean deleteCollection(Long userId, Long collectionId) {
+        UserCollection userCollection = userCollectionMapper.selectByIds(userId, collectionId);
         if (Objects.nonNull(userCollection)) {
             Long sessionId = userCollection.getSessionId();
-            ChatSession chatSession = chatService.selectSessionById(sessionId);
+            ChatSession chatSession = chatService.selectSessionById(userId, sessionId);
             if (Objects.nonNull(chatSession)) {
                 chatSession.setIsCollected((byte) 0);
                 if (chatService.updateSession(chatSession) > 0
-                        && userCollectionMapper.deleteByPrimaryKey(id) > 0) {
+                        && userCollectionMapper.deleteByPrimaryKey(userCollection) > 0) {
                     return true;
                 } else {
                     throw new CustomException(500, "取消收藏异常");
@@ -108,12 +108,12 @@ public class UserCollectionService {
     }
 
     @Transactional
-    public boolean deleteCollectionBySessionId(Long sessionId) {
-        ChatSession chatSession = chatService.selectSessionById(sessionId);
+    public boolean deleteCollectionBySessionId(Long userId, Long sessionId) {
+        ChatSession chatSession = chatService.selectSessionById(userId, sessionId);
         if (Objects.nonNull(chatSession)) {
             chatSession.setIsCollected((byte) 0);
             if (chatService.updateSession(chatSession) > 0
-                    && userCollectionMapper.deleteBySessionId(sessionId) > 0) {
+                    && userCollectionMapper.deleteByIds(userId, sessionId) > 0) {
                 return true;
             } else {
                 throw new CustomException(500, "取消收藏异常");
