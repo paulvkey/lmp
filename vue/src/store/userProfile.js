@@ -5,18 +5,17 @@ import defaultAvatar from '@/assets/images/avatar.jpg'
 export const useUserProfileStore = defineStore('userProfile', {
   // 状态（存储用户信息）
   state: () => ({
+    isLogin: false,
     userId: 0,
     username: '游客',
     avatar: defaultAvatar,
+    sex: 3,
     phone: '',
     email: '',
-    sex: 3,
     birthday: null,
-    status: 1,
+    bio: '',
     lastLoginIp: null,
     lastLoginTime: null,
-    bio: '',
-    isLogin: false,
     token: null,
     rememberMe: {
       isRemember: false,
@@ -29,18 +28,17 @@ export const useUserProfileStore = defineStore('userProfile', {
   actions: {
     // 设置信息
     setUserProfile(info) {
+      this.isLogin = info.userId > 0
       this.userId = info.userId
       this.username = info.username
       this.avatar = info.avatar ? info.avatar : defaultAvatar
+      this.sex = info.sex
       this.phone = info.phone
       this.email = info.email
-      this.sex = info.sex
       this.birthday = info.birthday
-      this.status = info.status
+      this.bio = info.bio
       this.lastLoginIp = info.lastLoginIp
       this.lastLoginTime = info.lastLoginTime
-      this.bio = info.bio
-      this.isLogin = true
     },
     setUserToken(token) {
       this.token = token
@@ -65,7 +63,6 @@ export const useUserProfileStore = defineStore('userProfile', {
       this.email = ''
       this.sex = 3
       this.birthday = null
-      this.status = 1
       this.lastLoginIp = null
       this.lastLoginTime = null
       this.bio = ''

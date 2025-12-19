@@ -8,7 +8,7 @@ import io.jsonwebtoken.security.SignatureException;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Component;
 
-import javax.crypto.SecretKey;
+import jakarta.crypto.SecretKey;
 import java.util.Date;
 import java.util.Map;
 import java.util.function.Function;

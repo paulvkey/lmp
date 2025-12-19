@@ -9,18 +9,20 @@
         <result column="password" jdbcType="VARCHAR" property="password"/>
         <result column="token" jdbcType="VARCHAR" property="token"/>
     </resultMap>
-    <insert id="insert" parameterType="com.xjtu.springboot.pojo.User">
+
+    <insert id="insert" parameterType="com.xjtu.springboot.pojo.User"
+            useGeneratedKeys="true" keyColumn="id" keyProperty="id">
         <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
-            SELECT LAST_INSERT_ID()
+            SELECT currval(pg_get_serial_sequence('lmp."user"', 'id'))
         </selectKey>
-        insert into user (username, phone, password, token)
+        insert into lmp."user" (username, phone, password, token)
         values (#{username,jdbcType=VARCHAR}, #{phone,jdbcType=VARCHAR},
-        #{password,jdbcType=VARCHAR},
-        #{token,jdbcType=VARCHAR})
+        #{password,jdbcType=VARCHAR}, #{token,jdbcType=VARCHAR})
     </insert>
+
     <select id="selectAll" resultMap="BaseResultMap">
-        select id, username, phone, password, token, token
-        from user
+        select id, username, phone, password, token
+        from lmp."user"
     </select>
 
     <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
@@ -29,7 +31,7 @@
                phone,
                password,
                token
-        from user
+        from lmp."user"
         where id = #{id}
     </select>
 
@@ -39,14 +41,14 @@
                phone,
                password,
                token
-        from user
+        from lmp."user"
         where username = #{username}
     </select>
 
     <update id="updateByPrimaryKey" parameterType="com.xjtu.springboot.pojo.User">
-        update user
+        update lmp."user"
         <trim prefix="set" suffixOverrides=",">
-            <if test="password != null and username != ''">
+            <if test="password != null and password != ''">
                 password = #{password},
             </if>
             <if test="phone != null and phone != ''">
@@ -57,7 +59,7 @@
     </update>
 
     <update id="updatePassword" parameterType="com.xjtu.springboot.pojo.User">
-        update user
+        update lmp."user"
         set password = #{password}
         where id = #{id}
     </update>

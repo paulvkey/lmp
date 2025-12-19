@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xjtu.springboot.mapper.FolderMapper">
+    <resultMap id="BaseResultMap" type="com.xjtu.springboot.pojo.Folder">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="user_id" jdbcType="BIGINT" property="userId"/>
+        <result column="session_id" jdbcType="BIGINT" property="sessionId"/>
+        <result column="name" jdbcType="VARCHAR" property="name"/>
+        <result column="parent_id" jdbcType="BIGINT" property="parentId"/>
+        <result column="created_at" jdbcType="TIMESTAMP" property="createdAt"/>
+    </resultMap>
+
+    <delete id="deleteByPrimaryKey" parameterType="com.xjtu.springboot.pojo.Folder">
+        delete
+        from lmp.folder
+        where id = #{id,jdbcType=BIGINT}
+          and user_id = #{userId,jdbcType=BIGINT}
+          and session_id = #{sessionId,jdbcType=BIGINT}
+    </delete>
+
+    <insert id="insert" parameterType="com.xjtu.springboot.pojo.Folder" useGeneratedKeys="true"
+            keyColumn="id" keyProperty="id">
+        <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
+            SELECT currval(pg_get_serial_sequence('lmp.folder', 'id'))
+        </selectKey>
+        insert into lmp.folder (user_id, session_id, name,
+        parent_id, created_at)
+        values (#{userId,jdbcType=BIGINT}, #{sessionId,jdbcType=BIGINT},
+        #{name,jdbcType=VARCHAR},
+        #{parentId,jdbcType=BIGINT}, #{createdAt,jdbcType=TIMESTAMP})
+    </insert>
+
+    <update id="updateByPrimaryKey" parameterType="com.xjtu.springboot.pojo.Folder">
+        update lmp.folder
+        set user_id          = #{userId,jdbcType=BIGINT},
+            session_id       = #{sessionId,jdbcType=BIGINT},
+            name      = #{name,jdbcType=VARCHAR},
+            parent_id = #{parentId,jdbcType=BIGINT},
+            created_at       = #{createdAt,jdbcType=TIMESTAMP}
+        where id = #{id,jdbcType=BIGINT}
+          and user_id = #{userId,jdbcType=BIGINT}
+          and session_id = #{sessionId,jdbcType=BIGINT}
+    </update>
+
+    <select id="selectByPrimaryKey" parameterType="com.xjtu.springboot.pojo.Folder" resultMap="BaseResultMap">
+        select id, user_id, session_id, name, parent_id, created_at
+        from lmp.folder
+        where id = #{id,jdbcType=BIGINT}
+          and user_id = #{userId,jdbcType=BIGINT}
+          and session_id = #{sessionId,jdbcType=BIGINT}
+    </select>
+
+    <select id="selectByUserSessionId" resultMap="BaseResultMap">
+        select id, user_id, session_id, name, parent_id, created_at
+        from lmp.folder
+        where user_id = #{userId}
+          and session_id = #{sessionId}
+    </select>
+
+    <select id="selectSubFolderIds" resultType="java.lang.Long">
+        select id from lmp.folder where parent_id = #{folderId}
+    </select>
+</mapper>

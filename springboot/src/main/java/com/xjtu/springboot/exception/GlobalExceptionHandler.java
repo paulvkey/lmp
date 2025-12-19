@@ -1,6 +1,7 @@
 package com.xjtu.springboot.exception;
 
 import com.xjtu.springboot.common.Result;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -8,6 +9,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
+@Slf4j
 @ControllerAdvice(basePackages = {
         "com.xjtu.springboot.controller",
         "com.xjtu.springboot.service"
@@ -18,6 +20,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     @ResponseBody
     public Result handleException(Exception exception) {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        exception.printStackTrace(pw);
+        pw.close();
+        return Result.error(exception.getMessage());
+    }
+
+    @ExceptionHandler(RuntimeException.class)
+    @ResponseBody
+    public Result handleRuntimeException(RuntimeException exception) {
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw);
         exception.printStackTrace(pw);

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xjtu.springboot.mapper.SessionMapper">
+    <resultMap id="BaseResultMap" type="com.xjtu.springboot.pojo.Session">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="user_id" jdbcType="BIGINT" property="userId"/>
+        <result column="model_id" jdbcType="BIGINT" property="modelId"/>
+        <result column="session_title" jdbcType="VARCHAR" property="sessionTitle"/>
+        <result column="is_pinned" jdbcType="SMALLINT" property="isPinned"/>
+        <result column="is_collected" jdbcType="SMALLINT" property="isCollected"/>
+        <result column="is_deleted" jdbcType="SMALLINT" property="isDeleted"/>
+        <result column="created_at" jdbcType="TIMESTAMP" property="createdAt"/>
+        <result column="updated_at" jdbcType="TIMESTAMP" property="updatedAt"/>
+        <result column="last_msg_time" jdbcType="TIMESTAMP" property="lastMsgTime"/>
+    </resultMap>
+
+    <delete id="deleteByPrimaryKey" parameterType="com.xjtu.springboot.pojo.Session">
+        delete
+        from lmp.session
+        where id = #{id,jdbcType=BIGINT}
+          and user_id = #{userId,jdbcType=BIGINT}
+    </delete>
+
+    <insert id="insert" parameterType="com.xjtu.springboot.pojo.Session"
+            useGeneratedKeys="true" keyColumn="id" keyProperty="id">
+        <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
+            SELECT currval(pg_get_serial_sequence('lmp.session', 'id'))
+        </selectKey>
+        insert into lmp.session (user_id, model_id, session_title,
+        is_pinned, is_collected, is_deleted, created_at,
+        updated_at, last_msg_time)
+        values (#{userId,jdbcType=BIGINT}, #{modelId,jdbcType=BIGINT},
+        #{sessionTitle,jdbcType=VARCHAR},
+        #{isPinned,jdbcType=SMALLINT}, #{isCollected,jdbcType=SMALLINT}, #{isDeleted,jdbcType=SMALLINT},
+        #{createdAt,jdbcType=TIMESTAMP},
+        #{updatedAt,jdbcType=TIMESTAMP}, #{lastMsgTime,jdbcType=TIMESTAMP})
+    </insert>
+
+    <update id="updateByPrimaryKey" parameterType="com.xjtu.springboot.pojo.Session">
+        update lmp.session
+        set user_id       = #{userId,jdbcType=BIGINT},
+            model_id      = #{modelId,jdbcType=BIGINT},
+            session_title = #{sessionTitle,jdbcType=VARCHAR},
+            is_pinned     = #{isPinned,jdbcType=SMALLINT},
+            is_collected  = #{isCollected,jdbcType=SMALLINT},
+            is_deleted    = #{isDeleted,jdbcType=SMALLINT},
+            created_at    = #{createdAt,jdbcType=TIMESTAMP},
+            updated_at    = #{updatedAt,jdbcType=TIMESTAMP},
+            last_msg_time = #{lastMsgTime,jdbcType=TIMESTAMP}
+        where id = #{id,jdbcType=BIGINT}
+          and user_id = #{userId,jdbcType=BIGINT}
+    </update>
+
+    <select id="selectSessionByUserId" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select id,
+               user_id,
+               model_id,
+               session_title,
+               is_pinned,
+               is_collected,
+               is_deleted,
+               created_at,
+               updated_at,
+               last_msg_time
+        from lmp.session
+        where user_id = #{userId}
+    </select>
+
+    <select id="selectSessionByIds" resultMap="BaseResultMap">
+        select id,
+               user_id,
+               model_id,
+               session_title,
+               is_pinned,
+               is_collected,
+               is_deleted,
+               created_at,
+               updated_at,
+               last_msg_time
+        from lmp.session
+        where user_id = #{userId}
+          and id = #{sessionId}
+    </select>
+</mapper>

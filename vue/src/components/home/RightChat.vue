@@ -21,7 +21,7 @@
           <div class="user-msg-wrapper" v-if="msg.isUser">
             <div class="chat-msg">
               <!-- 展示文件消息 -->
-              <div v-if="msg.type === 'file'">
+              <div v-if="msg.type === 2">
                 <div class="msg-file-list">
                   <div
                     v-for="(file, idx) in JSON.parse(msg.content)"
@@ -173,7 +173,7 @@
         <textarea
           id="chat-msg-input"
           class="chat-msg-input"
-          name="chatMessage"
+          name="message"
           rows="4"
           ref="chatMsgInputRef"
           v-model="chat.inputData"
@@ -295,7 +295,7 @@ import request from '@/utils/request.js'
 import { checkLogin, escapeMsg } from '@/utils/commonUtils.js'
 import { formatFileSize, getImageDimensions } from '@/utils/fileUtils.js'
 import RenameBox from '@/components/RenameBox.vue'
-import UploadFilesBox from '@/components/home/UploadFilesBox.vue'
+import UploadFilesBox from '@/components/UploadFilesBox.vue'
 import MarkdownRender from 'markstream-vue'
 import 'markstream-vue/index.css'
 import '@/assets/css/Global.css'
@@ -525,7 +525,7 @@ const prepareUpload = async (files) => {
     try {
       // 获取图片维度/预览（兼容非图片文件）
       const { isImage, width, height, preview } = await getImageDimensions(file)
-      // 初始化文件状态
+      // TODO 初始化文件状态
       const fileInfo = {
         name: file.name,
         size: file.size,
@@ -820,16 +820,18 @@ const prepareSendMessage = () => {
   }
   if (hasUploadFiles && !chat.filesUploaded) {
     const fileContent = chat.uploadedFiles.map((file) => ({
+      // TODO 重新设置文件信息
       name: file.name,
       size: file.size,
       type: file.type,
       previewUrl: file.previewUrl,
     }))
     const fileMessage = {
-      id: `${Date.now()}-${Math.random().toString(36).slice(2)}-file`,
+      id: `${Date.now()}-${Math.random().toString(36).slice(2)}-2`,
       content: JSON.stringify(fileContent),
       isUser: true,
-      type: 'file',
+      // TODO 设置是否图片
+      type: 2,
     }
     chat.messageList.push(fileMessage)
     chat.modelInfo.messageList.push({
@@ -843,10 +845,10 @@ const prepareSendMessage = () => {
   }
 
   const message = {
-    id: `${Date.now()}-${Math.random().toString(36).slice(2)}-text`,
+    id: `${Date.now()}-${Math.random().toString(36).slice(2)}-1`,
     content: inputData,
     isUser: true,
-    type: 'text',
+    type: 1,
   }
   chat.messageList.push(message)
   chat.modelInfo.messageList.push({
@@ -859,7 +861,7 @@ const prepareSendMessage = () => {
   chat.inputData = ''
   chat.isSending = true
   chat.modelInfo.newSession = homeStatus.isNewSession
-  chat.modelInfo.messageType = 1
+  chat.modelInfo.role = 1
   chat.modelInfo.isDeepThink = chat.isDeepThink ? 1 : 0
   chat.modelInfo.isNetworkSearch = chat.isNetworkSearch ? 1 : 0
   return true
@@ -870,13 +872,13 @@ const updateInfoByResponse = (response) => {
   chat.modelInfo.newSession = false
   chat.modelInfo.sessionId = response.sessionId
   chat.modelInfo.sessionTitle = response.sessionTitle
-  chat.modelInfo.aiModelId = response.aiModelId
+  chat.modelInfo.modelId = response.modelId
   chat.modelInfo.isDeleted = response.isDeleted
   chat.modelInfo.isPinned = response.isPinned
   chat.modelInfo.isCollected = response.isCollected
   chat.modelInfo.createdAt = response.createdAt
   chat.modelInfo.sendTime = response.sendTime
-  chat.modelInfo.lastMessageTime = response.lastMessageTime
+  chat.modelInfo.lastMsgTime = response.lastMsgTime
   homeStatus.isNewSession = chat.modelInfo.newSession
   homeStatus.setCurrentMenu('history')
   homeStatus.renamingSessionId = response.sessionId
@@ -893,13 +895,13 @@ const getAndParseChatData = async (abortSignal) => {
 
   try {
     // 创建流式消息项
-    streamMsgIdRef.value = `${Date.now()}-${Math.random().toString(36).slice(2)}-stream`
+    streamMsgIdRef.value = `${Date.now()}-${Math.random().toString(36).slice(2)}-1`
     const streamMsg = {
       id: streamMsgIdRef.value,
       thinking: '',
       content: '',
       isUser: false,
-      type: 'text',
+      type: 1,
       isStreaming: true,
       showThinking: true,
       thinkingType: '',

@@ -5,8 +5,10 @@ spring:
   datasource:
     username: root
     password: 123456
-    url: jdbc:mysql://localhost:3306/lmp?serverTimezone=UTC&useSSL=false&characterEncoding=utf8&allowPublicKeyRetrieval=true
-    driverClassName: com.mysql.cj.jdbc.Driver
+    # url: jdbc:mysql://localhost:3306/lmp?serverTimezone=UTC&useSSL=false&characterEncoding=utf8&allowPublicKeyRetrieval=true
+    # driverClassName: com.mysql.cj.jdbc.Driver
+    url: jdbc:postgresql://localhost:5432/rag_db?currentSchema=public&useSSL=false
+    driver-class-name: org.postgresql.Driver
     type: com.alibaba.druid.pool.DruidDataSource
     # Druid连接池配置
     druid:
@@ -73,6 +75,13 @@ spring:
       max-request-size: 50MB  # 整个请求（含所有文件）的最大大小
       enabled: true  # 启用文件上传支持（默认开启）
 
+  task:
+    scheduling:
+      pool:
+        size: 5
+      thread-name-prefix: scheduler-
+
+
 mybatis:
   # 指定Mapper XML文件的位置（classpath: 表示resources目录下）
   mapper-locations: classpath:mapper/*.xml
@@ -134,3 +143,31 @@ management:
   metrics:
     tags:
       application: message-holder
+
+# 文件上传配置
+file:
+  upload:
+    max-file-size: 4294967296       # 4G
+    chunk-size: 104857600      # 100MB
+    # 本地存储配置
+    local:
+      root-path: /data/upload  # 本地存储根目录
+      access-prefix: http://localhost:8080/upload/  # 本地访问前缀
+    # 阿里云OSS配置
+    oss:
+      endpoint: oss-cn-hangzhou.aliyuncs.com
+      access-key-id: your-oss-access-key-id
+      access-key-secret: your-oss-access-key-secret
+      default-bucket: your-oss-bucket-name
+
+# ollama配置
+ollama:
+  base-url: http://localhost:11434
+  model-name: qwen:7b-chat
+
+# RAG配置
+rag:
+  embedding-dimension: 768 # BGE-base-zh 模型维度
+  chunk-size: 512 # 文档分割大小
+  chunk-overlap: 50 # 分割重叠长度
+  top-k: 3 # 检索返回条数

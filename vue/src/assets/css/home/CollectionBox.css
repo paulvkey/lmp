@@ -107,22 +107,17 @@
 
 /* 内容列宽与表头对应 */
 .table-cell.title-cell {
-  width: 30%;
-  word-break: break-all;
-}
-
-.table-cell.note-cell {
-  width: 30%;
+  width: 40%;
   word-break: break-all;
 }
 
 .table-cell.time-cell {
-  width: 25%;
+  width: 40%;
   color: #666;
 }
 
 .table-cell.action-cell {
-  width: 15%;
+  width: 30%;
   display: flex;
   gap: 8px;
 }

@@ -113,7 +113,7 @@
 import { inject, nextTick, provide } from 'vue'
 import { ElMessage } from 'element-plus'
 import '@/assets/css/home/LeftMenu.css'
-import CollectionBox from '@/components/home/CollectionBox.vue'
+import CollectionBox from '@/components/CollectionBox.vue'
 import HistoryDetail from '@/components/home/HistoryDetail.vue'
 import request from '@/utils/request.js'
 import { checkLogin } from '@/utils/commonUtils.js'

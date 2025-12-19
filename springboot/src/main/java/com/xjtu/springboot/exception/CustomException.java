@@ -1,8 +1,10 @@
 package com.xjtu.springboot.exception;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 public class CustomException extends RuntimeException {
     private final Integer code;
     private final String msg;

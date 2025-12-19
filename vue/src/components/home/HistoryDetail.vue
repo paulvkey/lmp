@@ -179,31 +179,31 @@ const loadHistorySession = async (item) => {
         sessionId: item.id,
       },
     })
-    const sessionData = response.data.chatSession
-    const messageList = response.data.chatMessageList || []
+    const session = response.data.session
+    const messageList = response.data.messageList || []
 
     history.currentSessionId = item.id
     history.loadedSessionId = item.id
-    chat.chatTitle = sessionData.sessionTitle
+    chat.chatTitle = session.sessionTitle
     chat.messageList = messageList.map((msg) => ({
       id: `${Date.now()}-${Math.random().toString(36).slice(2)}-${msg.type}`,
-      thinking: msg.messageThinking || '',
-      content: msg.messageContent || '',
-      isUser: msg.messageType === 1,
-      type: msg.type ? msg.type : 'text',
-      thinkingType: msg.messageThinking ? '思考完成' : '',
+      thinking: msg.thinking || '',
+      content: msg.content || '',
+      isUser: msg.role === 1,
+      type: msg.type ? msg.type : 1,
+      thinkingType: msg.thinking ? '思考完成' : '',
     }))
     chat.modelInfo.newSession = false
-    chat.modelInfo.sessionId = sessionData.id
-    chat.modelInfo.sessionTitle = sessionData.sessionTitle
-    chat.modelInfo.aiModelId = sessionData.aiModelId
-    chat.modelInfo.isDeleted = sessionData.isDeleted
-    chat.modelInfo.isPinned = sessionData.isPinned
-    chat.modelInfo.isCollected = sessionData.isCollected
-    chat.modelInfo.createdAt = sessionData.createdAt
-    chat.modelInfo.sendTime = sessionData.sendTime
-    chat.modelInfo.lastMessageTime = sessionData.lastMessageTime
-    history.isSessionCollected = sessionData.isCollected === 1
+    chat.modelInfo.sessionId = session.id
+    chat.modelInfo.sessionTitle = session.sessionTitle
+    chat.modelInfo.modelId = session.modelId
+    chat.modelInfo.isDeleted = session.isDeleted
+    chat.modelInfo.isPinned = session.isPinned
+    chat.modelInfo.isCollected = session.isCollected
+    chat.modelInfo.createdAt = session.createdAt
+    chat.modelInfo.sendTime = session.sendTime
+    chat.modelInfo.lastMsgTime = session.lastMsgTime
+    history.isSessionCollected = session.isCollected === 1
     await nextTick()
     setTimeout(() => {
       func.scrollToBottom({ force: true })

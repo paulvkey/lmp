@@ -26,7 +26,6 @@ import '@/assets/css/home/UserProfile.css'
 import { useUserProfileStore } from '@/store/userProfile.js'
 import { useHomeStatusStore } from '@/store/homeStatus.js'
 import { ElMessage } from 'element-plus'
-import router from '@/router/index.js'
 import { useHistoryStore } from '@/store/history.js'
 import { useChatStore } from '@/store/chat.js'
 import { useCollectionStore } from '@/store/collection.js'
@@ -40,7 +39,7 @@ const chat = useChatStore()
 const usernameRef = ref(null)
 const avatarRef = ref(null)
 
-const setUserInfo = async () => {
+const setUserProfile = async () => {
   await nextTick()
   if (usernameRef.value) {
     usernameRef.value.textContent = userProfile.username
@@ -50,7 +49,7 @@ const setUserInfo = async () => {
   }
 }
 
-watch(() => [userProfile.username, userProfile.avatar], setUserInfo, { immediate: true })
+watch(() => [userProfile.username, userProfile.avatar], setUserProfile, { immediate: true })
 
 const toggleUserMenu = async () => {
   if (!checkLogin(userProfile)) {
