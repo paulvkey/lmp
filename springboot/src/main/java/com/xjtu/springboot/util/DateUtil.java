@@ -5,7 +5,6 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 
-
 public class DateUtil {
     // 格式化器（线程安全）
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -15,7 +14,7 @@ public class DateUtil {
     private static final ChronoUnit DEFAULT_UNIT = ChronoUnit.MINUTES;
 
     /**
-     * 时间差值比较类型枚举（贴合业务语义）
+     * 时间差值比较类型枚举（
      * GT：目标时间-当前时间 > 时长（对应afterNow）
      * LT：当前时间-目标时间 > 时长（对应beforeNow）
      * EQ：时间差值 = 时长（对应equalNow）
@@ -26,7 +25,6 @@ public class DateUtil {
         EQ
     }
 
-    // ===================== 基础时间操作方法 =====================
     /**
      * 格式化LocalDateTime为指定格式的字符串（北京时间）
      * @param dateTime 待格式化的时间（null返回null）
@@ -57,6 +55,52 @@ public class DateUtil {
             return null;
         }
         return LocalDateTime.parse(timeStr, formatter);
+    }
+
+    /**
+     * 获取当前北京时间【多久之后】的时间（默认单位：分钟）
+     * 示例：plusTime(5) → 当前时间5分钟后；plusTime(1, ChronoUnit.HOURS) → 当前时间1小时后
+     * @param duration 偏移时长（≥0）
+     * @return 偏移后的北京时间
+     */
+    public static LocalDateTime plusTime(Integer duration) {
+        return plusTime(duration, DEFAULT_UNIT);
+    }
+
+    /**
+     * 重载：指定时间单位，获取当前北京时间【多久之后】的时间
+     * @param duration 偏移时长（≥0）
+     * @param unit 时间单位（非空，如ChronoUnit.SECONDS/HOURS/DAYS）
+     * @return 偏移后的北京时间
+     * @throws IllegalArgumentException 参数不合法时抛出
+     */
+    public static LocalDateTime plusTime(Integer duration, ChronoUnit unit) {
+        validateOffsetParams(duration, unit);
+        LocalDateTime now = LocalDateTime.now(zoneId);
+        return now.plus(duration, unit);
+    }
+
+    /**
+     * 获取当前北京时间【多久之前】的时间（默认单位：分钟）
+     * 示例：minusTime(5) → 当前时间5分钟前；minusTime(1, ChronoUnit.DAYS) → 当前时间1天前
+     * @param duration 偏移时长（≥0）
+     * @return 偏移后的北京时间
+     */
+    public static LocalDateTime minusTime(Integer duration) {
+        return minusTime(duration, DEFAULT_UNIT);
+    }
+
+    /**
+     * 重载：指定时间单位，获取当前北京时间【多久之前】的时间
+     * @param duration 偏移时长（≥0）
+     * @param unit 时间单位（非空，如ChronoUnit.SECONDS/HOURS/DAYS）
+     * @return 偏移后的北京时间
+     * @throws IllegalArgumentException 参数不合法时抛出
+     */
+    public static LocalDateTime minusTime(Integer duration, ChronoUnit unit) {
+        validateOffsetParams(duration, unit);
+        LocalDateTime now = LocalDateTime.now(zoneId);
+        return now.minus(duration, unit);
     }
 
     /**
@@ -134,7 +178,6 @@ public class DateUtil {
         return compareTimeDiff(targetTime, duration, unit, TimeDiffType.EQ);
     }
 
-
     /**
      * 通用时间差值比较函数（默认单位：分钟）
      * @param targetTime  目标时间（非空）
@@ -206,6 +249,18 @@ public class DateUtil {
         // 时长校验：EQ类型允许=0，其他类型≥0（防止负数）
         if (duration == null || duration < 0) {
             throw new IllegalArgumentException("比较时长（duration）必须≥0，当前值：" + duration);
+        }
+    }
+
+    /**
+     * 时间偏移参数校验（时长≥0、单位非空）
+     */
+    private static void validateOffsetParams(Integer duration, ChronoUnit unit) {
+        if (duration == null || duration < 0) {
+            throw new IllegalArgumentException("偏移时长（duration）必须≥0，当前值：" + duration);
+        }
+        if (unit == null) {
+            throw new IllegalArgumentException("时间单位（unit）不能为空，支持：SECONDS/MINUTES/HOURS/DAYS等");
         }
     }
 

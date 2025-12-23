@@ -16,25 +16,20 @@ public class ExcelParseUtil {
     // 日期格式化（统一日期显示格式）
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-    /**
-     * 核心方法：解析xls/xlsx，返回RAG友好的结构化字符串
-     * @param file 上传的Excel文件
-     * @return RAG可用的结构化字符串（工作表+Markdown表格）
-     */
-    public static String extractExcelForRAG(MultipartFile file) {
-        // 1. 参数校验
+    public static String parse(MultipartFile file) {
+        // 参数校验
         if (file == null || file.isEmpty()) {
             return "【错误】上传的Excel文件为空";
         }
 
-        // 2. 校验文件格式
+        // 校验文件格式
         String fileName = Objects.requireNonNull(file.getOriginalFilename(), "文件名不能为空");
         String suffix = fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
         if (!SUPPORTED_FORMATS.contains(suffix)) {
             return "【错误】不支持的文件格式（仅支持xls/xlsx），当前文件：" + fileName;
         }
 
-        // 3. 解析Excel文件
+        // 解析Excel文件
         Workbook workbook = null;
         try {
             // 根据格式创建Workbook
@@ -68,9 +63,9 @@ public class ExcelParseUtil {
                 }
 
                 // 提取表格数据（转为Markdown）
-                List<List<String>> tableData = extractSheetData(sheet);
+                List<List<String>> tableData = parseSheetData(sheet);
                 ragContent.append("【表格内容】\n");
-                ragContent.append(convertTableToMarkdown(tableData)).append("\n\n");
+                ragContent.append(parseTableToMarkdown(tableData)).append("\n\n");
             }
 
             return ragContent.toString().trim();
@@ -89,7 +84,7 @@ public class ExcelParseUtil {
     /**
      * 提取单个工作表的结构化数据（表头+行）
      */
-    private static List<List<String>> extractSheetData(Sheet sheet) {
+    private static List<List<String>> parseSheetData(Sheet sheet) {
         List<List<String>> tableData = new ArrayList<>();
         // 遍历所有行
         for (Row row : sheet) {
@@ -108,8 +103,7 @@ public class ExcelParseUtil {
     }
 
     /**
-     * 解析单元格值（彻底修正类型错误，兼容所有单元格类型）
-     * 关键：所有分支返回String，入参仅为Cell类型，无类型混淆
+     * 解析单元格值
      */
     private static String getCellValue(Cell cell) {
         if (cell == null) {
@@ -143,8 +137,6 @@ public class ExcelParseUtil {
                 }
             case BOOLEAN:
                 return String.valueOf(cell.getBooleanCellValue());
-            case BLANK:
-                return "";
             default:
                 return "";
         }
@@ -174,9 +166,9 @@ public class ExcelParseUtil {
     }
 
     /**
-     * 二维表格转Markdown（RAG友好）
+     * 二维表格转Markdown
      */
-    private static String convertTableToMarkdown(List<List<String>> tableData) {
+    private static String parseTableToMarkdown(List<List<String>> tableData) {
         if (tableData.isEmpty()) {
             return "空表格";
         }

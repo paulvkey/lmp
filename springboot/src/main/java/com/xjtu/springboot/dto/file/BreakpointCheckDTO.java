@@ -17,7 +17,7 @@ public class BreakpointCheckDTO {
     /**
      * 匿名用户临时ID
      */
-    private String anonymId;
+    private String anonymousId;
 
     /**
      * 文件MD5

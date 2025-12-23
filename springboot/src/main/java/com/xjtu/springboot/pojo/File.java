@@ -11,7 +11,7 @@ public class File implements Serializable {
     private Long id;
     private Long userId;
     private Long sessionId;
-    private String anonymId;
+    private String anonymousId;
     private Long folderId;
     private String newName;
     private String originalName;
@@ -41,7 +41,7 @@ public class File implements Serializable {
         this.setId(source.getId());
         this.setUserId(source.getUserId());
         this.setSessionId(source.getSessionId());
-        this.setAnonymId(source.getAnonymId());
+        this.setAnonymousId(source.getAnonymousId());
         this.setFolderId(source.getFolderId());
         this.setNewName(source.getNewName());
         this.setOriginalName(source.getOriginalName());

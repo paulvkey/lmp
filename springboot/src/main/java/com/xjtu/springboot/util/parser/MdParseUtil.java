@@ -8,13 +8,9 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * 高性能Markdown解析工具（适配RAG核心样式 + 极致性能）
- * 核心：预编译正则 + 行级状态机 + 语义提取（过滤视觉噪声）
- */
 public class MdParseUtil {
 
-    // ========== 预编译正则（RAG核心样式） ==========
+    // 正则匹配结构化内容
     // 基础结构
     private static final Pattern HEADING_PATTERN = Pattern.compile("^(#{1,6})\\s+(.*)$"); // 标题
     private static final Pattern CODE_BLOCK_START = Pattern.compile("^```(.*)$"); // 代码块开始
@@ -31,11 +27,8 @@ public class MdParseUtil {
     private static final Pattern FOOTNOTE_MARK_PATTERN = Pattern.compile("\\[\\^(\\d+)\\]"); // 脚注标记
     private static final Pattern FOOTNOTE_CONTENT_PATTERN = Pattern.compile("^\\[\\^(\\d+)\\]:\\s*(.*)$"); // 脚注内容
 
-    /**
-     * 核心方法：解析MD文件，高性能+适配全量RAG核心样式
-     */
-    public static String parseMarkdownForRAG(MultipartFile file) {
-        // 1. 参数校验
+    public static String parse(MultipartFile file) {
+        // 参数校验
         if (file == null || file.isEmpty()) {
             return "【错误】上传的Markdown文件为空";
         }
@@ -45,11 +38,10 @@ public class MdParseUtil {
             return "【错误】不支持的文件格式（仅支持md/markdown），当前文件：" + fileName;
         }
 
-        // 2. 读取MD内容（按行处理，高性能）
+        // 读取MD内容（按行处理）
         try {
             String mdContent = new String(file.getBytes(), StandardCharsets.UTF_8);
-            String[] lines = mdContent.split("\\r?\\n"); // 兼容所有换行符
-
+            String[] lines = mdContent.split("\\r?\\n");
             StringBuilder ragContent = new StringBuilder();
             // 元信息
             ragContent.append("=== Markdown文档元信息 ===\n");
@@ -58,13 +50,13 @@ public class MdParseUtil {
             ragContent.append("字符编码：UTF-8\n\n");
             ragContent.append("=== 结构化Markdown内容 ===\n");
 
-            // 状态机（轻量化，仅标记跨多行结构）
+            // 状态机
             boolean inCodeBlock = false;
             String codeLanguage = "";
             List<String> tableRows = new ArrayList<>();
-            Map<Integer, String> footnoteMap = new HashMap<>(); // 脚注缓存（标记→内容）
-
-            // 逐行解析（核心高性能逻辑）
+            // 脚注缓存（标记→内容）
+            Map<Integer, String> footnoteMap = new HashMap<>();
+            // 逐行解析
             for (String line : lines) {
                 String trimLine = line.trim();
                 // 空行：处理未闭合的表格/重置状态
@@ -76,19 +68,20 @@ public class MdParseUtil {
                     continue;
                 }
 
-                // ========== 1. 处理跨多行结构：代码块 ==========
+                // ========== 处理跨多行结构：代码块 ==========
                 if (inCodeBlock) {
                     if (trimLine.equals("```")) { // 代码块结束
                         ragContent.append("```\n\n");
                         inCodeBlock = false;
                         codeLanguage = "";
-                    } else { // 代码块内容：直接保留（RAG需完整代码逻辑）
+                    } else {
+                        // 代码块内容：直接保留
                         ragContent.append("  ").append(line).append("\n");
                     }
                     continue;
                 }
 
-                // ========== 2. 匹配脚注内容（先缓存，最后统一输出） ==========
+                // ========== 匹配脚注内容（先缓存，最后统一输出） ==========
                 Matcher footnoteContentMatcher = FOOTNOTE_CONTENT_PATTERN.matcher(trimLine);
                 if (footnoteContentMatcher.find()) {
                     int footnoteId = Integer.parseInt(footnoteContentMatcher.group(1));
@@ -97,7 +90,7 @@ public class MdParseUtil {
                     continue;
                 }
 
-                // ========== 3. 匹配标题 ==========
+                // ========== 匹配标题 ==========
                 Matcher headingMatcher = HEADING_PATTERN.matcher(line);
                 if (headingMatcher.find()) {
                     int level = headingMatcher.group(1).length();
@@ -106,7 +99,7 @@ public class MdParseUtil {
                     continue;
                 }
 
-                // ========== 4. 匹配代码块开始 ==========
+                // ========== 匹配代码块开始 ==========
                 Matcher codeStartMatcher = CODE_BLOCK_START.matcher(trimLine);
                 if (codeStartMatcher.find()) {
                     inCodeBlock = true;
@@ -116,13 +109,13 @@ public class MdParseUtil {
                     continue;
                 }
 
-                // ========== 5. 匹配表格行 ==========
+                // ========== 匹配表格行 ==========
                 if (TABLE_ROW_PATTERN.matcher(line).find()) {
                     tableRows.add(line);
                     continue;
                 }
 
-                // ========== 6. 匹配块引用 ==========
+                // ========== 匹配块引用 ==========
                 Matcher blockquoteMatcher = BLOCKQUOTE_PATTERN.matcher(line);
                 if (blockquoteMatcher.find()) {
                     String quoteContent = cleanInlineStyles(blockquoteMatcher.group(1).trim());
@@ -130,7 +123,7 @@ public class MdParseUtil {
                     continue;
                 }
 
-                // ========== 7. 匹配任务列表 ==========
+                // ========== 匹配任务列表 ==========
                 Matcher taskListMatcher = TASK_LIST_PATTERN.matcher(line);
                 if (taskListMatcher.find()) {
                     String status = taskListMatcher.group(1).equals("x") ? "完成" : "未完成";
@@ -139,7 +132,7 @@ public class MdParseUtil {
                     continue;
                 }
 
-                // ========== 8. 匹配普通列表项 ==========
+                // ========== 匹配普通列表项 ==========
                 Matcher listItemMatcher = LIST_ITEM_PATTERN.matcher(line);
                 if (listItemMatcher.find()) {
                     String listType = listItemMatcher.group(1).matches("\\d+\\.") ? "有序列表" : "无序列表";
@@ -150,7 +143,7 @@ public class MdParseUtil {
                     continue;
                 }
 
-                // ========== 9. 普通段落（清洗所有行内样式 + 替换脚注） ==========
+                // ========== 普通段落（清洗所有行内样式 + 替换脚注） ==========
                 String paragraphContent = cleanInlineStyles(trimLine);
                 paragraphContent = replaceFootnote(paragraphContent, footnoteMap);
                 ragContent.append("【段落】").append(paragraphContent).append("\n\n");
@@ -164,7 +157,7 @@ public class MdParseUtil {
                 ragContent.append("```\n");
             }
 
-            // ========== 输出脚注（RAG需完整语义） ==========
+            // ========== 输出脚注 ==========
             if (!footnoteMap.isEmpty()) {
                 ragContent.append("【脚注】\n");
                 footnoteMap.forEach((id, content) -> ragContent.append(id).append("：").append(content).append("\n"));

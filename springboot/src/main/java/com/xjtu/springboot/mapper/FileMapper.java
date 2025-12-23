@@ -24,5 +24,5 @@ public interface FileMapper {
     List<File> selectExpiredChunkFiles(@Param("expireTime") LocalDateTime expireTime);
 
     File selectByUserMd5(@Param("userId") Long userId, @Param("sessionId") Long sessionId,
-                         @Param("anonymId") String anonymId, @Param("fileMd5") String fileMd5);
+                         @Param("anonymousId") String anonymousId, @Param("fileMd5") String fileMd5);
 }

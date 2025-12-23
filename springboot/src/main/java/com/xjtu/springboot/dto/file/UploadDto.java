@@ -14,7 +14,7 @@ public class UploadDto implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private Long userId;
-    private String anonymId;
+    private String anonymousId;
     private Long sessionId;
     private Long folderId;
     private String relativePath;

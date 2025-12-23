@@ -12,11 +12,9 @@ import java.util.Set;
 public class XmlParseUtil {
     // 支持的XML文件后缀
     private static final Set<String> SUPPORTED_FORMATS = Set.of("xml");
-
     // 全局XmlMapper
     private static final XmlMapper XML_MAPPER;
-
-    // 静态初始化：配置XML格式化（统一使用SerializationFeature）
+    // 配置XML格式化
     static {
         XML_MAPPER = new XmlMapper();
         // 启用缩进
@@ -25,23 +23,20 @@ public class XmlParseUtil {
         XML_MAPPER.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
     }
 
-    /**
-     * 解析XML文件，返回RAG友好的结构化字符串
-     */
-    public static String extractXmlForRAG(MultipartFile file) {
-        // 1. 参数校验
+    public static String parse(MultipartFile file) {
+        // 参数校验
         if (file == null || file.isEmpty()) {
             return "【错误】上传的XML文件为空";
         }
 
-        // 2. 校验文件格式
+        // 校验文件格式
         String fileName = Objects.requireNonNull(file.getOriginalFilename(), "文件名不能为空");
         String suffix = fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
         if (!SUPPORTED_FORMATS.contains(suffix)) {
             return "【错误】不支持的文件格式（仅支持xml），当前文件：" + fileName;
         }
 
-        // 3. 解析并格式化XML
+        // 解析并格式化XML
         try {
             // 读取文件内容（UTF-8编码）
             String xmlContent = new String(file.getBytes(), StandardCharsets.UTF_8);
@@ -51,15 +46,14 @@ public class XmlParseUtil {
             String formattedXml = XML_MAPPER.writeValueAsString(xmlNode);
 
             // 拼接RAG结构化内容
-            StringBuilder ragContent = new StringBuilder();
-            ragContent.append("=== XML文档元信息 ===\n");
-            ragContent.append("文件名：").append(fileName).append("\n");
-            ragContent.append("文件大小：").append(file.getSize()).append("字节\n");
-            ragContent.append("字符编码：UTF-8\n\n");
-            ragContent.append("=== 格式化XML内容 ===\n");
-            ragContent.append(formattedXml);
+            String ragContent = "=== XML文档元信息 ===\n" +
+                    "文件名：" + fileName + "\n" +
+                    "文件大小：" + file.getSize() + "字节\n" +
+                    "字符编码：UTF-8\n\n" +
+                    "=== 格式化XML内容 ===\n" +
+                    formattedXml;
 
-            return ragContent.toString().trim();
+            return ragContent.trim();
         } catch (IOException e) {
             return "【错误】XML解析失败（语法错误/格式异常）：" + e.getMessage();
         }

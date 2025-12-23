@@ -119,7 +119,7 @@
         select * from lmp.file
         <where>
             <if test="userId != null">and user_id = #{userId}</if>
-            <if test="anonymId != null and anonymId != ''">and anonym_id = #{anonymId}</if>
+            <if test="anonymousId != null and anonymousId != ''">and anonym_id = #{anonymousId}</if>
             <if test="sessionId != null">and session_id = #{sessionId}</if>
             <if test="folderId != null">and folder_id = #{folderId}</if>
             <if test="fileType != null and fileType != ''">and type = #{fileType}</if>
@@ -138,8 +138,8 @@
             <if test="userId != null">
                 and user_id = #{userId}
             </if>
-            <if test="anonymId != null and anonymId != ''">
-                and anonym_id = #{anonymId}
+            <if test="anonymousId != null and anonymousId != ''">
+                and anonym_id = #{anonymousId}
             </if>
             <if test="sessionId != null">
                 and session_id = #{sessionId}
@@ -178,10 +178,10 @@
     <select id="selectByUserMd5" resultMap="BaseResultMap">
         SELECT * FROM "lmp"."file"
         WHERE 1=1
-        <if test="anonymId != null and anonymId != ''">
-            AND "anonym_id" = #{anonymId}
+        <if test="anonymousId != null and anonymousId != ''">
+            AND "anonym_id" = #{anonymousId}
         </if>
-        <if test="anonymId == null or anonymId == ''">
+        <if test="anonymousId == null or anonymousId == ''">
             <if test="userId != null">
                 AND "user_id" = #{userId}
                 <if test="sessionId != null">

@@ -16,6 +16,8 @@ public class FileConfig {
     private String serverPrefix = "http://localhost:8090";
     // 允许的文件类型
     private List<String> allowTypes = List.of("txt", "jpg", "jpeg", "png", "pdf", "doc", "docx", "xls", "xlsx");
+    // 对话窗口上传文件最大大小
+    private Long chatMaxFileSize = 104857600L;
     // 单文件最大大小(4G)
     private Long maxFileSize = 4294967296L;
     // 分片大小(100MB)

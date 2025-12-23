@@ -11,7 +11,7 @@ public class Folder implements Serializable {
     private Long id;
     private Long userId;
     private Long sessionId;
-    private String anonymId;
+    private String anonymousId;
     private String name;
     private Long parentId;
     private LocalDateTime createdAt;

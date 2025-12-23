@@ -11,13 +11,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class PdfParseUtil {
-    /**
-     * 核心方法：提取PDF文本+表格，返回RAG友好的结构化字符串
-     * @param file 上传的PDF文件
-     * @return RAG可用的结构化字符串（文本+Markdown表格）
-     */
-    public static String extractPdfForRAG(MultipartFile file) {
-        // 1. 参数校验
+
+    public static String parse(MultipartFile file) {
+        // 参数校验
         if (file == null || file.isEmpty()) {
             return "【错误】上传的PDF文件为空";
         }
@@ -26,7 +22,7 @@ public class PdfParseUtil {
             return "【错误】文件不是PDF格式（文件名：" + fileName + "）";
         }
 
-        // 2. 校验PDF魔数（精准判断）
+        // 校验PDF魔数
         try (var is = file.getInputStream()) {
             byte[] header = new byte[4];
             if (is.read(header) != 4 || !"%PDF".equals(new String(header, StandardCharsets.ISO_8859_1))) {
@@ -36,10 +32,8 @@ public class PdfParseUtil {
             return "【错误】文件校验失败：" + e.getMessage();
         }
 
-        // 3. 解析PDF文本和表格
-        PDDocument document = null;
-        try {
-            document = Loader.loadPDF(file.getBytes());
+        // 解析PDF文本和表格
+        try (PDDocument document = Loader.loadPDF(file.getBytes())) {
             int totalPages = document.getNumberOfPages();
             StringBuilder ragContent = new StringBuilder();
 
@@ -53,14 +47,14 @@ public class PdfParseUtil {
             for (int pageNum = 1; pageNum <= totalPages; pageNum++) {
                 ragContent.append("=== 第").append(pageNum).append("页内容 ===\n");
 
-                // 3.1 提取当前页文本
-                String pageText = extractPageText(document, pageNum);
+                // 提取当前页文本
+                String pageText = parsePageText(document, pageNum);
                 ragContent.append("【文本内容】\n").append(pageText).append("\n");
 
-                // 3.2 提取当前页表格并转为Markdown格式
-                List<List<String>> pageTable = extractPageTable(document, pageNum);
+                // 提取当前页表格并转为Markdown格式
+                List<List<String>> pageTable = parsePageTable(document, pageNum);
                 if (!pageTable.isEmpty()) {
-                    ragContent.append("【表格内容】\n").append(convertTableToMarkdown(pageTable)).append("\n");
+                    ragContent.append("【表格内容】\n").append(parseTableToMarkdown(pageTable)).append("\n");
                 }
 
                 ragContent.append("\n"); // 页间分隔
@@ -69,19 +63,13 @@ public class PdfParseUtil {
             return ragContent.toString().trim();
         } catch (IOException e) {
             return "【错误】PDF解析失败：" + e.getMessage();
-        } finally {
-            if (document != null) {
-                try {
-                    document.close();
-                } catch (IOException e) { /* 关闭失败不影响结果 */ }
-            }
         }
     }
 
     /**
      * 提取指定页码的文本
      */
-    private static String extractPageText(PDDocument document, int pageNum) throws IOException {
+    private static String parsePageText(PDDocument document, int pageNum) throws IOException {
         PDFTextStripper stripper = new PDFTextStripper();
         stripper.setStartPage(pageNum);
         stripper.setEndPage(pageNum);
@@ -93,7 +81,7 @@ public class PdfParseUtil {
     /**
      * 提取指定页码的表格（基于坐标聚类）
      */
-    private static List<List<String>> extractPageTable(PDDocument document, int pageNum) throws IOException {
+    private static List<List<String>> parsePageTable(PDDocument document, int pageNum) throws IOException {
         Map<Float, Map<Float, String>> cellMap = new TreeMap<>(); // Y轴（行）→ X轴（列）→ 文本
 
         PDFTextStripper stripper = new PDFTextStripper() {
@@ -127,9 +115,9 @@ public class PdfParseUtil {
     }
 
     /**
-     * 将二维表格转为Markdown格式（RAG友好）
+     * 将二维表格转为Markdown格式
      */
-    private static String convertTableToMarkdown(List<List<String>> table) {
+    private static String parseTableToMarkdown(List<List<String>> table) {
         if (table.isEmpty()) {
             return "";
         }

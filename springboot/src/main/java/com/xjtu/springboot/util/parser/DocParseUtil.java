@@ -19,25 +19,20 @@ public class DocParseUtil {
     // 支持的文件格式
     private static final Set<String> SUPPORTED_FORMATS = new HashSet<>(Arrays.asList("doc", "docx"));
 
-    /**
-     * 核心方法：解析doc/docx，返回RAG友好的结构化字符串
-     * @param file 上传的Word文件
-     * @return RAG可用的结构化字符串
-     */
-    public static String extractWordForRAG(MultipartFile file) {
-        // 1. 参数校验
+    public static String parse(MultipartFile file) {
+        // 参数校验
         if (file == null || file.isEmpty()) {
             return "【错误】上传的Word文件为空";
         }
 
-        // 2. 校验文件格式
+        // 校验文件格式
         String fileName = Objects.requireNonNull(file.getOriginalFilename(), "文件名不能为空");
         String suffix = fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
         if (!SUPPORTED_FORMATS.contains(suffix)) {
             return "【错误】不支持的文件格式（仅支持doc/docx），当前文件：" + fileName;
         }
 
-        // 3. 解析文件
+        // 解析文件
         try {
             StringBuilder ragContent = new StringBuilder();
             // 元信息
@@ -46,11 +41,10 @@ public class DocParseUtil {
             ragContent.append("文件大小：").append(file.getSize()).append("字节\n");
             ragContent.append("文件格式：").append(suffix.toUpperCase()).append("\n\n");
 
-            // 区分doc和docx解析
             if ("doc".equals(suffix)) {
-                extractDocContent(file, ragContent);
+                parseDocContent(file, ragContent);
             } else if ("docx".equals(suffix)) {
-                extractDocxContent(file, ragContent);
+                parseDocxContent(file, ragContent);
             }
 
             return ragContent.toString().trim();
@@ -62,9 +56,8 @@ public class DocParseUtil {
     /**
      * 解析doc文件（HWPF）
      */
-    private static void extractDocContent(MultipartFile file, StringBuilder ragContent) throws IOException {
-        HWPFDocument doc = new HWPFDocument(file.getInputStream());
-        try {
+    private static void parseDocContent(MultipartFile file, StringBuilder ragContent) throws IOException {
+        try (HWPFDocument doc = new HWPFDocument(file.getInputStream())) {
             // 提取文本
             WordExtractor extractor = new WordExtractor(doc);
             String[] paragraphs = extractor.getParagraphText();
@@ -100,23 +93,20 @@ public class DocParseUtil {
 
                 // 追加表格（Markdown格式）
                 ragContent.append("=== 表格").append(tableCount).append(" ===\n");
-                ragContent.append(convertTableToMarkdown(tableData)).append("\n\n");
+                ragContent.append(parseTableToMarkdown(tableData)).append("\n\n");
             }
 
             if (tableCount == 0) {
                 ragContent.append("=== 表格内容 ===\n无表格\n");
             }
-        } finally {
-            doc.close();
         }
     }
 
     /**
      * 解析docx文件（XWPF）
      */
-    private static void extractDocxContent(MultipartFile file, StringBuilder ragContent) throws IOException {
-        XWPFDocument docx = new XWPFDocument(file.getInputStream());
-        try {
+    private static void parseDocxContent(MultipartFile file, StringBuilder ragContent) throws IOException {
+        try (XWPFDocument docx = new XWPFDocument(file.getInputStream())) {
             // 提取文本
             XWPFWordExtractor extractor = new XWPFWordExtractor(docx);
             String text = extractor.getText().trim();
@@ -156,17 +146,15 @@ public class DocParseUtil {
 
                 // 追加表格
                 ragContent.append("表格").append(tableIdx + 1).append("：\n");
-                ragContent.append(convertTableToMarkdown(tableData)).append("\n");
+                ragContent.append(parseTableToMarkdown(tableData)).append("\n");
             }
-        } finally {
-            docx.close();
         }
     }
 
     /**
-     * 二维表格转Markdown（RAG友好）
+     * 二维表格转Markdown
      */
-    private static String convertTableToMarkdown(List<List<String>> tableData) {
+    private static String parseTableToMarkdown(List<List<String>> tableData) {
         if (tableData.isEmpty()) {
             return "空表格";
         }

@@ -1,6 +1,7 @@
 package com.xjtu.springboot.util;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -10,18 +11,20 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Locale;
+import java.util.Objects;
 
 @Slf4j
 public class FileUtil {
-    public static Boolean checkParams(Long userId, String anonymId) {
-        if (StringUtils.isEmpty(anonymId)) {
+    public static Boolean checkParams(Long userId, String anonymousId) {
+        if (StringUtils.isEmpty(anonymousId)) {
             return userId != null && userId > 0;
         }
         return true;
     }
 
-    public static Boolean checkParams(Long userId, String anonymId, Long sessionId) {
-        if (StringUtils.isEmpty(anonymId)) {
+    public static Boolean checkParams(Long userId, String anonymousId, Long sessionId) {
+        if (StringUtils.isEmpty(anonymousId)) {
             return userId != null && userId > 0 && sessionId != null && sessionId > 0;
         }
         return true;
@@ -102,12 +105,9 @@ public class FileUtil {
 
     // 获取文件扩展名
     public static String getExtension(MultipartFile file) {
-        String originalName = file.getOriginalFilename();
-        if (originalName != null) {
-            int lastDotIndex = originalName.lastIndexOf(".");
-            return originalName.substring(lastDotIndex + 1);
-        }
-        return "";
+        Objects.requireNonNull(file, "解析文件不能为空");
+        String fileName = Objects.requireNonNull(file.getOriginalFilename(), "文件名不能为空");
+        return FilenameUtils.getExtension(fileName).toLowerCase(Locale.ROOT);
     }
 
     public static boolean isImage(MultipartFile file) {

@@ -10,7 +10,7 @@ public class FileQueryDTO {
     /** 登录用户ID */
     private Long userId;
     /** 匿名用户ID */
-    private String anonymId;
+    private String anonymousId;
     /** 会话ID */
     private Long sessionId;
     /** 文件夹ID */

@@ -18,7 +18,7 @@ public class FolderInitDTO {
     /**
      * 匿名用户临时ID
      */
-    private String anonymId;
+    private String anonymousId;
 
     /**
      * 关联会话ID

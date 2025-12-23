@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xjtu.springboot.mapper.FileChunkPartMapper">
+  <resultMap id="BaseResultMap" type="com.xjtu.springboot.pojo.FileChunkPart">
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="upload_id" jdbcType="VARCHAR" property="uploadId" />
+    <result column="chunk_id" jdbcType="BIGINT" property="chunkId" />
+    <result column="part_number" jdbcType="INTEGER" property="partNumber" />
+    <result column="e_tag" jdbcType="VARCHAR" property="eTag" />
+    <result column="chunk_size" jdbcType="BIGINT" property="chunkSize" />
+    <result column="storage_path" jdbcType="VARCHAR" property="storagePath" />
+    <result column="upload_at" jdbcType="TIMESTAMP" property="uploadAt" />
+  </resultMap>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+    delete from file_chunk_part
+    where id = #{id,jdbcType=BIGINT}
+  </delete>
+  <insert id="insert" parameterType="com.xjtu.springboot.pojo.FileChunkPart">
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
+      PostgreSQL
+    </selectKey>
+    insert into file_chunk_part (upload_id, chunk_id, part_number, 
+      e_tag, chunk_size, storage_path, 
+      upload_at)
+    values (#{uploadId,jdbcType=VARCHAR}, #{chunkId,jdbcType=BIGINT}, #{partNumber,jdbcType=INTEGER}, 
+      #{eTag,jdbcType=VARCHAR}, #{chunkSize,jdbcType=BIGINT}, #{storagePath,jdbcType=VARCHAR}, 
+      #{uploadAt,jdbcType=TIMESTAMP})
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="com.xjtu.springboot.pojo.FileChunkPart">
+    update file_chunk_part
+    set upload_id = #{uploadId,jdbcType=VARCHAR},
+      chunk_id = #{chunkId,jdbcType=BIGINT},
+      part_number = #{partNumber,jdbcType=INTEGER},
+      e_tag = #{eTag,jdbcType=VARCHAR},
+      chunk_size = #{chunkSize,jdbcType=BIGINT},
+      storage_path = #{storagePath,jdbcType=VARCHAR},
+      upload_at = #{uploadAt,jdbcType=TIMESTAMP}
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select id, upload_id, chunk_id, part_number, e_tag, chunk_size, storage_path, upload_at
+    from file_chunk_part
+    where id = #{id,jdbcType=BIGINT}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select id, upload_id, chunk_id, part_number, e_tag, chunk_size, storage_path, upload_at
+    from file_chunk_part
+  </select>
+</mapper>

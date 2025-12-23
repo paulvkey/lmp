@@ -10,7 +10,7 @@ import java.util.Date;
 public class FileVO {
     private Long id;
     private Long userId;
-    private String anonymId;
+    private String anonymousId;
     private Long sessionId;
     private Long folderId;
     private String folderName; // 文件夹名称

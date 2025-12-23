@@ -156,14 +156,14 @@ file:
     # 阿里云OSS配置
     oss:
       endpoint: oss-cn-hangzhou.aliyuncs.com
-      access-key-id: your-oss-access-key-id
-      access-key-secret: your-oss-access-key-secret
-      default-bucket: your-oss-bucket-name
+      access-key-id: access-key-id
+      access-key-secret: access-key-secret
+      default-bucket: bucket-name
 
 # ollama配置
 ollama:
   base-url: http://localhost:11434
-  model-name: qwen:7b-chat
+  model-name: qwen3:8b
 
 # RAG配置
 rag:

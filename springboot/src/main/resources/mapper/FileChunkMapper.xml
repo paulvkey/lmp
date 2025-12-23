@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xjtu.springboot.mapper.FileChunkMapper">
+  <resultMap id="BaseResultMap" type="com.xjtu.springboot.pojo.FileChunk">
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="upload_id" jdbcType="VARCHAR" property="uploadId" />
+    <result column="file_id" jdbcType="BIGINT" property="fileId" />
+    <result column="user_id" jdbcType="BIGINT" property="userId" />
+    <result column="session_id" jdbcType="BIGINT" property="sessionId" />
+    <result column="anonym_id" jdbcType="VARCHAR" property="anonymousId" />
+    <result column="folder_id" jdbcType="BIGINT" property="folderId" />
+    <result column="file_md5" jdbcType="VARCHAR" property="fileMd5" />
+    <result column="original_name" jdbcType="VARCHAR" property="originalName" />
+    <result column="total_chunks" jdbcType="INTEGER" property="totalChunks" />
+    <result column="uploaded_chunks" jdbcType="INTEGER" property="uploadedChunks" />
+    <result column="upload_status" jdbcType="SMALLINT" property="uploadStatus" />
+    <result column="storage_type" jdbcType="VARCHAR" property="storageType" />
+    <result column="bucket_name" jdbcType="VARCHAR" property="bucketName" />
+    <result column="relative_path" jdbcType="VARCHAR" property="relativePath" />
+    <result column="create_at" jdbcType="TIMESTAMP" property="createAt" />
+    <result column="update_at" jdbcType="TIMESTAMP" property="updateAt" />
+    <result column="expire_at" jdbcType="TIMESTAMP" property="expireAt" />
+  </resultMap>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+    delete from file_chunk
+    where id = #{id,jdbcType=BIGINT}
+  </delete>
+  <insert id="insert" parameterType="com.xjtu.springboot.pojo.FileChunk">
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
+      PostgreSQL
+    </selectKey>
+    insert into file_chunk (upload_id, file_id, user_id, 
+      session_id, anonym_id, folder_id, 
+      file_md5, original_name, total_chunks, 
+      uploaded_chunks, upload_status, storage_type, 
+      bucket_name, relative_path, create_at, 
+      update_at, expire_at)
+    values (#{uploadId,jdbcType=VARCHAR}, #{fileId,jdbcType=BIGINT}, #{userId,jdbcType=BIGINT}, 
+      #{sessionId,jdbcType=BIGINT}, #{anonymousId,jdbcType=VARCHAR}, #{folderId,jdbcType=BIGINT},
+      #{fileMd5,jdbcType=VARCHAR}, #{originalName,jdbcType=VARCHAR}, #{totalChunks,jdbcType=INTEGER}, 
+      #{uploadedChunks,jdbcType=INTEGER}, #{uploadStatus,jdbcType=SMALLINT}, #{storageType,jdbcType=VARCHAR}, 
+      #{bucketName,jdbcType=VARCHAR}, #{relativePath,jdbcType=VARCHAR}, #{createAt,jdbcType=TIMESTAMP}, 
+      #{updateAt,jdbcType=TIMESTAMP}, #{expireAt,jdbcType=TIMESTAMP})
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="com.xjtu.springboot.pojo.FileChunk">
+    update file_chunk
+    set upload_id = #{uploadId,jdbcType=VARCHAR},
+      file_id = #{fileId,jdbcType=BIGINT},
+      user_id = #{userId,jdbcType=BIGINT},
+      session_id = #{sessionId,jdbcType=BIGINT},
+      anonym_id = #{anonymousId,jdbcType=VARCHAR},
+      folder_id = #{folderId,jdbcType=BIGINT},
+      file_md5 = #{fileMd5,jdbcType=VARCHAR},
+      original_name = #{originalName,jdbcType=VARCHAR},
+      total_chunks = #{totalChunks,jdbcType=INTEGER},
+      uploaded_chunks = #{uploadedChunks,jdbcType=INTEGER},
+      upload_status = #{uploadStatus,jdbcType=SMALLINT},
+      storage_type = #{storageType,jdbcType=VARCHAR},
+      bucket_name = #{bucketName,jdbcType=VARCHAR},
+      relative_path = #{relativePath,jdbcType=VARCHAR},
+      create_at = #{createAt,jdbcType=TIMESTAMP},
+      update_at = #{updateAt,jdbcType=TIMESTAMP},
+      expire_at = #{expireAt,jdbcType=TIMESTAMP}
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select id, upload_id, file_id, user_id, session_id, anonym_id, folder_id, file_md5, 
+    original_name, total_chunks, uploaded_chunks, upload_status, storage_type, bucket_name, 
+    relative_path, create_at, update_at, expire_at
+    from file_chunk
+    where id = #{id,jdbcType=BIGINT}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select id, upload_id, file_id, user_id, session_id, anonym_id, folder_id, file_md5, 
+    original_name, total_chunks, uploaded_chunks, upload_status, storage_type, bucket_name, 
+    relative_path, create_at, update_at, expire_at
+    from file_chunk
+  </select>
+</mapper>
