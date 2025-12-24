@@ -14,7 +14,6 @@ public class ChatFileDto implements Serializable {
     private String anonymousId;
     private Long fileId;
     private Long folderId;
-    private String uploadId;
     private String fileMd5;
     private String storageType;
     private Boolean succeed = false;

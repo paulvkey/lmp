@@ -18,7 +18,7 @@ public class FileConfig {
     // 对话窗口上传文件最大大小
     private Long chatMaxFileSize = 104857600L;
     // 单文件最大大小(4G)
-    private Long maxFileSize = 4294967296L;
+    private Long ragMaxFileSize = 4294967296L;
     // 分片大小(100MB)
     private Long chunkSize = 104857600L;
 

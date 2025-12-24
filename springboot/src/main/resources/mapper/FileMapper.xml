@@ -1,97 +1,142 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.xjtu.springboot.mapper.FileMapper">
-  <resultMap id="BaseResultMap" type="com.xjtu.springboot.pojo.File">
-    <id column="id" jdbcType="BIGINT" property="id" />
-    <result column="user_id" jdbcType="BIGINT" property="userId" />
-    <result column="session_id" jdbcType="BIGINT" property="sessionId" />
-    <result column="anonymous_id" jdbcType="VARCHAR" property="anonymousId" />
-    <result column="folder_id" jdbcType="BIGINT" property="folderId" />
-    <result column="new_name" jdbcType="VARCHAR" property="newName" />
-    <result column="original_name" jdbcType="VARCHAR" property="originalName" />
-    <result column="extension" jdbcType="VARCHAR" property="extension" />
-    <result column="size" jdbcType="BIGINT" property="size" />
-    <result column="storage_path" jdbcType="VARCHAR" property="storagePath" />
-    <result column="access_url" jdbcType="VARCHAR" property="accessUrl" />
-    <result column="is_image" jdbcType="SMALLINT" property="isImage" />
-    <result column="image_width" jdbcType="INTEGER" property="imageWidth" />
-    <result column="image_height" jdbcType="INTEGER" property="imageHeight" />
-    <result column="upload_at" jdbcType="TIMESTAMP" property="uploadAt" />
-    <result column="file_md5" jdbcType="VARCHAR" property="fileMd5" />
-    <result column="storage_type" jdbcType="VARCHAR" property="storageType" />
-    <result column="bucket_name" jdbcType="VARCHAR" property="bucketName" />
-    <result column="expire_at" jdbcType="TIMESTAMP" property="expireAt" />
-    <result column="mime_type" jdbcType="VARCHAR" property="mimeType" />
-    <result column="is_compressed" jdbcType="SMALLINT" property="isCompressed" />
-    <result column="relative_path" jdbcType="VARCHAR" property="relativePath" />
-    <result column="is_deleted" jdbcType="SMALLINT" property="isDeleted" />
-    <result column="updated_at" jdbcType="TIMESTAMP" property="updatedAt" />
-  </resultMap>
-  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
-    delete from file
-    where id = #{id,jdbcType=BIGINT}
-  </delete>
-  <insert id="insert" parameterType="com.xjtu.springboot.pojo.File">
-    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
-      PostgreSQL
-    </selectKey>
-    insert into file (user_id, session_id, anonymous_id, 
-      folder_id, new_name, original_name, 
-      extension, size, storage_path, 
-      access_url, is_image, image_width, 
-      image_height, upload_at, file_md5, 
-      storage_type, bucket_name, expire_at, 
-      mime_type, is_compressed, relative_path, 
-      is_deleted, updated_at)
-    values (#{userId,jdbcType=BIGINT}, #{sessionId,jdbcType=BIGINT}, #{anonymousId,jdbcType=VARCHAR}, 
-      #{folderId,jdbcType=BIGINT}, #{newName,jdbcType=VARCHAR}, #{originalName,jdbcType=VARCHAR}, 
-      #{extension,jdbcType=VARCHAR}, #{size,jdbcType=BIGINT}, #{storagePath,jdbcType=VARCHAR}, 
-      #{accessUrl,jdbcType=VARCHAR}, #{isImage,jdbcType=SMALLINT}, #{imageWidth,jdbcType=INTEGER}, 
-      #{imageHeight,jdbcType=INTEGER}, #{uploadAt,jdbcType=TIMESTAMP}, #{fileMd5,jdbcType=VARCHAR}, 
-      #{storageType,jdbcType=VARCHAR}, #{bucketName,jdbcType=VARCHAR}, #{expireAt,jdbcType=TIMESTAMP}, 
-      #{mimeType,jdbcType=VARCHAR}, #{isCompressed,jdbcType=SMALLINT}, #{relativePath,jdbcType=VARCHAR}, 
-      #{isDeleted,jdbcType=SMALLINT}, #{updatedAt,jdbcType=TIMESTAMP})
-  </insert>
-  <update id="updateByPrimaryKey" parameterType="com.xjtu.springboot.pojo.File">
-    update file
-    set user_id = #{userId,jdbcType=BIGINT},
-      session_id = #{sessionId,jdbcType=BIGINT},
-      anonymous_id = #{anonymousId,jdbcType=VARCHAR},
-      folder_id = #{folderId,jdbcType=BIGINT},
-      new_name = #{newName,jdbcType=VARCHAR},
-      original_name = #{originalName,jdbcType=VARCHAR},
-      extension = #{extension,jdbcType=VARCHAR},
-      size = #{size,jdbcType=BIGINT},
-      storage_path = #{storagePath,jdbcType=VARCHAR},
-      access_url = #{accessUrl,jdbcType=VARCHAR},
-      is_image = #{isImage,jdbcType=SMALLINT},
-      image_width = #{imageWidth,jdbcType=INTEGER},
-      image_height = #{imageHeight,jdbcType=INTEGER},
-      upload_at = #{uploadAt,jdbcType=TIMESTAMP},
-      file_md5 = #{fileMd5,jdbcType=VARCHAR},
-      storage_type = #{storageType,jdbcType=VARCHAR},
-      bucket_name = #{bucketName,jdbcType=VARCHAR},
-      expire_at = #{expireAt,jdbcType=TIMESTAMP},
-      mime_type = #{mimeType,jdbcType=VARCHAR},
-      is_compressed = #{isCompressed,jdbcType=SMALLINT},
-      relative_path = #{relativePath,jdbcType=VARCHAR},
-      is_deleted = #{isDeleted,jdbcType=SMALLINT},
-      updated_at = #{updatedAt,jdbcType=TIMESTAMP}
-    where id = #{id,jdbcType=BIGINT}
-  </update>
-  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
-    select id, user_id, session_id, anonymous_id, folder_id, new_name, original_name, 
-    extension, size, storage_path, access_url, is_image, image_width, image_height, upload_at, 
-    file_md5, storage_type, bucket_name, expire_at, mime_type, is_compressed, relative_path, 
-    is_deleted, updated_at
-    from file
-    where id = #{id,jdbcType=BIGINT}
-  </select>
-  <select id="selectAll" resultMap="BaseResultMap">
-    select id, user_id, session_id, anonymous_id, folder_id, new_name, original_name, 
-    extension, size, storage_path, access_url, is_image, image_width, image_height, upload_at, 
-    file_md5, storage_type, bucket_name, expire_at, mime_type, is_compressed, relative_path, 
-    is_deleted, updated_at
-    from file
-  </select>
+    <resultMap id="BaseResultMap" type="com.xjtu.springboot.pojo.File">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="user_id" jdbcType="BIGINT" property="userId"/>
+        <result column="session_id" jdbcType="BIGINT" property="sessionId"/>
+        <result column="anonymous_id" jdbcType="VARCHAR" property="anonymousId"/>
+        <result column="folder_id" jdbcType="BIGINT" property="folderId"/>
+        <result column="new_name" jdbcType="VARCHAR" property="newName"/>
+        <result column="original_name" jdbcType="VARCHAR" property="originalName"/>
+        <result column="extension" jdbcType="VARCHAR" property="extension"/>
+        <result column="size" jdbcType="BIGINT" property="size"/>
+        <result column="storage_path" jdbcType="VARCHAR" property="storagePath"/>
+        <result column="access_url" jdbcType="VARCHAR" property="accessUrl"/>
+        <result column="is_image" jdbcType="SMALLINT" property="isImage"/>
+        <result column="image_width" jdbcType="INTEGER" property="imageWidth"/>
+        <result column="image_height" jdbcType="INTEGER" property="imageHeight"/>
+        <result column="upload_at" jdbcType="TIMESTAMP" property="uploadAt"/>
+        <result column="file_md5" jdbcType="VARCHAR" property="fileMd5"/>
+        <result column="storage_type" jdbcType="VARCHAR" property="storageType"/>
+        <result column="bucket_name" jdbcType="VARCHAR" property="bucketName"/>
+        <result column="expire_at" jdbcType="TIMESTAMP" property="expireAt"/>
+        <result column="mime_type" jdbcType="VARCHAR" property="mimeType"/>
+        <result column="is_compressed" jdbcType="SMALLINT" property="isCompressed"/>
+        <result column="relative_path" jdbcType="VARCHAR" property="relativePath"/>
+        <result column="is_deleted" jdbcType="SMALLINT" property="isDeleted"/>
+        <result column="updated_at" jdbcType="TIMESTAMP" property="updatedAt"/>
+    </resultMap>
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+        delete
+        from file
+        where id = #{id,jdbcType=BIGINT}
+    </delete>
+    <insert id="insert" parameterType="com.xjtu.springboot.pojo.File">
+        <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
+            PostgreSQL
+        </selectKey>
+        insert into file (user_id, session_id, anonymous_id,
+        folder_id, new_name, original_name,
+        extension, size, storage_path,
+        access_url, is_image, image_width,
+        image_height, upload_at, file_md5,
+        storage_type, bucket_name, expire_at,
+        mime_type, is_compressed, relative_path,
+        is_deleted, updated_at)
+        values (#{userId,jdbcType=BIGINT}, #{sessionId,jdbcType=BIGINT},
+        #{anonymousId,jdbcType=VARCHAR},
+        #{folderId,jdbcType=BIGINT}, #{newName,jdbcType=VARCHAR}, #{originalName,jdbcType=VARCHAR},
+        #{extension,jdbcType=VARCHAR}, #{size,jdbcType=BIGINT}, #{storagePath,jdbcType=VARCHAR},
+        #{accessUrl,jdbcType=VARCHAR}, #{isImage,jdbcType=SMALLINT}, #{imageWidth,jdbcType=INTEGER},
+        #{imageHeight,jdbcType=INTEGER}, #{uploadAt,jdbcType=TIMESTAMP},
+        #{fileMd5,jdbcType=VARCHAR},
+        #{storageType,jdbcType=VARCHAR}, #{bucketName,jdbcType=VARCHAR},
+        #{expireAt,jdbcType=TIMESTAMP},
+        #{mimeType,jdbcType=VARCHAR}, #{isCompressed,jdbcType=SMALLINT},
+        #{relativePath,jdbcType=VARCHAR},
+        #{isDeleted,jdbcType=SMALLINT}, #{updatedAt,jdbcType=TIMESTAMP})
+    </insert>
+    <update id="updateByPrimaryKey" parameterType="com.xjtu.springboot.pojo.File">
+        update file
+        set user_id       = #{userId,jdbcType=BIGINT},
+            session_id    = #{sessionId,jdbcType=BIGINT},
+            anonymous_id  = #{anonymousId,jdbcType=VARCHAR},
+            folder_id     = #{folderId,jdbcType=BIGINT},
+            new_name      = #{newName,jdbcType=VARCHAR},
+            original_name = #{originalName,jdbcType=VARCHAR},
+            extension     = #{extension,jdbcType=VARCHAR},
+            size          = #{size,jdbcType=BIGINT},
+            storage_path  = #{storagePath,jdbcType=VARCHAR},
+            access_url    = #{accessUrl,jdbcType=VARCHAR},
+            is_image      = #{isImage,jdbcType=SMALLINT},
+            image_width   = #{imageWidth,jdbcType=INTEGER},
+            image_height  = #{imageHeight,jdbcType=INTEGER},
+            upload_at     = #{uploadAt,jdbcType=TIMESTAMP},
+            file_md5      = #{fileMd5,jdbcType=VARCHAR},
+            storage_type  = #{storageType,jdbcType=VARCHAR},
+            bucket_name   = #{bucketName,jdbcType=VARCHAR},
+            expire_at     = #{expireAt,jdbcType=TIMESTAMP},
+            mime_type     = #{mimeType,jdbcType=VARCHAR},
+            is_compressed = #{isCompressed,jdbcType=SMALLINT},
+            relative_path = #{relativePath,jdbcType=VARCHAR},
+            is_deleted    = #{isDeleted,jdbcType=SMALLINT},
+            updated_at    = #{updatedAt,jdbcType=TIMESTAMP}
+        where id = #{id,jdbcType=BIGINT}
+    </update>
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select id,
+               user_id,
+               session_id,
+               anonymous_id,
+               folder_id,
+               new_name,
+               original_name,
+               extension,
+               size,
+               storage_path,
+               access_url,
+               is_image,
+               image_width,
+               image_height,
+               upload_at,
+               file_md5,
+               storage_type,
+               bucket_name,
+               expire_at,
+               mime_type,
+               is_compressed,
+               relative_path,
+               is_deleted,
+               updated_at
+        from file
+        where id = #{id,jdbcType=BIGINT}
+    </select>
+
+    <select id="selectByUserMd5" resultMap="BaseResultMap">
+        SELECT *
+        FROM lmp.file
+        <where>
+            is_deleted = 0
+            AND file_md5 = #{fileMd5}
+            <choose>
+                <when test="userId != null">
+                    AND user_id = #{userId}
+                    <if test="sessionId != null">
+                        AND session_id = #{sessionId}
+                    </if>
+                </when>
+                <otherwise>
+                    <if test="anonymousId != null">
+                        AND anonymous_id = #{anonymousId}
+                    </if>
+                    <if test="anonymousId == null">
+                        AND 1 = 0
+                    </if>
+                </otherwise>
+            </choose>
+        </where>
+        LIMIT 1
+    </select>
 </mapper>

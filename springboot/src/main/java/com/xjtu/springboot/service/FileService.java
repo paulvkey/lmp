@@ -11,6 +11,7 @@ import com.xjtu.springboot.pojo.File;
 import com.xjtu.springboot.pojo.FileContent;
 import com.xjtu.springboot.pojo.FileChunk;
 import com.xjtu.springboot.pojo.Folder;
+import com.xjtu.springboot.pojo.common.Unit;
 import com.xjtu.springboot.service.storage.StorageStrategy;
 import com.xjtu.springboot.util.DateUtil;
 import com.xjtu.springboot.util.FileParseUtil;
@@ -48,9 +49,11 @@ public class FileService {
     private final FolderService folderService;
     private final Map<String, StorageStrategy> storageStrategyMap;
 
+    @Transactional(rollbackFor = Exception.class)
     public ChatFileDto chatUploadFile(MultipartFile file, ChatFileDto chatFileDto) {
         if (file.getSize() > fileConfig.getChatMaxFileSize()) {
-            throw new CustomException(500, "文件大小超过100M限制");
+            throw new CustomException(500, "文件大小超过" +
+                    FileUtil.formatFileSize(fileConfig.getChatMaxFileSize(), Unit.M) + "限制");
         }
         String fileMd5 = FileUtil.calculateMd5(file);
         if (StringUtils.isEmpty(fileMd5)) {
@@ -70,89 +73,71 @@ public class FileService {
             return chatFileDto;
         }
 
-        // 获取存储策略
+        // 获取存储策略并上传文件
         String storageType = FileUtil.getStorageType(chatFileDto.getStorageType());
         StorageStrategy storageStrategy = storageStrategyMap.get(storageType + "Storage");
         if (storageStrategy == null) {
             throw new CustomException(500, "不支持的存储类型: " + storageType);
         }
-
-        // 查看是否有已存在的文件夹
-        Folder folderData = null;
-        Folder folder = folderMapper.selectByIds(userId, anonymousId, sessionId);
-        if (folder != null) {
-            folderData = FileUtil.generateFolderData(folder);
-            folderMapper.updateByPrimaryKey(folderData);
-        } else {
-            folderData = FileUtil.generateFolderData(chatFileDto);
-            folderMapper.insert(folderData);
+        String newFileName = CommonUtil.getUUID() + "_" + FileUtil.getCleanedName(file);
+        String storagePath = buildStoragePath(userId, anonymousId, sessionId, newFileName);
+        String accessUrl = storageStrategy.uploadFile(file, storagePath, "");
+        if (StringUtils.isEmpty(accessUrl)) {
+            throw new CustomException(500, "文件上传数据存储异常");
         }
 
-        File fileData = FileUtil.generateFileData(file, chatFileDto, fileMd5, storageType);
-        fileMapper.insert(fileData);
+        // 文件夹处理
+        Folder folderData = folderService.getOrInitFolder(chatFileDto);
+        // 生成数据
+        HashMap<String, Object> data = new HashMap<>();
+        data.put("folderId", folderData.getId());
+        data.put("fileMd5", fileMd5);
+        data.put("storageType", storageType);
+        data.put("newFileName", newFileName);
+        data.put("storagePath", storagePath);
+        data.put("accessUrl", accessUrl);
+        File fileData = FileUtil.generateFileData(file, chatFileDto, data);
+        if (fileMapper.insert(fileData) == 0) {
+            throw new CustomException(500, "创建文件数据异常");
+        }
 
-        return localFile;
+        return FileUtil.generateChatFileDto(chatFileDto, fileData, folderData);
     }
 
-    public boolean uploadFile(File file) {
-        Long userId = file.getUserId();
-        Long sessionId = file.getSessionId();
-        FileFolder fileFolder = fileFolderMapper.selectByUserSessionId(userId, sessionId);
-
-        if (Objects.isNull(fileFolder)) {
-            // 创建根目录
-            fileFolder = new FileFolder();
-            fileFolder.setUserId(userId);
-            fileFolder.setSessionId(sessionId);
-            fileFolder.setFolderName("root");
-            fileFolder.setParentFolderId(null);
-            fileFolder.setCreatedAt(DateUtil.now());
-            if (fileFolderMapper.insert(fileFolder) <= 0) {
-                throw new CustomException(500, "创建文件逻辑根目录异常");
-            }
+    @Transactional(rollbackFor = Exception.class)
+    public List<ChatFileDto> chatUploadFiles(List<MultipartFile> fileList,
+                                             List<ChatFileDto> chatFileDtoList) {
+        List<ChatFileDto> responseList = new ArrayList<>();
+        for (int i = 0; i < chatFileDtoList.size(); i++) {
+            responseList.add(chatUploadFile(fileList.get(i), chatFileDtoList.get(i)));
         }
-
-        file.setFolderId(fileFolder.getId());
-        if (fileMapper.insert(file) <= 0) {
-            throw new CustomException(500, "添加文件信息异常");
-
-        }
-        return true;
-    }
-
-    public List<File> uploadFiles(List<MultipartFile> multipartFileList, List<File> fileList) {
-        List<File> files = new ArrayList<>();
-        for (int i = 0; i < fileList.size(); i++) {
-            files.add(uploadFile(multipartFileList.get(i), fileList.get(i)));
-        }
-        return files;
+        return responseList;
     }
 
 
     // 单文件上传
     @Transactional(rollbackFor = Exception.class)
-    public FileResponseDto uploadSingleFile(UploadDto dto) {
-        MultipartFile file = dto.getFile();
-        // 1. 基础校验
-        if (file.getSize() > fileConfig.getMaxFileSize()) {
-            throw new CustomException(500, "文件大小超过4G限制");
+    public RagFileDto ragUploadFile(MultipartFile file, RagFileDto ragFileDto) {
+        if (file.getSize() > fileConfig.getRagMaxFileSize()) {
+            throw new CustomException(500, "文件大小超过" +
+                    FileUtil.formatFileSize(fileConfig.getChatMaxFileSize(), Unit.G) + "限制");
         }
         String fileMd5 = FileUtil.calculateMd5(file);
         if (StringUtils.isEmpty(fileMd5)) {
             throw new CustomException(500, "计算文件MD5失败");
         }
 
-        // 2. 检查文件是否已上传
-        Long userId = dto.getUserId();
-        Long sessionId = dto.getSessionId();
-        String anonymousId = dto.getAnonymousId();
+        // 检查文件是否已上传
+        Long userId = ragFileDto.getUserId();
+        Long sessionId = ragFileDto.getSessionId();
+        String anonymousId = ragFileDto.getAnonymousId();
         File existFile = fileMapper.selectByUserMd5(userId, sessionId, anonymousId, fileMd5);
         if (existFile != null) {
-            return FileResponseDto.success()
-                    .setFileId(existFile.getId())
-                    .setFolderId(existFile.getFolderId())
-                    .setAccessUrl(existFile.getAccessUrl())
-                    .setSucceed(true);
+            ragFileDto.setFileId(existFile.getId());
+            ragFileDto.setFolderId(existFile.getFolderId());
+            ragFileDto.setFileMd5(existFile.getFileMd5());
+            ragFileDto.setSucceed(true);
+            return ragFileDto;
         }
 
         // 3. 获取存储策略
@@ -619,7 +604,7 @@ public class FileService {
         } else if (StringUtils.isNotEmpty(anonymousId)) {
             path.append(anonymousId);
         } else {
-            path.append("anonymous"); // 兜底
+            path.append("public");
         }
         if (sessionId != null && sessionId > 0) {
             path.append("/").append(sessionId);

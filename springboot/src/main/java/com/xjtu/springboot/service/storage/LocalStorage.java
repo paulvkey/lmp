@@ -32,7 +32,7 @@ public class LocalStorage implements StorageStrategy {
     /**
      * 本地访问前缀（配置在application.yml）
      */
-    @Value("${file.upload.local.access-prefix:http://localhost:8080/upload/}")
+    @Value("${file.upload.local.access-prefix:http://localhost:8090/upload/}")
     private String localAccessPrefix;
 
     /**
@@ -287,7 +287,7 @@ public class LocalStorage implements StorageStrategy {
     public String uploadFile(MultipartFile file, String storagePath, String bucketName) {
         try {
             // 创建存储目录
-            File targetFile = new File(localRootPath + File.separator + storagePath);
+            File targetFile = new File(localRootPath + File.separator + storagePath.replace("/", File.separator));
             if (!targetFile.getParentFile().exists()) {
                 if (!targetFile.getParentFile().mkdirs()) {
                     log.error("创建本地存储目录失败：{}", targetFile.getParentFile().getPath());
@@ -298,7 +298,7 @@ public class LocalStorage implements StorageStrategy {
             file.transferTo(targetFile);
             // 生成访问URL
             String accessUrl = localAccessPrefix + storagePath.replace(File.separator, "/");
-            log.info("单文件上传成功：存储路径={}, 访问URL={}", storagePath, accessUrl);
+            log.debug("文件上传成功：存储路径={}, 访问URL={}", storagePath, accessUrl);
             return accessUrl;
         } catch (IOException e) {
             log.error("本地文件上传失败", e);

@@ -4,7 +4,6 @@
     <resultMap id="BaseResultMap" type="com.xjtu.springboot.pojo.Folder">
         <id column="id" jdbcType="BIGINT" property="id"/>
         <result column="user_id" jdbcType="BIGINT" property="userId"/>
-        <result column="session_id" jdbcType="BIGINT" property="sessionId"/>
         <result column="anonymous_id" jdbcType="VARCHAR" property="anonymousId"/>
         <result column="parent_id" jdbcType="BIGINT" property="parentId"/>
         <result column="created_at" jdbcType="TIMESTAMP" property="createdAt"/>
@@ -23,22 +22,28 @@
 
     <insert id="insert" parameterType="com.xjtu.springboot.pojo.Folder">
         <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
-            PostgreSQL
+            SELECT currval(pg_get_serial_sequence('lmp.folder', 'id')) AS id;
         </selectKey>
-        insert into folder (user_id, session_id, anonymous_id,
-        parent_id, created_at, upload_id,
-        total_files, uploaded_files, is_deleted,
-        updated_at)
-        values (#{userId,jdbcType=BIGINT}, #{sessionId,jdbcType=BIGINT}, #{anonymousId,jdbcType=VARCHAR},
-        #{parentId,jdbcType=BIGINT}, #{createdAt,jdbcType=TIMESTAMP}, #{uploadId,jdbcType=VARCHAR},
-        #{totalFiles,jdbcType=INTEGER}, #{uploadedFiles,jdbcType=INTEGER}, #{isDeleted,jdbcType=SMALLINT},
-        #{updatedAt,jdbcType=TIMESTAMP})
+        INSERT INTO lmp.folder (
+        user_id, anonymous_id, parent_id,
+        created_at, upload_id, total_files,
+        uploaded_files, is_deleted, updated_at
+        ) VALUES (
+        #{userId,jdbcType=BIGINT},
+        #{anonymousId,jdbcType=VARCHAR},
+        #{parentId,jdbcType=BIGINT},
+        #{createdAt,jdbcType=TIMESTAMP},
+        #{uploadId,jdbcType=VARCHAR},
+        #{totalFiles,jdbcType=INTEGER},
+        #{uploadedFiles,jdbcType=INTEGER},
+        #{isDeleted,jdbcType=SMALLINT},
+        #{updatedAt,jdbcType=TIMESTAMP}
+        )
     </insert>
 
     <update id="updateByPrimaryKey" parameterType="com.xjtu.springboot.pojo.Folder">
-        update folder
-        set user_id        = #{userId,jdbcType=BIGINT},
-            session_id     = #{sessionId,jdbcType=BIGINT},
+        UPDATE lmp.folder
+        SET user_id        = #{userId,jdbcType=BIGINT},
             anonymous_id   = #{anonymousId,jdbcType=VARCHAR},
             parent_id      = #{parentId,jdbcType=BIGINT},
             created_at     = #{createdAt,jdbcType=TIMESTAMP},
@@ -47,36 +52,28 @@
             uploaded_files = #{uploadedFiles,jdbcType=INTEGER},
             is_deleted     = #{isDeleted,jdbcType=SMALLINT},
             updated_at     = #{updatedAt,jdbcType=TIMESTAMP}
-        where id = #{id,jdbcType=BIGINT}
+        WHERE id = #{id,jdbcType=BIGINT}
     </update>
-    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
-        select id,
-               user_id,
-               session_id,
-               anonymous_id,
-               parent_id,
-               created_at,
-               upload_id,
-               total_files,
-               uploaded_files,
-               is_deleted,
-               updated_at
-        from folder
-        where id = #{id,jdbcType=BIGINT}
-    </select>
 
-    <select id="selectAll" resultMap="BaseResultMap">
-        select id,
-               user_id,
-               session_id,
-               anonymous_id,
-               parent_id,
-               created_at,
-               upload_id,
-               total_files,
-               uploaded_files,
-               is_deleted,
-               updated_at
-        from folder
+    <select id="selectByIds" resultMap="BaseResultMap">
+        SELECT *
+        FROM lmp.folder
+        <where>
+            is_deleted = 0
+            <choose>
+                <when test="userId != null">
+                    AND user_id = #{userId}
+                </when>
+                <otherwise>
+                    <if test="anonymousId != null">
+                        AND anonymous_id = #{anonymousId}
+                    </if>
+                    <if test="anonymousId == null">
+                        AND 1 = 0
+                    </if>
+                </otherwise>
+            </choose>
+        </where>
+        LIMIT 1
     </select>
 </mapper>

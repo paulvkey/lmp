@@ -3,6 +3,7 @@ package com.xjtu.springboot.util;
 import com.xjtu.springboot.dto.file.ChatFileDto;
 import com.xjtu.springboot.pojo.File;
 import com.xjtu.springboot.pojo.Folder;
+import com.xjtu.springboot.pojo.common.Unit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -14,6 +15,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -33,6 +35,10 @@ public class FileUtil {
             return false;
         }
         return userId != null && userId > 0 && sessionId != null && sessionId > 0;
+    }
+
+    public static Long formatFileSize(Long size, Unit unit) {
+        return size / unit.getStep();
     }
 
     /**
@@ -149,34 +155,35 @@ public class FileUtil {
     }
 
     public static File generateFileData(MultipartFile file, ChatFileDto chatFileDto,
-                                        String fileMd5, String storageType) {
+                                        HashMap<String, Object> data) {
         File fileData = new File();
         fileData.setUserId(chatFileDto.getUserId());
         fileData.setSessionId(chatFileDto.getSessionId());
         fileData.setAnonymousId(chatFileDto.getAnonymousId());
-        fileData.setFolderId();
-        fileData.setNewName();
+        fileData.setFolderId((Long) data.get("folderId"));
+        fileData.setNewName(data.get("newFileName").toString());
         fileData.setOriginalName(file.getOriginalFilename());
         fileData.setSize(file.getSize());
-        fileData.setStoragePath();
-        fileData.setAccessUrl();
+        fileData.setStoragePath(data.get("storagePath").toString());
+        fileData.setAccessUrl(data.get("accessUrl").toString());
         int[] imageInfo = ImageUtil.checkAndGetSize(file);
         fileData.setIsImage((short) imageInfo[0]);
         fileData.setImageWidth(imageInfo[1]);
         fileData.setImageHeight(imageInfo[2]);
         fileData.setUploadAt(DateUtil.now());
-        fileData.setFileMd5(fileMd5);
-        fileData.setStorageType(storageType);
+        fileData.setFileMd5(data.get("fileMd5").toString());
+        fileData.setStorageType(data.get("storageType").toString());
         fileData.setExpireAt(getExpireAt(chatFileDto.getUserId(), chatFileDto.getAnonymousId()));
-        fileData.setRelativePath();
+        // TODO
+        fileData.setRelativePath("");
         fileData.setIsDeleted((short) 0);
         fileData.setUpdatedAt(DateUtil.now());
+        return fileData;
     }
 
     public static Folder generateFolderData(ChatFileDto chatFileDto) {
         Folder folderData = new Folder();
         folderData.setUserId(chatFileDto.getUserId());
-        folderData.setSessionId(chatFileDto.getSessionId());
         folderData.setAnonymousId(chatFileDto.getAnonymousId());
         folderData.setParentId(null);
         folderData.setCreatedAt(DateUtil.now());
@@ -190,8 +197,8 @@ public class FileUtil {
 
     public static Folder generateFolderData(Folder folder) {
         Folder folderData = new Folder();
+        folderData.setId(folder.getId());
         folderData.setUserId(folder.getUserId());
-        folderData.setSessionId(folder.getSessionId());
         folderData.setAnonymousId(folder.getAnonymousId());
         folderData.setParentId(folder.getParentId());
         folderData.setCreatedAt(folder.getCreatedAt());
@@ -203,7 +210,15 @@ public class FileUtil {
         return folderData;
     }
 
-    public static ChatFileDto generateChatFileDto() {
-
+    public static ChatFileDto generateChatFileDto(ChatFileDto chatFileDto, File file, Folder folder) {
+        ChatFileDto result = new ChatFileDto();
+        result.setUserId(chatFileDto.getUserId());
+        result.setSessionId(chatFileDto.getSessionId());
+        result.setAnonymousId(chatFileDto.getAnonymousId());
+        result.setFolderId(folder.getId());
+        result.setFileMd5(file.getFileMd5());
+        result.setStorageType(chatFileDto.getStorageType());
+        result.setSucceed(true);
+        return result;
     }
 }

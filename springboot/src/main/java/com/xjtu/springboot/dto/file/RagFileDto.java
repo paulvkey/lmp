@@ -9,15 +9,16 @@ import java.util.List;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class FileResponseDto implements Serializable {
+public class RagFileDto implements Serializable {
+    private Long userId;
+    private Long sessionId;
+    private String anonymousId;
     private Long fileId;
     private Long folderId;
+    private String fileMd5;
+    private String storageType;
     private Boolean succeed = false;
-    private String accessUrl;
-    // 已上传分片索引（断点续传）
-    private List<Integer> uploadedChunk;
 
     @Serial
     private static final long serialVersionUID = 1L;
-
 }

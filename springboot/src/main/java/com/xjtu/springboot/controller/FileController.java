@@ -35,11 +35,11 @@ public class FileController {
     private final FolderService folderService;
 
     @RequestMapping(method = RequestMethod.POST, path = "chat/file/upload")
-    public Result chatUploadFile(@RequestParam("requestParams") String requestParams,
+    public Result chatUploadFile(@RequestParam("params") String params,
                                  @RequestParam("file") MultipartFile file) {
         try {
             ChatFileDto chatFileDto = new ObjectMapper().readValue(
-                    requestParams,
+                    params,
                     new TypeReference<ChatFileDto>() {
                     }
             );
@@ -50,15 +50,15 @@ public class FileController {
     }
 
     @RequestMapping(method = RequestMethod.POST, path = "chat/files/upload")
-    public Result chatUploadFiles(@RequestParam("multipartFileList") List<MultipartFile> multipartFileList,
-                                  @RequestParam("fileListJson") String fileListJson) {
+    public Result chatUploadFiles(@RequestParam("fileList") List<MultipartFile> fileList,
+                                  @RequestParam("paramsList") String paramsList) {
         try {
-            List<File> fileList = new ObjectMapper().readValue(
-                    fileListJson,
-                    new TypeReference<List<File>>() {
+            List<ChatFileDto> chatFileDtoList = new ObjectMapper().readValue(
+                    paramsList,
+                    new TypeReference<List<ChatFileDto>>() {
                     }
             );
-            return Result.success(fileService.uploadFiles(multipartFileList, fileList));
+            return Result.success(fileService.chatUploadFiles(fileList, chatFileDtoList));
         } catch (JsonProcessingException e) {
             return Result.error("文件信息解析失败：" + e.getMessage());
         }
@@ -67,9 +67,9 @@ public class FileController {
     /**
      * 单文件上传（支持登录/匿名用户，关联会话/文件夹）
      *
-     * @param userId      登录用户ID（二选一：userId/anonymousId）
+     * @param userId      登录用户ID
      * @param anonymousId 匿名用户临时ID
-     * @param file        上传的文件（必填）
+     * @param file        上传的文件
      */
     @PostMapping("/single/upload")
     public Result uploadSingleFile(

@@ -1,19 +1,20 @@
 package com.xjtu.springboot.service;
 
-import com.xjtu.springboot.dto.file.FileResponseDto;
+import com.xjtu.springboot.dto.file.ChatFileDto;
 import com.xjtu.springboot.dto.file.FolderInitDTO;
+import com.xjtu.springboot.exception.CustomException;
 import com.xjtu.springboot.mapper.FileMapper;
 import com.xjtu.springboot.mapper.FolderMapper;
 import com.xjtu.springboot.pojo.File;
 import com.xjtu.springboot.pojo.Folder;
 import com.xjtu.springboot.util.DateUtil;
+import com.xjtu.springboot.util.FileUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
 import java.util.List;
 
 
@@ -25,6 +26,26 @@ public class FolderService {
     private final FolderMapper folderMapper;
     private final FileMapper fileMapper;
     private final FileService fileService;
+
+    public Folder getOrInitFolder(ChatFileDto chatFileDto) {
+        Long userId = chatFileDto.getUserId();
+        Long sessionId = chatFileDto.getSessionId();
+        String anonymousId = chatFileDto.getAnonymousId();
+        Folder folderData;
+        Folder folder = folderMapper.selectByIds(userId, anonymousId, sessionId);
+        if (folder != null) {
+            folderData = FileUtil.generateFolderData(folder);
+            if (folderMapper.updateByPrimaryKey(folderData) == 0) {
+                throw new CustomException(500, "更新文件夹数据异常");
+            }
+        } else {
+            folderData = FileUtil.generateFolderData(chatFileDto);
+            if (folderMapper.insert(folderData) == 0) {
+                throw new CustomException(500, "创建文件夹异常");
+            }
+        }
+        return folderData;
+    }
 
     /**
      * 初始化文件夹上传（创建根文件夹记录）
