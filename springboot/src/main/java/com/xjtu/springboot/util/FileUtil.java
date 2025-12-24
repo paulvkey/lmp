@@ -1,33 +1,38 @@
 package com.xjtu.springboot.util;
 
+import com.xjtu.springboot.dto.file.ChatFileDto;
+import com.xjtu.springboot.pojo.File;
+import com.xjtu.springboot.pojo.Folder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Locale;
 import java.util.Objects;
 
 @Slf4j
 public class FileUtil {
+    // 登录返回true
     public static Boolean checkParams(Long userId, String anonymousId) {
-        if (StringUtils.isEmpty(anonymousId)) {
-            return userId != null && userId > 0;
+        if (StringUtils.isNotEmpty(anonymousId)) {
+            return false;
         }
-        return true;
+        return userId != null && userId > 0;
     }
 
+    // 登录返回true
     public static Boolean checkParams(Long userId, String anonymousId, Long sessionId) {
-        if (StringUtils.isEmpty(anonymousId)) {
-            return userId != null && userId > 0 && sessionId != null && sessionId > 0;
+        if (StringUtils.isNotEmpty(anonymousId)) {
+            return false;
         }
-        return true;
+        return userId != null && userId > 0 && sessionId != null && sessionId > 0;
     }
 
     /**
@@ -35,18 +40,6 @@ public class FileUtil {
      */
     public static String calculateMd5(MultipartFile file) {
         try (InputStream is = file.getInputStream()) {
-            return calculateMd5(is);
-        } catch (IOException e) {
-            log.error("计算文件MD5失败", e);
-            return null;
-        }
-    }
-
-    /**
-     * 计算文件的MD5
-     */
-    public static String calculateMd5(File file) {
-        try (InputStream is = new FileInputStream(file)) {
             return calculateMd5(is);
         } catch (IOException e) {
             log.error("计算文件MD5失败", e);
@@ -147,5 +140,70 @@ public class FileUtil {
         }
     }
 
+    // 获取文件过期时间，如果登录了就不过期，否则24小时后过期
+    public static LocalDateTime getExpireAt(Long userId, String anonymousId) {
+        if (checkParams(userId, anonymousId)) {
+            return null;
+        }
+        return DateUtil.plusTime(24, ChronoUnit.HOURS);
+    }
 
+    public static File generateFileData(MultipartFile file, ChatFileDto chatFileDto,
+                                        String fileMd5, String storageType) {
+        File fileData = new File();
+        fileData.setUserId(chatFileDto.getUserId());
+        fileData.setSessionId(chatFileDto.getSessionId());
+        fileData.setAnonymousId(chatFileDto.getAnonymousId());
+        fileData.setFolderId();
+        fileData.setNewName();
+        fileData.setOriginalName(file.getOriginalFilename());
+        fileData.setSize(file.getSize());
+        fileData.setStoragePath();
+        fileData.setAccessUrl();
+        int[] imageInfo = ImageUtil.checkAndGetSize(file);
+        fileData.setIsImage((short) imageInfo[0]);
+        fileData.setImageWidth(imageInfo[1]);
+        fileData.setImageHeight(imageInfo[2]);
+        fileData.setUploadAt(DateUtil.now());
+        fileData.setFileMd5(fileMd5);
+        fileData.setStorageType(storageType);
+        fileData.setExpireAt(getExpireAt(chatFileDto.getUserId(), chatFileDto.getAnonymousId()));
+        fileData.setRelativePath();
+        fileData.setIsDeleted((short) 0);
+        fileData.setUpdatedAt(DateUtil.now());
+    }
+
+    public static Folder generateFolderData(ChatFileDto chatFileDto) {
+        Folder folderData = new Folder();
+        folderData.setUserId(chatFileDto.getUserId());
+        folderData.setSessionId(chatFileDto.getSessionId());
+        folderData.setAnonymousId(chatFileDto.getAnonymousId());
+        folderData.setParentId(null);
+        folderData.setCreatedAt(DateUtil.now());
+        folderData.setUploadId(CommonUtil.getUUID());
+        folderData.setTotalFiles(1);
+        folderData.setUploadedFiles(1);
+        folderData.setIsDeleted((short) 0);
+        folderData.setUpdatedAt(DateUtil.now());
+        return folderData;
+    }
+
+    public static Folder generateFolderData(Folder folder) {
+        Folder folderData = new Folder();
+        folderData.setUserId(folder.getUserId());
+        folderData.setSessionId(folder.getSessionId());
+        folderData.setAnonymousId(folder.getAnonymousId());
+        folderData.setParentId(folder.getParentId());
+        folderData.setCreatedAt(folder.getCreatedAt());
+        folderData.setUploadId(folder.getUploadId());
+        folderData.setTotalFiles(folder.getTotalFiles() + 1);
+        folderData.setUploadedFiles(folder.getUploadedFiles() + 1);
+        folderData.setIsDeleted((short) 0);
+        folderData.setUpdatedAt(DateUtil.now());
+        return folderData;
+    }
+
+    public static ChatFileDto generateChatFileDto() {
+
+    }
 }

@@ -77,18 +77,18 @@
         <!-- <table tableName="model" domainObjectName="Model"> -->
         <!--     <generatedKey column="id" sqlStatement="PostgreSQL" identity="true"/> -->
         <!-- </table> -->
-        <!-- <table tableName="file" domainObjectName="File"> -->
-        <!--     <generatedKey column="id" sqlStatement="PostgreSQL" identity="true"/> -->
-        <!-- </table> -->
+        <table tableName="file" domainObjectName="File">
+            <generatedKey column="id" sqlStatement="PostgreSQL" identity="true"/>
+        </table>
         <!-- <table tableName="file_content" domainObjectName="FileContent"> -->
         <!--     <generatedKey column="id" sqlStatement="PostgreSQL" identity="true"/> -->
         <!-- </table> -->
         <!-- <table tableName="file_chunk" domainObjectName="FileChunk"> -->
         <!--     <generatedKey column="id" sqlStatement="PostgreSQL" identity="true"/> -->
         <!-- </table> -->
-        <table tableName="file_chunk_part" domainObjectName="FileChunkPart">
-            <generatedKey column="id" sqlStatement="PostgreSQL" identity="true"/>
-        </table>
+        <!-- <table tableName="file_chunk_part" domainObjectName="FileChunkPart"> -->
+        <!--     <generatedKey column="id" sqlStatement="PostgreSQL" identity="true"/> -->
+        <!-- </table> -->
         <!-- <table tableName="folder" domainObjectName="Folder"> -->
         <!--     <generatedKey column="id" sqlStatement="PostgreSQL" identity="true"/> -->
         <!-- </table> -->

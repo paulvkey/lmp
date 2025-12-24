@@ -63,6 +63,10 @@ public class FileService {
         String anonymousId = chatFileDto.getAnonymousId();
         File existFile = fileMapper.selectByUserMd5(userId, sessionId, anonymousId, fileMd5);
         if (existFile != null) {
+            chatFileDto.setFileId(existFile.getId());
+            chatFileDto.setFolderId(existFile.getFolderId());
+            chatFileDto.setFileMd5(existFile.getFileMd5());
+            chatFileDto.setSucceed(true);
             return chatFileDto;
         }
 
@@ -73,15 +77,20 @@ public class FileService {
             throw new CustomException(500, "不支持的存储类型: " + storageType);
         }
 
-        File localFile = new File();
-        localFile.copyFrom(file);
-        localFile.setFileName(fileName);
-        // TODO 暂时放在本地文件夹
-        localFile.setFilePath(LOCALHOST + FILE_PATH_PREFIX + fileName);
-        localFile.setUploadTime(DateUtil.now());
-        if (!uploadFile(localFile)) {
-            throw new CustomException(500, "更新上传文件信息异常");
+        // 查看是否有已存在的文件夹
+        Folder folderData = null;
+        Folder folder = folderMapper.selectByIds(userId, anonymousId, sessionId);
+        if (folder != null) {
+            folderData = FileUtil.generateFolderData(folder);
+            folderMapper.updateByPrimaryKey(folderData);
+        } else {
+            folderData = FileUtil.generateFolderData(chatFileDto);
+            folderMapper.insert(folderData);
         }
+
+        File fileData = FileUtil.generateFileData(file, chatFileDto, fileMd5, storageType);
+        fileMapper.insert(fileData);
+
         return localFile;
     }
 
