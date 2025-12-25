@@ -5,12 +5,12 @@ import org.springframework.web.multipart.MultipartFile;
 
 
 public class FileParseUtil {
-    /**
-     * 统一解析入口
-     */
     public static String parse(MultipartFile file) throws Exception {
         String ext = FileUtil.getExtension(file);
+        return parse(file, ext);
+    }
 
+    public static String parse(MultipartFile file, String ext) throws Exception {
         return switch (ext) {
             case "pdf" -> PdfParseUtil.parse(file);
             case "doc", "docx" -> DocParseUtil.parse(file);

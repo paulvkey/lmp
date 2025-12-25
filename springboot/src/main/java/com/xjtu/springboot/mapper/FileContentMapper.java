@@ -10,7 +10,5 @@ public interface FileContentMapper {
 
     FileContent selectByPrimaryKey(Long id);
 
-    List<FileContent> selectAll();
-
     int updateByPrimaryKey(FileContent row);
 }

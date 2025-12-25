@@ -12,8 +12,11 @@ public class FileContent implements Serializable {
     private Long fileId;
     private String type;
     private String content;
-    private LocalDateTime parseTime;
+    private LocalDateTime createdAt;
+    private Short isDeleted;
+    private LocalDateTime updatedAt;
 
     @Serial
     private static final long serialVersionUID = 1L;
+
 }

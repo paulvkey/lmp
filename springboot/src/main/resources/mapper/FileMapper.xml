@@ -35,7 +35,7 @@
     </delete>
     <insert id="insert" parameterType="com.xjtu.springboot.pojo.File">
         <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
-            PostgreSQL
+            SELECT currval(pg_get_serial_sequence('lmp.file', 'id')) AS id;
         </selectKey>
         insert into file (user_id, session_id, anonymous_id,
         folder_id, new_name, original_name,

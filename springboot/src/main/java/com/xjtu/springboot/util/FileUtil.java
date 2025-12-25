@@ -2,6 +2,7 @@ package com.xjtu.springboot.util;
 
 import com.xjtu.springboot.dto.file.ChatFileDto;
 import com.xjtu.springboot.pojo.File;
+import com.xjtu.springboot.pojo.FileContent;
 import com.xjtu.springboot.pojo.Folder;
 import com.xjtu.springboot.pojo.common.Unit;
 import lombok.extern.slf4j.Slf4j;
@@ -170,15 +171,28 @@ public class FileUtil {
         fileData.setIsImage((short) imageInfo[0]);
         fileData.setImageWidth(imageInfo[1]);
         fileData.setImageHeight(imageInfo[2]);
-        fileData.setUploadAt(DateUtil.now());
+        LocalDateTime now = DateUtil.now();
+        fileData.setUploadAt(now);
         fileData.setFileMd5(data.get("fileMd5").toString());
         fileData.setStorageType(data.get("storageType").toString());
         fileData.setExpireAt(getExpireAt(chatFileDto.getUserId(), chatFileDto.getAnonymousId()));
         // TODO
         fileData.setRelativePath("");
         fileData.setIsDeleted((short) 0);
-        fileData.setUpdatedAt(DateUtil.now());
+        fileData.setUpdatedAt(now);
         return fileData;
+    }
+
+    public static FileContent generateFileContent(Long fileId, String content, String ext) {
+        FileContent fileContent = new FileContent();
+        fileContent.setFileId(fileId);
+        fileContent.setType(ext);
+        fileContent.setContent(content);
+        LocalDateTime now = DateUtil.now();
+        fileContent.setCreatedAt(now);
+        fileContent.setIsDeleted((short) 0);
+        fileContent.setUpdatedAt(now);
+        return fileContent;
     }
 
     public static Folder generateFolderData(ChatFileDto chatFileDto) {

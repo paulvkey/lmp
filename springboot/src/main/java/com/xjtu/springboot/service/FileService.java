@@ -101,6 +101,18 @@ public class FileService {
             throw new CustomException(500, "创建文件数据异常");
         }
 
+        FileContent fileContent;
+        try {
+            String content = FileParseUtil.parse(file);
+            String ext = FileUtil.getExtension(file);
+            fileContent = FileUtil.generateFileContent(fileData.getId(), content, ext);
+        } catch (Exception e) {
+            throw new CustomException(500, "文件内容解析异常：" + e.getMessage());
+        }
+        if (fileContentMapper.insert(fileContent) == 0) {
+            throw new CustomException(500, "创建内容解析数据异常");
+        }
+
         return FileUtil.generateChatFileDto(chatFileDto, fileData, folderData);
     }
 
